@@ -7,7 +7,7 @@ const response=(url,body,headers={},statusCode=200)=>({statusCode,body:typeof bo
 const cookieHeaders={'Set-Cookie':'e=123; Expires=Wed, 21 Oct 2030 07:28:00 GMT; Path=/, p=proof%3D; Path=/, h=hash; Path=/, session=do-not-forward; Path=/'};
 const episodeHtml=(id,data='opaque%7Brequest%7D')=>`<html><body><article id="post-${id}"><div class="entry-content"><video data-apireq="${data}"></video></div></article></body></html>`;
 function load({get=async url=>response(url,rows),post=async()=>{throw Error('Unexpected POST');},browser=async()=>{throw Error('Unexpected browser');},preferences={},document=Document}={}) {
- class Client{get(...args){return get(...args);}post(...args){return post(...args);}}
+ class Client{constructor(options){this.options=options;}get(...args){return get(...args,this.options);}post(...args){return post(...args,this.options);}}
  class SharedPreferences{get(key){return preferences[key];}}
  const context=vm.createContext({Document:document,Client,SharedPreferences,MProvider:class{},evaluateJavascriptViaWebview:browser});
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../javascript/anime/src/zh/anime1.js'),'utf8')+'\nglobalThis.ext=new DefaultExtension();',context);
@@ -59,6 +59,12 @@ test('archive titles without permalink anchors and whitespace-separated category
  const detail=await ext.getDetail(base+'/?cat=12');assert.equal(detail.episodes.length,3);assert.deepEqual(Array.from(detail.episodes,e=>e.url),[base+'/103',base+'/102',base+'/101']);
 });
 
+test('archive accepts a category slug from the verified body, including FX-style mixed numeric and slug classes',async()=>{
+ const html=archive(12,[[104,'04'],[103,'03'],[102,'02'],[101,'01']]).replace('archive category category-12','archive category category-fx category-12').replace(/class="post category-12"/g,'class="post category-fx"').replace('</body>','<article id="post-999" class="post category-other"><h2 class="entry-title">其他分類 [99]</h2></article></body>');
+ const {ext}=load({get:async url=>url.endsWith('/animelist.json')?response(url,rows):response(url,html)});
+ const detail=await ext.getDetail(base+'/?cat=12');assert.equal(detail.episodes.length,4);assert.equal(detail.episodes.at(-1).url,base+'/101');assert.ok(!Array.from(detail.episodes).some(e=>e.url.endsWith('/999')));
+});
+
 test('empty native archive extraction falls back to rendered metadata on each page and retains page order',async()=>{
  class MissingArticles extends Document{select(selector){return selector==='article'?[]:super.select(selector);}}
  const calls=[];
@@ -75,6 +81,15 @@ test('rendered archive capture reads article titles and IDs without requiring ti
  Object.defineProperty(document,'cookie',{get(){throw Error('Cookie access forbidden');}});let captured;
  await vm.runInNewContext(script,{window:{flutter_inappwebview:{callHandler:async(name,raw)=>{captured=JSON.parse(raw);}}},document,location:new URL(base+'/?cat=12'),URL});
  assert.equal(captured.kind,'page');const data=JSON.parse(captured.body);assert.equal(data.category,'12');assert.equal(data.entries.length,2);assert.equal(data.entries[0].url,base+'/103');assert.equal(data.previous[0],'/category/test/page/2');
+});
+
+test('rendered archive capture accepts slug categories after verifying the numeric body category',async()=>{
+ const {context}=load(),script=vm.runInContext('a1BrowserScript("archive","12")',context);
+ const {document}=parseHTML(archive(12,[[102,'02'],[101,'01']]).replace('archive category category-12','archive category category-fx category-12').replace(/class="post category-12"/g,'class="post category-fx"'));
+ let captured;await vm.runInNewContext(script,{window:{flutter_inappwebview:{callHandler:async(name,raw)=>{captured=JSON.parse(raw);}}},document,location:new URL(base+'/?cat=12'),URL});
+ assert.equal(captured.kind,'page');assert.equal(JSON.parse(captured.body).entries.length,2);
+ const mismatch=parseHTML(archive(13,[[101,'01']])).document;
+ await vm.runInNewContext(script,{window:{flutter_inappwebview:{callHandler:async(name,raw)=>{captured=JSON.parse(raw);}}},document:mismatch,location:new URL(base+'/?cat=13'),URL});assert.equal(captured.kind,'category');
 });
 
 test('rendered archive failures stay explicit and do not return an incomplete catalogue',async()=>{
@@ -94,6 +109,17 @@ test('unknown and external categories do not trigger arbitrary page requests',as
 test('normal player request preserves form encoding and forwards only playback cookies',async()=>{
  let request;const {ext}=load({get:async url=>response(url,episodeHtml(101)),post:async(...args)=>{request=args;return response(api,{s:[{src:'//muan.v.anime1.me/a.mp4',type:'video/mp4'}]},cookieHeaders);}});
  const videos=await ext.getVideoList(base+'/101');assert.equal(request[0],api);assert.equal(request[2],'d=opaque%7Brequest%7D');assert.equal(request[1].Origin,base);assert.equal(request[1].Referer,base+'/101');assert.equal(videos.length,1);assert.equal(videos[0].headers.Cookie,'e=123; p=proof%3D; h=hash');assert.equal(videos[0].originalUrl,videos[0].url);assert.equal(videos[0].quality,'原始 MP4');assert.ok(!videos[0].headers.Cookie.includes('session'));
+});
+
+test('playback uses Dart IOClient to preserve repeated Set-Cookie headers while site requests keep the default client',async()=>{
+ let siteOptions='not called',playbackOptions;
+ const cookiePairs=[['set-cookie','e=123; Path=/'],['set-cookie','p=proof; Path=/'],['set-cookie','h=hash; Path=/']];
+ const {ext,context}=load({get:async(url,headers,options)=>{siteOptions=options;return response(url,episodeHtml(101));},post:async(url,headers,body,options)=>{
+  playbackOptions=options;const replyHeaders=options?.useDartHttpClient?{'set-cookie':cookiePairs.map(([,value])=>value).join(', ')}:Object.fromEntries(cookiePairs);
+  return response(api,{s:[{src:'//muan.v.anime1.me/a.mp4'}]},replyHeaders);
+ }});
+ context.collapsedHeaders=Object.fromEntries(cookiePairs);assert.throws(()=>vm.runInContext('a1PlaybackCookies(collapsedHeaders)',context),/A1-PLAYBACK-HEADERS/);
+ const videos=await ext.getVideoList(base+'/101');assert.equal(siteOptions,undefined);assert.equal(playbackOptions.useDartHttpClient,true);assert.equal(videos[0].headers.Cookie,'e=123; p=proof; h=hash');
 });
 test('separate Set-Cookie values and case-insensitive header names are supported',()=>{
  const {context}=load();context.headers={'SET-COOKIE':['p=value==; Path=/','h=token; Path=/','e=1; Expires=Wed, 21 Oct 2030 07:28:00 GMT']};assert.equal(vm.runInContext('a1PlaybackCookies(headers)',context),'e=1; p=value==; h=token');

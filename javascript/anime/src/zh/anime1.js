@@ -5,7 +5,7 @@
 const mangayomiSources = [{
     name: "Anime1（測試版）", id: 1827634456, lang: "zh", baseUrl: "https://anime1.me", apiUrl: "",
     iconUrl: "https://anime1.me/favicon-32x32.png", typeSource: "single", itemType: 1, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.1", appMinVerReq: "0.9.9", pkgPath: "anime/src/zh/anime1.js",
+    sourceCodeLanguage: 1, version: "0.1.2", appMinVerReq: "0.9.9", pkgPath: "anime/src/zh/anime1.js",
     hasCloudflare: true, isNsfw: false,
     notes: "依動畫列表分組，支援搜尋、年份／季節篩選、完整集數與站方播放器的原始影片。網站未提供各作封面，使用站方圖示。影片連結失效時請重新開啟該集。"
 }];
@@ -76,10 +76,11 @@ function a1BrowserScript(kind, category) {
             if (options.kind === "archive") {
                 const id = String(options.category || "");
                 if (!/^[1-9]\d*$/.test(id) || !document.body || !document.body.classList.contains("category-" + id)) return reply("category");
+                const categories = Array.from(document.body.classList).filter(name => /^category-.+/.test(name));
                 const entries = [];
                 for (const post of document.querySelectorAll("article")) {
                     const match = /^post-([1-9]\d*)$/.exec(post.id);
-                    if (!match || !post.classList.contains("category-" + id)) continue;
+                    if (!match || !categories.some(name => post.classList.contains(name))) continue;
                     const heading = post.querySelector(".entry-title"), date = post.querySelector("time[datetime]");
                     if (!heading || !heading.textContent.trim()) continue;
                     entries.push({title: heading.textContent, url: "https://anime1.me/" + match[1], date: date ? date.getAttribute("datetime") : ""});
@@ -95,7 +96,13 @@ function a1BrowserScript(kind, category) {
     return "(function(){const a1Challenge=" + a1Challenge.toString() + ";return (" + capture.toString() + ")(" + JSON.stringify({kind, category}) + ");})()";
 }
 class DefaultExtension extends MProvider {
-    constructor() { super(); this.client = new Client(); this.prefs = new SharedPreferences(); this.indexTask = null; this.indexLoadedAt = 0; this.browserQueue = Promise.resolve(); }
+    constructor() {
+        super(); this.client = new Client();
+        // The default rhttp headerMap keeps only the last Set-Cookie header.
+        // Dart's IOClient preserves all three normal player response cookies.
+        this.playbackClient = new Client({useDartHttpClient: true});
+        this.prefs = new SharedPreferences(); this.indexTask = null; this.indexLoadedAt = 0; this.browserQueue = Promise.resolve();
+    }
     get supportsLatest() { return true; }
     getHeaders() { return {Referer: A1_BASE + "/", Origin: A1_BASE}; }
     getFilterList() { return []; }
@@ -172,9 +179,10 @@ class DefaultExtension extends MProvider {
         const document = new Document(html), entries = [], previous = [];
         const body = a1First(document, "body");
         if (!body || !a1HasClass(body, "category-" + id)) throw a1Error("CATEGORY", "網站沒有回傳指定動畫的集數頁");
+        const categories = a1Clean(body.attr("class")).split(" ").filter(name => /^category-.+/.test(name));
         for (const post of document.select("article")) {
             const match = /^post-([1-9]\d*)$/.exec(post.attr("id"));
-            if (!match || !a1HasClass(post, "category-" + id)) continue;
+            if (!match || !categories.some(name => a1HasClass(post, name))) continue;
             const heading = a1First(post, ".entry-title"), title = heading && a1Clean(heading.text);
             if (!title) continue;
             const date = a1First(post, "time");
@@ -252,7 +260,7 @@ class DefaultExtension extends MProvider {
             const data = requests[index].attr("data-apireq");
             if (!data || data.length > 16384 || /[&\r\n\u0000]/.test(data)) throw a1Error("PLAYER", "站方播放請求格式已變更");
             let response;
-            try { response = await this.client.post(A1_API, {Referer: episode, Origin: A1_BASE, "Content-Type": "application/x-www-form-urlencoded"}, "d=" + data); }
+            try { response = await this.playbackClient.post(A1_API, {Referer: episode, Origin: A1_BASE, "Content-Type": "application/x-www-form-urlencoded"}, "d=" + data); }
             catch (_) { throw a1Error("PLAYBACK", "站方播放介面未回應，請稍後重新開啟此集"); }
             if (Number(response.statusCode) !== 200) throw a1Error("PLAYBACK", "站方暫時無法提供影片，請先在來源 WebView 確認這一集");
             if (response.request && response.request.url && response.request.url !== A1_API) throw a1Error("PLAYBACK", "播放介面發生非預期轉址，請在來源 WebView 確認");

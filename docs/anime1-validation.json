@@ -1,20 +1,39 @@
 {
   "date": "2026-10-24",
-  "version": "0.1.1",
-  "sourceSha256": "7b69f4b5cf595195075369e82a9da05a442adacfcd1284aae2f336b7bfd48203",
-  "mode": "source JavaScript + real Dart html 0.15.7 / pseudom 1.0.1 selectors + live public website",
+  "version": "0.1.2",
+  "sourceSha256": "001c0e27e2de1d9aa206ed979ebbcd6c0100cc1571cf0ef6f98ba3cc3bd2312c",
+  "mode": "source JavaScript + real Dart html 0.15.7 / pseudom 1.0.1 selectors + Dart http 1.6.0 IOClient playback API and media range requests",
   "installedInApp": false,
   "actualPlayerUiTested": false,
   "androidUiTested": false,
+  "loginCredentialsUsed": false,
   "series": [
+    {
+      "id": 1970,
+      "name": "FX戰士久留美",
+      "episodes": 4,
+      "uniqueUrls": 4,
+      "pageRequests": 1,
+      "readerRetained": 4,
+      "readerOrderMatches": true
+    },
+    {
+      "id": 1949,
+      "name": "二十世紀電氣目錄",
+      "episodes": 13,
+      "uniqueUrls": 13,
+      "pageRequests": 1,
+      "readerRetained": 13,
+      "readerOrderMatches": true
+    },
     {
       "id": 1851,
       "name": "入間同學入魔了！ 第四季",
       "episodes": 24,
       "uniqueUrls": 24,
       "pageRequests": 2,
-      "first": "0001｜０１",
-      "last": "0024｜２４"
+      "readerRetained": 24,
+      "readerOrderMatches": true
     },
     {
       "id": 1307,
@@ -22,28 +41,129 @@
       "episodes": 28,
       "uniqueUrls": 28,
       "pageRequests": 2,
-      "first": "0001｜０１",
-      "last": "0028｜２８"
-    },
-    {
-      "id": 2003,
-      "name": "冰劍的魔術師將要統一世界 II(第二季)",
-      "episodes": 3,
-      "uniqueUrls": 3,
-      "pageRequests": 1,
-      "first": "0001｜０１",
-      "last": "0003｜０３"
+      "readerRetained": 28,
+      "readerOrderMatches": true
     }
   ],
-  "parserCalls": 262,
+  "playback": [
+    {
+      "category": 1970,
+      "episode": "0001｜０１",
+      "sources": 1,
+      "transport": "Dart IOClient",
+      "cookieNames": [
+        "e",
+        "p",
+        "h"
+      ],
+      "status": 206,
+      "type": "video/mp4",
+      "bytesRead": 2048,
+      "mp4Signature": true
+    },
+    {
+      "category": 1970,
+      "episode": "0004｜０４",
+      "sources": 1,
+      "transport": "Dart IOClient",
+      "cookieNames": [
+        "e",
+        "p",
+        "h"
+      ],
+      "status": 206,
+      "type": "video/mp4",
+      "bytesRead": 2048,
+      "mp4Signature": true
+    },
+    {
+      "category": 1949,
+      "episode": "0001｜０１",
+      "sources": 1,
+      "transport": "Dart IOClient",
+      "cookieNames": [
+        "e",
+        "p",
+        "h"
+      ],
+      "status": 206,
+      "type": "video/mp4",
+      "bytesRead": 2048,
+      "mp4Signature": true
+    },
+    {
+      "category": 1949,
+      "episode": "0013｜１３",
+      "sources": 1,
+      "transport": "Dart IOClient",
+      "cookieNames": [
+        "e",
+        "p",
+        "h"
+      ],
+      "status": 206,
+      "type": "video/mp4",
+      "bytesRead": 2048,
+      "mp4Signature": true
+    },
+    {
+      "category": 1851,
+      "episode": "0001｜０１",
+      "sources": 1,
+      "transport": "Dart IOClient",
+      "cookieNames": [
+        "e",
+        "p",
+        "h"
+      ],
+      "status": 206,
+      "type": "video/mp4",
+      "bytesRead": 2048,
+      "mp4Signature": true
+    },
+    {
+      "category": 1851,
+      "episode": "0024｜２４",
+      "sources": 1,
+      "transport": "Dart IOClient",
+      "cookieNames": [
+        "e",
+        "p",
+        "h"
+      ],
+      "status": 206,
+      "type": "video/mp4",
+      "bytesRead": 2048,
+      "mp4Signature": true
+    }
+  ],
+  "mediaDownloadLimitPerEpisode": 2048,
+  "fxRegression": {
+    "oldVersion": "0.1.1",
+    "oldEpisodes": 0,
+    "newEpisodes": 4
+  },
+  "parserCalls": 319,
+  "siteGets": 13,
+  "apiPosts": 6,
+  "noPlaybackUrlsOrCookieValuesStored": true,
   "status": "passed",
   "automatedTests": {
-    "animePassed": 24,
+    "animePassed": 27,
     "existingNovelPassed": 32,
-    "totalPassed": 56,
+    "totalPassed": 59,
     "failed": 0
   },
-  "originalFailureReproduced": false,
-  "webviewFallbackTested": "DOM script and simulated native-parser failure, including pagination; not exercised inside installed app",
-  "previousPlaybackValidation": "anime1-validation-0.1.0.json"
+  "cookieRegression": {
+    "defaultTransport": "rhttp",
+    "repeatedHeaderMap": "last value only",
+    "fixedPlaybackTransport": "Dart IOClient",
+    "preservedCookieNames": [
+      "e",
+      "p",
+      "h"
+    ],
+    "sourceCodeConfirmed": true,
+    "modelTestPassed": true
+  }
 }
