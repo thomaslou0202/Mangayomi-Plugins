@@ -1,0 +1,128 @@
+Reference sources inspected during development (2026-10-23)
+
+Mangayomi native JavaScript extension format and local developer workflow:
+https://github.com/kodjodevf/mangayomi-extensions/blob/main/CONTRIBUTING-JS.md
+
+Mangayomi 0.9.9 JavaScript runtime and response contracts:
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/eval/javascript/service.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/eval/javascript/http.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/eval/http_response_extensions.dart
+
+Preferences and actual source settings UI:
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/eval/javascript/preferences.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/modules/browse/extension/widgets/source_preference_widget.dart
+
+HTTP client, Cookie inheritance, and redirect options:
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/services/http/m_client.dart
+
+Existing native novel source demonstrating HTML return values:
+https://github.com/m2k3a/mangayomi-extensions/blob/main/javascript/novel/src/en/novelfire.js
+
+Wenku8 page structure and URL rules documented by another open-source client:
+https://github.com/Xempastissimo/LightNovelReader/blob/master/app/src/main/java/com/xempastissimo/lightnovelreader/data/source/wenku8/Wenku8Urls.kt
+https://github.com/Xempastissimo/LightNovelReader/blob/master/app/src/main/java/com/xempastissimo/lightnovelreader/data/source/wenku8/Wenku8Selectors.kt
+https://github.com/Xempastissimo/LightNovelReader/blob/master/app/src/test/java/com/xempastissimo/lightnovelreader/data/source/wenku8/Wenku8ParserTest.kt
+https://github.com/mojimoon/wenku8/blob/main/utils/catalog.py
+
+Direct ordinary HTTPS requests to the target site returned a Cloudflare
+challenge (HTTP 403). No real account was used, and no challenge was bypassed.
+The automated tests use independently written neutral markup and fake accounts.
+No website novel text or illustrations are bundled with this package.
+
+Version 0.2.0: ordinary browser page rendering and form submission
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/eval/javascript/utils.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/services/http/m_client.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/modules/webview/webview.dart
+https://inappwebview.dev/docs/webview/javascript/communication/
+https://developers.cloudflare.com/cloudflare-challenges/challenge-types/challenge-pages/detect-response/
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/modules/novel/novel_reader_view.dart
+
+A 2026-10-23 integration check through the running Windows app's official
+/evaluateJavascriptViaWebview API succeeded: 20 ranking entries, one book's
+metadata and 504-chapter catalogue, and one chapter's HTML. The source parser
+ran in a Node VM with a Mangayomi DOM adapter; the app performed real page
+rendering. Only aggregate results were saved. No real credentials were read
+or submitted, and the new source was not installed or UI-tested in the app.
+No browser profile, cookie, verification token, or session database was read.
+The earlier HTTP 403 observation above refers to the v0.1.0 HTTP route.
+
+Version 0.3.0: catalogue document order and script preference
+Mangayomi uses pseudom instead of the browser's querySelectorAll:
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/utils/extensions/dom_extensions.dart
+https://github.com/hubble459/pseudom/blob/main/lib/src/selector/selector_groups.dart
+SelectorGroups accumulates each group's result in insertion order; it does not
+merge groups back into document order. The source now selects td once, then
+filters classes to keep volume headers interleaved with their chapters.
+
+Wenku8's own Traditionalized / Simplized functions are already loaded by its
+normal pages. The source calls them on a detached copy's display text only.
+https://www.wenku8.net/GB_BIG5.js
+https://www.wenku8.net/novel/3/3496/index.htm
+No converter library or mapping from the website is bundled. Login form values
+and href/src attributes are excluded from script conversion.
+
+A real-page integration check through the running app's official page helper
+verified 120 distinct chapter URLs across nine volumes, two different chapter
+bodies, and traditional/simplified output for the same chapter. Only aggregate
+statistics and hashes were saved. The source parser ran in a Node VM with a
+pseudom group-order adapter. The new source was not installed into the app.
+
+Version 0.3.1: Traditional Chinese search and empty-result pages
+Real pages through the running app showed that searching 狗與剪刀 produces
+a header-only empty search grid, whereas 狗与剪刀 redirects to book/1284.htm.
+The site searches simplified titles; this differs from display conversion.
+https://www.wenku8.net/modules/article/search.php
+https://www.wenku8.net/book/1284.htm
+
+The source now normalizes search phrases locally using OpenCC dictionary data.
+Only first output candidates from TSCharacters/TSPhrases are merged into a JS
+lookup; longest-match phrase conversion is used. This is not the full OpenCC
+engine or its complete normalization/configuration pipeline.
+OpenCC pinned commit: bcf847cf3fbd79c74779567f9a491ea8ab878183
+https://github.com/BYVoid/OpenCC/blob/bcf847cf3fbd79c74779567f9a491ea8ab878183/data/dictionary/TSCharacters.txt
+https://github.com/BYVoid/OpenCC/blob/bcf847cf3fbd79c74779567f9a491ea8ab878183/data/dictionary/TSPhrases.txt
+https://github.com/BYVoid/OpenCC/blob/bcf847cf3fbd79c74779567f9a491ea8ab878183/LICENSE
+Apache-2.0 attribution and license are included in OPENCC-LICENSE.txt and embedded in both standalone code files.
+
+Version 0.3.2: Mangayomi chapter identity compatibility
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/utils/chapter_recognition.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/modules/manga/detail/providers/update_manga_detail_providers.dart
+The app combines recognized season/episode/scanlator into a duplicate key and
+can discard a different URL with that same key. Chinese volume labels are not
+recognized as seasons. For the reported book, all 120 chapters reach the parser
+but only 41 survive the upstream duplicate model, with five of ten first-volume
+chapters retained. Fullwidth display digits leave identity to the existing URL
+fallback, avoid numeric cross-volume read-state inheritance, and keep all 120
+URLs. This changes display names only; chapter URLs, body text and order stay
+the same. Automatic ASCII episode-number recognition is intentionally unused.
+The comparison uses the app's real page helper and a model of these two Dart
+functions, not a direct test of the installed reader UI or Android build.
+
+Version 0.3.3: Name-sort compatibility
+The user's installed app exposes number, upload-date and name sorting, with no
+source-order choice. Chapter display names now start with their global TOC
+position, padded to the same width (at least four digits) in fullwidth form.
+Name ascending reproduces the TOC's reading order and name descending its
+reverse, while fullwidth digits preserve the numeric-dedup workaround. Empty,
+invalid and repeated links are excluded before assigning sequence positions.
+The real 120-chapter catalogue was checked in both sort directions, as were
+synthetic multi-volume, decimal-volume, prologue, illustration and 10001-chapter
+cases. URLs and original labels after the generated prefix are preserved.
+
+Version 0.3.4: Reader navigation compatibility (supersedes fullwidth prefix)
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/utils/extensions/manga_extensions.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/modules/manga/reader/mixins/chapter_controller_mixin.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/modules/novel/novel_reader_view.dart
+getNextChapter follows getChapterListForReading, which independently sorts by
+recognized chapter number, not the chapter-list UI's chosen name sort. Null
+number keys preserve database row order, which need not match the TOC after
+earlier updates. The leading, padded global sequence now uses ASCII digits;
+original volume/title digits remain fullwidth so embedded Ch./Ep./S labels
+cannot override it. Distinct, positive sequence numbers keep every chapter
+through ingestion dedup and reader dedup while fixing numeric and name order.
+The real 120-chapter catalogue was checked against shuffled stored rows:
+119 next and 119 previous transitions match the TOC in the reader model.
+Active reader filters may still exclude the current chapter and make the app
+fall back to unsorted raw rows; initial validation should show all chapters.
+This tests models derived from the pinned Dart sources, not installed-reader
+button interactions or Android UI. Chapter URLs and original labels remain.

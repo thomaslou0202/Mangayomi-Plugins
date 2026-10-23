@@ -1,0 +1,43 @@
+Reference pages and source inspected on 2026-10-23
+
+Requested starting page and observed public routes:
+https://czbooks.net/c/normal
+https://czbooks.net/c/normal/day/2
+https://czbooks.net/c/normal/week
+https://czbooks.net/c/normal/total
+https://czbooks.net/s/%E5%AB%81%E9%87%91%E9%87%B5/1?q=%E5%AB%81%E9%87%91%E9%87%B5
+https://czbooks.net/n/sh4fco7
+https://czbooks.net/n/sh4fco7/shifhik1
+https://czbooks.net/js/assets.js?v=1.66
+
+The public frontend's search handler links to /s/<UTF-8 keyword>; pagination
+adds /<page>. Curated rankings expose day/week/total, not latest updates.
+The source deliberately hides the latest tab instead of relabelling a daily
+ranking as latest. Categories and their route names come from the site menu.
+
+The source parses .novel-list .novel-item, .novel-detail, .chapter-list li and
+.chapter-detail .content. Public chapterNumber hints are sorted when complete
+and unique; query hints are stripped from canonical chapter URL identity.
+
+Mangayomi JavaScript extension API and preferences:
+https://github.com/kodjodevf/mangayomi-extensions/blob/main/CONTRIBUTING-JS.md
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/eval/javascript/service.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/eval/javascript/utils.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/modules/browse/extension/providers/extension_preferences_providers.dart
+
+App chapter identity, sorting and sequential reader behavior:
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/utils/chapter_recognition.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/modules/manga/detail/providers/update_manga_detail_providers.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/utils/extensions/manga_extensions.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/modules/manga/reader/mixins/chapter_controller_mixin.dart
+
+Original chapter/volume digits are displayed fullwidth, preventing embedded
+Ch./Ep./season numbers from overriding the positive global ASCII sequence.
+That leading sequence supplies a unique ingestion identity and independent
+reader sort key, while equal padding preserves name sorting.
+
+Direct HTTP returned a Cloudflare challenge. The plugin uses the running
+app's ordinary WebView page-rendering helper. It does not extract cookies,
+solve verification challenges, submit login forms or use third-party proxies.
+The source is original code; website scripts, novels and images are not bundled.
+Only aggregate statistics and content hashes are retained in the package.

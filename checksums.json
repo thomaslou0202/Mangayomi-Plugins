@@ -1,0 +1,21 @@
+{
+  "algorithm": "sha256",
+  "files": [
+    {
+      "path": "javascript/novel/src/zh/czbooks.js",
+      "sha256": "1214ae40db252c60e067b1b26a6ccb88120473c1d75cad95b8f89e0776bb3663"
+    },
+    {
+      "path": "javascript/novel/src/zh/wenku8.js",
+      "sha256": "14c7e378790d442002255c1a37b6d36a7280127706318b6359b0d8b69632c116"
+    },
+    {
+      "path": "novel_index.json",
+      "sha256": "8eebaa5e0493d6145ab9b0497dc0f60c4c88bbbce22b04aee6347b7539350a89"
+    },
+    {
+      "path": "repo.json",
+      "sha256": "8d70a0818316086bab5f5e527a328673ef72d771518d286bc7c81617dd1c3c10"
+    }
+  ]
+}
