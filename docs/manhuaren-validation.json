@@ -1,0 +1,134 @@
+{
+  "date": "2026-10-24",
+  "version": "0.1.0",
+  "sourceSha256": "a32737c19a9365ab55c9076e503d72e05e86f3f3d76f0996903dd07156f2c8e7",
+  "mode": "source JavaScript including packed-string-table decoder + real Dart html 0.15.7 / pseudom 1.0.1 selectors and http 1.6.0 IOClient + public website",
+  "installedInApp": false,
+  "androidUiTested": false,
+  "actualReaderUiTested": false,
+  "loginCredentialsUsed": false,
+  "series": [
+    {
+      "name": "大狗狗",
+      "chapters": 8,
+      "urlsInServerHtml": 8,
+      "uniqueUrls": 8,
+      "readerRetained": 8,
+      "readerOrderMatches": true
+    },
+    {
+      "name": "落魄的哥哥其实是最强的",
+      "chapters": 100,
+      "urlsInServerHtml": 100,
+      "uniqueUrls": 100,
+      "readerRetained": 100,
+      "readerOrderMatches": true
+    }
+  ],
+  "imageChecks": [
+    {
+      "series": "大狗狗",
+      "chapter": "0001｜第１话",
+      "pages": 24,
+      "firstAndLastPage": [
+        {
+          "status": 206,
+          "type": "image/jpeg",
+          "bytesRead": 2048,
+          "validImageSignature": true
+        },
+        {
+          "status": 206,
+          "type": "image/jpeg",
+          "bytesRead": 2048,
+          "validImageSignature": true
+        }
+      ]
+    },
+    {
+      "series": "大狗狗",
+      "chapter": "0008｜第８话",
+      "pages": 25,
+      "firstAndLastPage": [
+        {
+          "status": 206,
+          "type": "image/jpeg",
+          "bytesRead": 2048,
+          "validImageSignature": true
+        },
+        {
+          "status": 206,
+          "type": "image/jpeg",
+          "bytesRead": 2048,
+          "validImageSignature": true
+        }
+      ]
+    },
+    {
+      "series": "落魄的哥哥其实是最强的",
+      "chapter": "0001｜第１话",
+      "pages": 52,
+      "firstAndLastPage": [
+        {
+          "status": 206,
+          "type": "image/jpeg",
+          "bytesRead": 2048,
+          "validImageSignature": true
+        },
+        {
+          "status": 206,
+          "type": "image/jpeg",
+          "bytesRead": 2048,
+          "validImageSignature": true
+        }
+      ]
+    },
+    {
+      "series": "落魄的哥哥其实是最强的",
+      "chapter": "0100｜第４３-５１话",
+      "pages": 449,
+      "firstAndLastPage": [
+        {
+          "status": 206,
+          "type": "image/jpeg",
+          "bytesRead": 2048,
+          "validImageSignature": true
+        },
+        {
+          "status": 206,
+          "type": "image/jpeg",
+          "bytesRead": 2048,
+          "validImageSignature": true
+        }
+      ]
+    }
+  ],
+  "browse": {
+    "popularPageOne": 21,
+    "popularPageTwo": 21,
+    "latestPageOne": 21,
+    "differentPages": true
+  },
+  "search": {
+    "pageOne": 10,
+    "pageTwo": 10,
+    "differentPages": true,
+    "traditionalChineseQueryMatched": true
+  },
+  "parserCalls": 23,
+  "httpGets": 6,
+  "httpPosts": 6,
+  "noSignedImageUrlsOrCookieValuesStored": true,
+  "status": "passed",
+  "automatedTests": {
+    "manhuarenPassed": 16,
+    "existingPassed": 59,
+    "totalPassed": 75,
+    "failed": 0
+  },
+  "pageHeaders": {
+    "nativePageUrlObjects": true,
+    "referer": "full chapter URL",
+    "stateIndependent": true
+  }
+}

@@ -2,7 +2,7 @@
   "name": "mangayomi-plugins",
   "version": "1.0.0",
   "private": true,
-  "description": "Native Mangayomi JavaScript novel and anime extension repository",
+  "description": "Native Mangayomi JavaScript manga, novel and anime extension repository",
   "type": "module",
   "engines": {
     "node": ">=22"

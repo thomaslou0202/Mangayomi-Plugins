@@ -6,8 +6,16 @@
       "sha256": "8656f9e354fa906c7719ddace4036b77571022add2b6c5a52fc3680e94cf4440"
     },
     {
+      "path": "index.json",
+      "sha256": "9d2e8be1e1e440fcaa45dceda2dc8304529993aaef82261fbdbc3daf95abcae0"
+    },
+    {
       "path": "javascript/anime/src/zh/anime1.js",
       "sha256": "001c0e27e2de1d9aa206ed979ebbcd6c0100cc1571cf0ef6f98ba3cc3bd2312c"
+    },
+    {
+      "path": "javascript/manga/src/zh/manhuaren.js",
+      "sha256": "a32737c19a9365ab55c9076e503d72e05e86f3f3d76f0996903dd07156f2c8e7"
     },
     {
       "path": "javascript/novel/src/zh/czbooks.js",

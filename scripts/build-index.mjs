@@ -40,7 +40,7 @@ try {
   }
   const website = `https://github.com/${config.owner}/${config.repository}`;
   const rawRoot = `https://raw.githubusercontent.com/${config.owner}/${config.repository}/${config.branch}`;
-  const files = [...filesUnder('javascript/novel/src'), ...filesUnder('javascript/anime/src')];
+  const files = [...filesUnder('javascript/manga/src'), ...filesUnder('javascript/novel/src'), ...filesUnder('javascript/anime/src')];
   if (!files.length) fail('No sources found');
   const entries = [];
   const ids = new Set();
@@ -64,10 +64,10 @@ try {
       if (!Number.isSafeInteger(source.id) || source.id <= 0 || ids.has(source.id)) fail(`${relative}: invalid/duplicate source ID`);
       if (typeof source.name !== 'string' || !source.name.trim()) fail(`${relative}: missing name`);
       if (typeof source.lang !== 'string' || !/^[a-z]{2}(?:-[a-zA-Z]{2})?$/.test(source.lang)) fail(`${relative}: invalid language`);
-      const itemType = relative.startsWith('javascript/anime/') ? 1 : 2;
+      const itemType = relative.startsWith('javascript/manga/') ? 0 : relative.startsWith('javascript/anime/') ? 1 : 2;
       const nameKey = `${itemType}:${source.lang}:${source.name}`;
       if (names.has(nameKey)) fail(`${relative}: duplicate source name/language`);
-      if (source.itemType !== itemType || source.isManga !== false || source.sourceCodeLanguage !== 1 || source.typeSource !== 'single') {
+      if (source.itemType !== itemType || source.isManga !== (itemType === 0) || source.sourceCodeLanguage !== 1 || source.typeSource !== 'single') {
         fail(`${relative}: expected native JavaScript / single source of itemType ${itemType}`);
       }
       for (const field of ['version', 'appMinVerReq']) {
@@ -85,7 +85,7 @@ try {
         lang: source.lang, typeSource: source.typeSource, iconUrl: https(source.iconUrl, 'iconUrl'),
         dateFormat: '', dateFormatLocale: '', isNsfw: source.isNsfw,
         hasCloudflare: source.hasCloudflare, sourceCodeUrl: `${rawRoot}/${relative}`,
-        apiUrl: source.apiUrl || '', version: source.version, isManga: false,
+        apiUrl: source.apiUrl || '', version: source.version, isManga: itemType === 0,
         itemType, isFullData: false, appMinVerReq: source.appMinVerReq,
         additionalParams: '', sourceCodeLanguage: 1, notes: source.notes || ''
       });
@@ -95,6 +95,7 @@ try {
   entries.sort((a, b) => a.id - b.id);
   const generated = new Map([
     ['repo.json', json({ name: config.name, website })],
+    ['index.json', json(entries.filter(source => source.itemType === 0))],
     ['novel_index.json', json(entries.filter(source => source.itemType === 2))],
     ['anime_index.json', json(entries.filter(source => source.itemType === 1))]
   ]);
@@ -113,7 +114,7 @@ try {
   }
   console.log(`${checking ? 'Verified' : 'Generated'} ${entries.length} sources; syntax, IDs, metadata, paths, URLs and hashes OK.`);
   for (const source of entries) console.log(`  ${source.name} ${source.version} (ID ${source.id})`);
-  for (const kind of ['novel', 'anime']) console.log(`${kind} repository URL: ${rawRoot}/${kind}_index.json`);
+  for (const [kind, file] of [['manga', 'index.json'], ['novel', 'novel_index.json'], ['anime', 'anime_index.json']]) console.log(`${kind} repository URL: ${rawRoot}/${file}`);
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;

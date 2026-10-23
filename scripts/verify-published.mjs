@@ -21,8 +21,8 @@ try {
   }
   const config = JSON.parse(local('repo.config.json'));
   const base = `https://raw.githubusercontent.com/${config.owner}/${config.repository}/${config.branch}`;
-  const indexes = await Promise.all([['novel', 2], ['anime', 1]].map(async ([kind, itemType]) => {
-    const filename = `${kind}_index.json`, bytes = await fetchBytes(`${base}/${filename}`);
+  const indexes = await Promise.all([['manga', 0, 'index.json'], ['novel', 2, 'novel_index.json'], ['anime', 1, 'anime_index.json']].map(async ([kind, itemType, filename]) => {
+    const bytes = await fetchBytes(`${base}/${filename}`);
     const entries = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
     if (bytes[0] !== 0x5b || !Array.isArray(entries) || entries.some(entry => entry.itemType !== itemType)) throw new Error(`${kind} index is not a native array of itemType ${itemType}`);
     if (!bytes.equals(local(filename))) throw new Error(`Published ${kind} metadata differs from local files; push changes or wait for GitHub raw cache`);
