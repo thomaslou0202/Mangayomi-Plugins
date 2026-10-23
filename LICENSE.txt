@@ -27,4 +27,4 @@ grant rights to the books, illustrations, accounts, or website content.
 
 The MIT license above applies to original extension code. Embedded OpenCC
 search conversion dictionary data is licensed under Apache-2.0; see
-OPENCC-LICENSE.txt and the notice embedded in wenku8.js / wenku8-code.txt.
+OPENCC-LICENSE.txt and the notices embedded in wenku8.js and sfacg.js.

@@ -6,12 +6,24 @@
       "sha256": "1214ae40db252c60e067b1b26a6ccb88120473c1d75cad95b8f89e0776bb3663"
     },
     {
+      "path": "javascript/novel/src/zh/eightbook.js",
+      "sha256": "77df0401a489af53e3fde75aafe01c470e377a152a0119995cc2fe1b1289237e"
+    },
+    {
+      "path": "javascript/novel/src/zh/sfacg.js",
+      "sha256": "327338a816b7a46dec89255b20546d45101bb7502f8c465d34632e1337cd55bd"
+    },
+    {
+      "path": "javascript/novel/src/zh/twbook.js",
+      "sha256": "07ee7523cc79668f7168c7de9df6e890feca445fa38bc9174f93dbcb8fa0cb19"
+    },
+    {
       "path": "javascript/novel/src/zh/wenku8.js",
       "sha256": "14c7e378790d442002255c1a37b6d36a7280127706318b6359b0d8b69632c116"
     },
     {
       "path": "novel_index.json",
-      "sha256": "8eebaa5e0493d6145ab9b0497dc0f60c4c88bbbce22b04aee6347b7539350a89"
+      "sha256": "e195a9856bb9a30261346e5ddd84cd88c5d5ad706a82fb0fa04be6445f5908e6"
     },
     {
       "path": "repo.json",

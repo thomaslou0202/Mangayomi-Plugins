@@ -1,0 +1,23 @@
+{
+  "project": "OpenCC",
+  "repository": "https://github.com/BYVoid/OpenCC",
+  "commit": "bcf847cf3fbd79c74779567f9a491ea8ab878183",
+  "files": [
+    {
+      "file": "data/dictionary/TSCharacters.txt",
+      "bytes": 104520
+    },
+    {
+      "file": "data/dictionary/TSPhrases.txt",
+      "bytes": 8835
+    },
+    {
+      "file": "LICENSE",
+      "bytes": 9165
+    },
+    {
+      "file": "NOTICE",
+      "absent": true
+    }
+  ]
+}

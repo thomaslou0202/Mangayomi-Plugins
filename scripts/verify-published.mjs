@@ -15,8 +15,10 @@ async function fetchBytes(url) {
 }
 
 try {
-  const check = spawnSync(process.execPath, ['scripts/build-index.mjs', '--check'], { cwd: root, stdio: 'inherit' });
-  if (check.status !== 0) throw new Error('Local repository check failed');
+  for (const script of ['scripts/build-sources.mjs', 'scripts/build-index.mjs']) {
+    const check = spawnSync(process.execPath, [script, '--check'], { cwd: root, stdio: 'inherit' });
+    if (check.status !== 0) throw new Error('Local repository check failed');
+  }
   const config = JSON.parse(local('repo.config.json'));
   const base = `https://raw.githubusercontent.com/${config.owner}/${config.repository}/${config.branch}`;
   const [indexBytes, repoBytes] = await Promise.all([

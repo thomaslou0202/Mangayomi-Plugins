@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-23",
+  "stylesheet": "https://i1.twbook.cc/min/read.38.css",
+  "font": "https://i1.twbook.cc/fonts/f24092.woff2",
+  "sha256": "4287ef986834d02762283c9265285cd7aa29b90c1dc1e7671d959359786c7db2",
+  "mappedCharacters": 149,
+  "method": "The site's public display glyphs were visually transcribed into their displayed Chinese characters. Substitution applies to HTML text nodes only, after verifying the site's font identity.",
+  "fontFileDistributed": false,
+  "mappingFile": "twbook-f24092-map.json"
+}

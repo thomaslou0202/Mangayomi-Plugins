@@ -2,12 +2,18 @@
   "name": "mangayomi-plugins",
   "version": "1.0.0",
   "private": true,
-  "description": "Native Mangayomi JavaScript novel repository: Wenku8 and CZBooks",
+  "description": "Native Mangayomi JavaScript novel repository: Wenku8, CZBooks, SFACG, 8book and TWBook",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "build": "node scripts/build-index.mjs",
-    "check": "node scripts/build-index.mjs --check",
+    "build": "node scripts/build-sources.mjs && node scripts/build-index.mjs",
+    "check": "node scripts/build-sources.mjs --check && node scripts/build-index.mjs --check",
+    "test": "node --test tests/*.test.cjs",
     "verify:published": "node scripts/verify-published.mjs"
+  },
+  "devDependencies": {
+    "linkedom": "0.18.12"
   }
 }

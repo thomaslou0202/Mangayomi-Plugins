@@ -1,0 +1,201 @@
+{
+  "date": "2026-10-23",
+  "automatedTests": {
+    "passed": 32,
+    "failed": 0,
+    "command": "node --test tests/novel-sources.test.cjs"
+  },
+  "sources": [
+    {
+      "name": "sfacg",
+      "version": "0.1.0",
+      "sha256": "327338a816b7a46dec89255b20546d45101bb7502f8c465d34632e1337cd55bd"
+    },
+    {
+      "name": "eightbook",
+      "version": "0.1.0",
+      "sha256": "77df0401a489af53e3fde75aafe01c470e377a152a0119995cc2fe1b1289237e"
+    },
+    {
+      "name": "twbook",
+      "version": "0.1.0",
+      "sha256": "07ee7523cc79668f7168c7de9df6e890feca445fa38bc9174f93dbcb8fa0cb19"
+    }
+  ],
+  "live": {
+    "date": "2026-10-23",
+    "app": "Mangayomi 0.9.9+127",
+    "mode": "app WebView helper + source parsers + native chapter identity/navigation models",
+    "installedInApp": false,
+    "androidUiTested": false,
+    "credentialsUsed": false,
+    "sources": [
+      {
+        "name": "sfacg",
+        "browse": {
+          "firstPage": 20,
+          "secondPage": 20,
+          "differentFirstBook": true,
+          "hasNext": true
+        },
+        "search": {
+          "query": "仙子",
+          "count": 30
+        },
+        "catalogue": {
+          "chapters": 66,
+          "uniqueUrls": 66,
+          "readerRetained": 66,
+          "nextTransitions": 65,
+          "nameSortMatches": true,
+          "hasAuthor": true,
+          "hasCoverUrl": true,
+          "vipChapters": 15
+        },
+        "reading": {
+          "firstCharacters": 4688,
+          "secondCharacters": 2649,
+          "differentBodies": true,
+          "bodyHashes": [
+            "cff6ab1b0476fd98b4ca2748ee732fa563a8ad1040cee11806a1a0ac26f0927d",
+            "4b4c5a2bc65dc19a7978b38dd654858ae2ceae8bff730a06e072cea2e0a5890e"
+          ],
+          "hasExecutableMarkup": false
+        },
+        "vipBlockedWithClearMessage": true,
+        "status": "passed"
+      },
+      {
+        "name": "eightbook",
+        "browse": {
+          "firstPage": 42,
+          "secondPage": 42,
+          "differentFirstBook": true,
+          "hasNext": true
+        },
+        "search": {
+          "query": "不科學禦獸",
+          "count": 2
+        },
+        "catalogue": {
+          "chapters": 709,
+          "uniqueUrls": 709,
+          "readerRetained": 709,
+          "nextTransitions": 708,
+          "nameSortMatches": true,
+          "hasAuthor": true,
+          "hasCoverUrl": true,
+          "vipChapters": 0
+        },
+        "reading": {
+          "firstCharacters": 3498,
+          "secondCharacters": 3466,
+          "differentBodies": true,
+          "bodyHashes": [
+            "70ae32b6777584a48f8b4660d2cde6c7bb22bb3cb43bd907d1c31f459752b957",
+            "5d7c739973f52c3bddc655a426679b96372bb4041de7ae3bd29e7e4f8d6053a7"
+          ],
+          "hasExecutableMarkup": false
+        },
+        "status": "passed"
+      },
+      {
+        "name": "twbook",
+        "browse": {
+          "firstPage": 18,
+          "secondPage": 18,
+          "differentFirstBook": true,
+          "hasNext": true
+        },
+        "search": {
+          "query": "北冥有魚",
+          "count": 21
+        },
+        "catalogue": {
+          "chapters": 161,
+          "uniqueUrls": 161,
+          "readerRetained": 161,
+          "nextTransitions": 160,
+          "nameSortMatches": true,
+          "hasAuthor": true,
+          "hasCoverUrl": true,
+          "vipChapters": 0
+        },
+        "reading": {
+          "firstCharacters": 2305,
+          "secondCharacters": 2371,
+          "differentBodies": true,
+          "bodyHashes": [
+            "97932c61f67fadba11c79505fa3ab3c7fc254a2e516e7228537bb919c572596f",
+            "04a738d9e897e769e6b480001ec9a0d6a69cefe42f83be2ba915e9190876695d"
+          ],
+          "hasExecutableMarkup": false,
+          "hangulRemaining": 0
+        },
+        "status": "passed"
+      }
+    ],
+    "status": "passed"
+  },
+  "additional": {
+    "date": "2026-10-23",
+    "checks": [
+      {
+        "name": "sfacg",
+        "emptySearch": true
+      },
+      {
+        "name": "eightbook",
+        "emptySearch": true
+      },
+      {
+        "name": "twbook",
+        "emptySearch": true
+      },
+      {
+        "name": "sfacg",
+        "traditionalSearch": "戰敗",
+        "count": 30
+      },
+      {
+        "name": "eightbook",
+        "searchPagination": true,
+        "pageOne": 24,
+        "pageTwo": 24
+      },
+      {
+        "name": "eightbook",
+        "multipleVolumes": 33,
+        "chapters": 537,
+        "uniqueUrls": 537
+      },
+      {
+        "name": "eightbook",
+        "latestUpdates": 30
+      }
+    ],
+    "status": "passed"
+  },
+  "readerDomainVerification": {
+    "date": "2026-10-23",
+    "source": "eightbook",
+    "freshRuntimePerRead": true,
+    "book": "https://www.8book.com/novelbooks/121051/",
+    "catalogue": 537,
+    "readerHost": "finance.binaccount.com",
+    "bodyHashes": [
+      "208062045839d9f3fc2b951a2c1a3bca22b7bfce225749e29ace8c75d6329685",
+      "7f48092cc24b44051340fa47b3d745a716581105ed2b8badd981ccbf651ed686"
+    ],
+    "differentBodies": true,
+    "status": "passed"
+  },
+  "limitations": [
+    "No extension was installed into the app UI during these tests.",
+    "Native chapter identity/reader checks are independent models of Mangayomi 0.9.9, not actual UI next/previous button presses.",
+    "Android UI, offline downloads and image rendering were not physically tested.",
+    "SFACG paid content is not supported; VIP chapters are labelled and return a clear message.",
+    "TWBook decoding supports the public f24092 font identified by its SHA-256; other versions return an update message."
+  ],
+  "status": "passed"
+}
