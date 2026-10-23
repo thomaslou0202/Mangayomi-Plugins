@@ -1,6 +1,6 @@
 # Anime1 動畫來源
 
-版本：0.1.0。最低 Mangayomi 版本：0.9.9。來源類型：原生 JavaScript／動畫（`itemType: 1`）。
+版本：0.1.1。最低 Mangayomi 版本：0.9.9。來源類型：原生 JavaScript／動畫（`itemType: 1`）。
 
 ## 安裝
 
@@ -18,6 +18,7 @@ https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/anime_ind
 - 支援作品名、年份、季節及字幕組的全站搜尋，也接受清單中的 `https://anime1.me/?cat=分類ID` 網址。
 - 來源設定可篩選首頁年份與季節；搜尋仍查詢全部作品。重新整理第一頁會抓取最新資料，其餘清單快取最長一分鐘。
 - 每部動畫收集完整分類頁的所有集數，不只讀第一頁；修訂版本及特別篇保留各自的貼文。
+- 依文章編號與標題辨識集數，標題沒有超連結時仍可收錄。一般讀取未辨識到集數時，會用內建 WebView 的 DOM 直接讀取集數資料，再繼續翻頁。
 - 集數以半形連續序號開頭，例如 `0001｜０１`，其餘數字為全形，讓 App 排序與下一集辨識使用相同序號。測試時請顯示全部集數，讓 `0001` 在最前面。
 - 網站動畫表沒有提供各作封面，來源使用站方共用圖示。
 
@@ -31,12 +32,14 @@ https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/anime_ind
 
 ## 驗證與限制
 
-2026-10-24 的驗證結果：
+0.1.1 更新後，到「動畫擴充套件」重新整理並更新 Anime1，回到作品詳細頁重新整理集數。來源 ID 相同，不需要移除書庫作品。
 
-- 動畫清單前兩頁各 20 部，翻頁內容不同；搜尋及無結果回應正常。
-- 一部 28 集作品的兩頁分類完整保留 28 集，通過 App 去重與排序規則模型。
-- 另一部作品的兩集影片，各讀取前 2,048 位元組，均取得 HTTP 206、`video/mp4` 及 MP4 `ftyp` 標記。沒有下載整集。
-- 20 項來源測試，加上既有 32 項小說測試，合計 52 項通過。
+2026-10-24 的 0.1.1 驗證結果：
+
+- 使用真正的 Dart `html 0.15.7` 與 `pseudom 1.0.1` 解析器，執行來源程式及公開網站的完整分類讀取：入間同學第四季 24 集／2 頁、葬送的芙莉蓮 28 集／2 頁、新作 3 集／1 頁，網址均無重複，序號由第 1 集至末集。
+- 24 項來源測試，加上既有 32 項小說測試，合計 56 項通過。新增標題無連結、分類空白字元、原生解析為空時的跨頁 WebView 備援、備援失敗明確報錯測試。
+- 原先使用一般 DOM 模型及真正 Dart 解析器，均沒有重現使用者的 `A1-EPISODES`；因此不能斷言是哪個網頁／執行環境差異造成。新版補強辨識及備援，仍需在原本出錯的裝置更新後確認。
+- 0.1.0 曾驗證動畫清單前兩頁、搜尋，以及兩集影片前 2,048 位元組的 HTTP 206／MP4 標記；本次未修改播放流程，也未重測影片。舊報告保留於 [anime1-validation-0.1.0.json](anime1-validation-0.1.0.json)。
 - 尚未在實際 Mangayomi 播放器或 Android 介面測試完整播放、切換下一集、投放及離線下載。上述網路與模型測試不能代替完整播放器實測。
 
 詳細記錄見 [anime1-validation.json](anime1-validation.json)。
@@ -50,6 +53,7 @@ https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/anime_ind
 - [首頁表格載入程式](https://sta.anicdn.com/homelist.min.js?ver=1103)
 - [測試作品分類](https://anime1.me/?cat=1307)
 - [測試新作分類](https://anime1.me/?cat=2003)
+- [入間同學第四季分類](https://anime1.me/?cat=1851)
 - [測試集數頁](https://anime1.me/30432)
 - [站方播放器程式](https://sta.anicdn.com/videojs.bundle.js?ver=8)
 - 播放介面：`POST https://v.anime1.me/api`，表單欄位沿用頁面提供的 `data-apireq`，不修改或重算簽章。
@@ -61,5 +65,6 @@ Mangayomi 0.9.9 的相容規則：
 - [動畫詳細資料的 episodes 欄位](https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/eval/model/m_manga.dart)
 - [影片網址與 headers 欄位](https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/models/video.dart)
 - [原生來源 itemType 讀取](https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/models/source.dart)
+- [原生 HTML 選擇器](https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/utils/extensions/dom_extensions.dart)
 
 本來源為原創程式碼，採根目錄 MIT 授權。沒有將動畫影片或站方播放器程式打包進套件庫。

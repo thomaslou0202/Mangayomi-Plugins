@@ -3,11 +3,11 @@
   "files": [
     {
       "path": "anime_index.json",
-      "sha256": "db06b6d2caa36c3defa215f12b383308ad908c3e36c395d42502e7673a30fc55"
+      "sha256": "0a67a8a6b146fb7c0965800ef44a352de25a0e8cd9a7e26f1f9f4afd3d3e07a0"
     },
     {
       "path": "javascript/anime/src/zh/anime1.js",
-      "sha256": "8e44cf49266c267d1cabf3da9d45c38283f5a81ca1534ee8efdbab29fc65e107"
+      "sha256": "7b69f4b5cf595195075369e82a9da05a442adacfcd1284aae2f336b7bfd48203"
     },
     {
       "path": "javascript/novel/src/zh/czbooks.js",

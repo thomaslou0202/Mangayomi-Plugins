@@ -5,7 +5,7 @@
 const mangayomiSources = [{
     name: "Anime1（測試版）", id: 1827634456, lang: "zh", baseUrl: "https://anime1.me", apiUrl: "",
     iconUrl: "https://anime1.me/favicon-32x32.png", typeSource: "single", itemType: 1, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.0", appMinVerReq: "0.9.9", pkgPath: "anime/src/zh/anime1.js",
+    sourceCodeLanguage: 1, version: "0.1.1", appMinVerReq: "0.9.9", pkgPath: "anime/src/zh/anime1.js",
     hasCloudflare: true, isNsfw: false,
     notes: "依動畫列表分組，支援搜尋、年份／季節篩選、完整集數與站方播放器的原始影片。網站未提供各作封面，使用站方圖示。影片連結失效時請重新開啟該集。"
 }];
@@ -15,6 +15,7 @@ const A1_API = "https://v.anime1.me/api";
 const A1_IMAGE = "https://sta.anicdn.com/logo/260x260.png";
 function a1Error(code, message) { return new Error("Anime1：" + message + "（A1-" + code + "）。"); }
 function a1Clean(value) { return String(value || "").replace(/\s+/g, " ").trim(); }
+function a1HasClass(node, name) { return (" " + a1Clean(node.attr("class")) + " ").includes(" " + name + " "); }
 function a1First(scope, selector) { const nodes = scope.select(selector); return nodes.length ? nodes[0] : null; }
 function a1Text(scope, selector) { const node = a1First(scope, selector); return node ? a1Clean(node.text) : ""; }
 function a1Plain(value) { const text = String(value || ""); if (!/[<&]/.test(text)) return a1Clean(text); const document = new Document("<body>" + text + "</body>"); return a1Text(document, "body"); }
@@ -62,7 +63,7 @@ function a1Challenge(html) {
     return /<title[^>]*>\s*(?:Just a moment(?:\.{3}|…)?|Attention Required!?(?:\s*\|\s*Cloudflare)?)\s*<\/title>/i.test(html)
         || /\bid=["'](?:challenge-form|challenge-running|cf-challenge-running)["']/i.test(html);
 }
-function a1BrowserScript(kind) {
+function a1BrowserScript(kind, category) {
     function capture(options) {
         const bridge = window.flutter_inappwebview;
         if (!bridge || typeof bridge.callHandler !== "function") return;
@@ -72,12 +73,26 @@ function a1BrowserScript(kind) {
             if (url.protocol !== "https:" || url.hostname !== "anime1.me" || url.username || url.password || (url.port && url.port !== "443")) return reply("outside");
             if (a1Challenge(document.documentElement.outerHTML)) return reply("challenge");
             if (options.kind === "json") return reply("page", document.body ? document.body.textContent : "");
+            if (options.kind === "archive") {
+                const id = String(options.category || "");
+                if (!/^[1-9]\d*$/.test(id) || !document.body || !document.body.classList.contains("category-" + id)) return reply("category");
+                const entries = [];
+                for (const post of document.querySelectorAll("article")) {
+                    const match = /^post-([1-9]\d*)$/.exec(post.id);
+                    if (!match || !post.classList.contains("category-" + id)) continue;
+                    const heading = post.querySelector(".entry-title"), date = post.querySelector("time[datetime]");
+                    if (!heading || !heading.textContent.trim()) continue;
+                    entries.push({title: heading.textContent, url: "https://anime1.me/" + match[1], date: date ? date.getAttribute("datetime") : ""});
+                }
+                const previous = Array.from(document.querySelectorAll(".nav-previous a[href]")).map(anchor => anchor.getAttribute("href"));
+                return reply("page", JSON.stringify({category: id, entries, previous}));
+            }
             const copy = document.documentElement.cloneNode(true);
             for (const node of copy.querySelectorAll("script,style,iframe,object,embed,noscript,form,input,textarea")) node.remove();
             return reply("page", copy.outerHTML);
         } catch (_) { return reply("error"); }
     }
-    return "(function(){const a1Challenge=" + a1Challenge.toString() + ";return (" + capture.toString() + ")(" + JSON.stringify({kind}) + ");})()";
+    return "(function(){const a1Challenge=" + a1Challenge.toString() + ";return (" + capture.toString() + ")(" + JSON.stringify({kind, category}) + ");})()";
 }
 class DefaultExtension extends MProvider {
     constructor() { super(); this.client = new Client(); this.prefs = new SharedPreferences(); this.indexTask = null; this.indexLoadedAt = 0; this.browserQueue = Promise.resolve(); }
@@ -92,14 +107,15 @@ class DefaultExtension extends MProvider {
             {key: "season", listPreference: {title: "首頁季節", summary: "依站方動畫列表的季節欄位篩選。", valueIndex: 0, entries: ["全部", "春", "夏", "秋", "冬"], entryValues: ["", "春", "夏", "秋", "冬"]}}
         ];
     }
-    async _browser(url, kind) {
+    async _browser(url, kind, category) {
         if (typeof evaluateJavascriptViaWebview !== "function") throw a1Error("WEBVIEW", "請先在來源 WebView 確認網站可開啟，並使用 Mangayomi 0.9.9 或更新版本");
         const task = this.browserQueue.then(async () => {
-            const raw = await evaluateJavascriptViaWebview(url, {}, [a1BrowserScript(kind)], 30);
+            const raw = await evaluateJavascriptViaWebview(url, {}, [a1BrowserScript(kind, category)], 30);
             if (!raw) throw a1Error("TIMEOUT", "內建網頁讀取逾時，請先在來源 WebView 開啟網站");
             let response; try { response = JSON.parse(raw); } catch (_) { throw a1Error("WEBVIEW", "內建網頁回傳格式錯誤"); }
             if (!response || typeof response !== "object") throw a1Error("WEBVIEW", "內建網頁回傳格式錯誤");
             if (response.kind === "challenge") throw a1Error("CHALLENGE", "請在來源 WebView 手動完成網站驗證後重試");
+            if (response.kind === "category") throw a1Error("CATEGORY", "網站沒有回傳指定動畫的集數頁");
             if (response.kind !== "page" || !a1Site(response.url) || typeof response.body !== "string") throw a1Error("WEBVIEW", "未取得 Anime1 網頁，請在來源 WebView 確認");
             return {body: response.body, url: response.url};
         });
@@ -153,26 +169,50 @@ class DefaultExtension extends MProvider {
         return this._slice(rows.filter(row => { const text = normalize([row.name, row.year, row.season, row.subtitles].join(" ")); return terms.every(term => text.includes(term)); }), page);
     }
     _episodes(html, url, id) {
-        const document = new Document(html), entries = [];
+        const document = new Document(html), entries = [], previous = [];
         const body = a1First(document, "body");
-        if (!body || !(" " + body.attr("class") + " ").includes(" category-" + id + " ")) throw a1Error("CATEGORY", "網站沒有回傳指定動畫的集數頁");
-        for (const post of document.select('article[id^="post-"]')) {
-            if (!(" " + post.attr("class") + " ").includes(" category-" + id + " ")) continue;
-            const anchor = a1First(post, ".entry-title a[href]"), title = anchor && a1Clean(anchor.text), link = anchor && a1Post(url, anchor.attr("href"));
-            if (!link || !title) continue;
-            const date = a1First(post, "time[datetime]"), timestamp = date ? Date.parse(date.attr("datetime")) : NaN;
+        if (!body || !a1HasClass(body, "category-" + id)) throw a1Error("CATEGORY", "網站沒有回傳指定動畫的集數頁");
+        for (const post of document.select("article")) {
+            const match = /^post-([1-9]\d*)$/.exec(post.attr("id"));
+            if (!match || !a1HasClass(post, "category-" + id)) continue;
+            const heading = a1First(post, ".entry-title"), title = heading && a1Clean(heading.text);
+            if (!title) continue;
+            const date = a1First(post, "time");
+            entries.push({title, url: A1_BASE + "/" + match[1], date: date ? date.attr("datetime") : ""});
+        }
+        for (const navigation of document.select(".nav-previous")) for (const anchor of navigation.select("a")) if (anchor.attr("href")) previous.push(anchor.attr("href"));
+        return this._archiveData({category: id, entries, previous}, url, id);
+    }
+    _archiveData(data, url, id) {
+        if (!data || String(data.category) !== id || !Array.isArray(data.entries) || !Array.isArray(data.previous)) throw a1Error("CATEGORY", "集數資料與指定動畫不符");
+        const entries = [];
+        for (const entry of data.entries) {
+            if (!entry || typeof entry.title !== "string" || typeof entry.url !== "string") continue;
+            const title = a1Clean(entry.title), link = a1Post(url, entry.url), timestamp = typeof entry.date === "string" ? Date.parse(entry.date) : NaN;
+            if (!title || !link) continue;
             const bracket = /[\[【]([^\]】]+)[\]】]\s*$/.exec(title), label = bracket ? bracket[1] : title;
             const number = /^\s*(\d+(?:\.\d+)?)(?:\s*[-~～]\s*\d+)?\s*$/.exec(label);
             entries.push({name: title, label, url: link, timestamp, number: number ? Number(number[1]) : null});
         }
-        const previous = document.select(".nav-previous a[href]"); let next = "";
-        for (const anchor of previous) {
-            const candidate = a1Absolute(url, anchor.attr("href"));
+        let next = "";
+        for (const href of data.previous) {
+            const candidate = a1Absolute(url, href);
             if (!a1Site(candidate) || !(/\/page\/[1-9]\d*(?:[/?#]|$)/.test(candidate) || /[?&]paged=[1-9]\d*(?:&|$)/.test(candidate))) throw a1Error("PAGINATION", "集數翻頁格式已變更，請回報動畫網址");
             if (next && next !== candidate) throw a1Error("PAGINATION", "集數頁出現多個不同的上一頁");
             next = candidate;
         }
         return {entries, next};
+    }
+    async _archive(result, id) {
+        const direct = this._episodes(result.body, result.url, id);
+        if (direct.entries.length) return direct;
+        // A successful HTTP response can still differ from the rendered page.
+        // Read only archive metadata with the WebView's own DOM, once per page.
+        const rendered = await this._browser(result.url, "archive", id);
+        let data; try { data = JSON.parse(rendered.body); } catch (_) { throw a1Error("EPISODES", "集數頁回傳格式錯誤，請回報動畫網址"); }
+        const parsed = this._archiveData(data, rendered.url, id);
+        if (!parsed.entries.length) throw a1Error("EPISODES", "網站與內建網頁均未取得集數，請回報動畫網址");
+        return parsed;
     }
     async getDetail(url) {
         const id = a1Category(url);
@@ -183,8 +223,7 @@ class DefaultExtension extends MProvider {
         while (next && seenPages.size < 200) {
             if (seenPages.has(next)) throw a1Error("PAGINATION", "集數頁重複，請稍後重試或回報動畫網址");
             seenPages.add(next);
-            const result = await this._get(next, "html"), parsed = this._episodes(result.body, result.url, id);
-            if (!parsed.entries.length) throw a1Error("EPISODES", "未取得該頁集數，請在來源 WebView 確認");
+            const result = await this._get(next, "html"), parsed = await this._archive(result, id);
             for (const entry of parsed.entries) if (!seenPosts.has(entry.url)) { seenPosts.add(entry.url); entries.push(entry); }
             next = parsed.next;
         }

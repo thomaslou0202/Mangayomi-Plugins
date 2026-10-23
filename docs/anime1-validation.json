@@ -1,69 +1,49 @@
 {
   "date": "2026-10-24",
-  "version": "0.1.0",
-  "sourceSha256": "8e44cf49266c267d1cabf3da9d45c38283f5a81ca1534ee8efdbab29fc65e107",
-  "mode": "source JavaScript + native HTTP response-shape adapter + public website + native chapter recognition/navigation models",
+  "version": "0.1.1",
+  "sourceSha256": "7b69f4b5cf595195075369e82a9da05a442adacfcd1284aae2f336b7bfd48203",
+  "mode": "source JavaScript + real Dart html 0.15.7 / pseudom 1.0.1 selectors + live public website",
   "installedInApp": false,
   "actualPlayerUiTested": false,
   "androidUiTested": false,
-  "loginCredentialsUsed": false,
-  "mediaDownloadLimitPerEpisode": 2048,
-  "browse": {
-    "pageOne": 20,
-    "pageTwo": 20,
-    "differentPages": true,
-    "indexGets": 1
-  },
-  "search": {
-    "matches": 2,
-    "emptyResultValid": true
-  },
-  "catalogue": {
-    "episodes": 28,
-    "uniqueUrls": 28,
-    "readerRetained": 28,
-    "readerOrderMatches": true,
-    "pagination": true
-  },
-  "recentCatalogue": {
-    "episodes": 3
-  },
-  "playback": [
+  "series": [
     {
-      "sources": 1,
-      "host": "hinata.v.anime1.me",
-      "type": "video/mp4",
-      "status": 206,
-      "bytesRead": 2048,
-      "mp4Signature": true,
-      "cookieNames": [
-        "e",
-        "p",
-        "h"
-      ]
+      "id": 1851,
+      "name": "入間同學入魔了！ 第四季",
+      "episodes": 24,
+      "uniqueUrls": 24,
+      "pageRequests": 2,
+      "first": "0001｜０１",
+      "last": "0024｜２４"
     },
     {
-      "sources": 1,
-      "host": "bocchi.v.anime1.me",
-      "type": "video/mp4",
-      "status": 206,
-      "bytesRead": 2048,
-      "mp4Signature": true,
-      "cookieNames": [
-        "e",
-        "p",
-        "h"
-      ]
+      "id": 1307,
+      "name": "葬送的芙莉蓮",
+      "episodes": 28,
+      "uniqueUrls": 28,
+      "pageRequests": 2,
+      "first": "0001｜０１",
+      "last": "0028｜２８"
+    },
+    {
+      "id": 2003,
+      "name": "冰劍的魔術師將要統一世界 II(第二季)",
+      "episodes": 3,
+      "uniqueUrls": 3,
+      "pageRequests": 1,
+      "first": "0001｜０１",
+      "last": "0003｜０３"
     }
   ],
-  "siteGets": 6,
-  "apiPosts": 2,
-  "noPlaybackUrlsOrCookieValuesStored": true,
+  "parserCalls": 262,
   "status": "passed",
   "automatedTests": {
-    "animePassed": 20,
+    "animePassed": 24,
     "existingNovelPassed": 32,
-    "totalPassed": 52,
+    "totalPassed": 56,
     "failed": 0
-  }
+  },
+  "originalFailureReproduced": false,
+  "webviewFallbackTested": "DOM script and simulated native-parser failure, including pagination; not exercised inside installed app",
+  "previousPlaybackValidation": "anime1-validation-0.1.0.json"
 }

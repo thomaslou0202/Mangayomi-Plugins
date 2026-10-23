@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-24",
+  "version": "0.1.0",
+  "sourceSha256": "8e44cf49266c267d1cabf3da9d45c38283f5a81ca1534ee8efdbab29fc65e107",
+  "mode": "source JavaScript + native HTTP response-shape adapter + public website + native chapter recognition/navigation models",
+  "installedInApp": false,
+  "actualPlayerUiTested": false,
+  "androidUiTested": false,
+  "loginCredentialsUsed": false,
+  "mediaDownloadLimitPerEpisode": 2048,
+  "browse": {
+    "pageOne": 20,
+    "pageTwo": 20,
+    "differentPages": true,
+    "indexGets": 1
+  },
+  "search": {
+    "matches": 2,
+    "emptyResultValid": true
+  },
+  "catalogue": {
+    "episodes": 28,
+    "uniqueUrls": 28,
+    "readerRetained": 28,
+    "readerOrderMatches": true,
+    "pagination": true
+  },
+  "recentCatalogue": {
+    "episodes": 3
+  },
+  "playback": [
+    {
+      "sources": 1,
+      "host": "hinata.v.anime1.me",
+      "type": "video/mp4",
+      "status": 206,
+      "bytesRead": 2048,
+      "mp4Signature": true,
+      "cookieNames": [
+        "e",
+        "p",
+        "h"
+      ]
+    },
+    {
+      "sources": 1,
+      "host": "bocchi.v.anime1.me",
+      "type": "video/mp4",
+      "status": 206,
+      "bytesRead": 2048,
+      "mp4Signature": true,
+      "cookieNames": [
+        "e",
+        "p",
+        "h"
+      ]
+    }
+  ],
+  "siteGets": 6,
+  "apiPosts": 2,
+  "noPlaybackUrlsOrCookieValuesStored": true,
+  "status": "passed",
+  "automatedTests": {
+    "animePassed": 20,
+    "existingNovelPassed": 32,
+    "totalPassed": 52,
+    "failed": 0
+  }
+}

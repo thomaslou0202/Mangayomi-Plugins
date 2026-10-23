@@ -6,10 +6,10 @@ const rows=[[12,'測試 &amp; 動畫','1-3','2026','秋','字幕組'],[13,'Other
 const response=(url,body,headers={},statusCode=200)=>({statusCode,body:typeof body==='string'?body:JSON.stringify(body),headers,request:{url}});
 const cookieHeaders={'Set-Cookie':'e=123; Expires=Wed, 21 Oct 2030 07:28:00 GMT; Path=/, p=proof%3D; Path=/, h=hash; Path=/, session=do-not-forward; Path=/'};
 const episodeHtml=(id,data='opaque%7Brequest%7D')=>`<html><body><article id="post-${id}"><div class="entry-content"><video data-apireq="${data}"></video></div></article></body></html>`;
-function load({get=async url=>response(url,rows),post=async()=>{throw Error('Unexpected POST');},browser=async()=>{throw Error('Unexpected browser');},preferences={}}={}) {
+function load({get=async url=>response(url,rows),post=async()=>{throw Error('Unexpected POST');},browser=async()=>{throw Error('Unexpected browser');},preferences={},document=Document}={}) {
  class Client{get(...args){return get(...args);}post(...args){return post(...args);}}
  class SharedPreferences{get(key){return preferences[key];}}
- const context=vm.createContext({Document,Client,SharedPreferences,MProvider:class{},evaluateJavascriptViaWebview:browser});
+ const context=vm.createContext({Document:document,Client,SharedPreferences,MProvider:class{},evaluateJavascriptViaWebview:browser});
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../javascript/anime/src/zh/anime1.js'),'utf8')+'\nglobalThis.ext=new DefaultExtension();',context);
  return {ext:context.ext,context};
 }
@@ -51,6 +51,37 @@ test('category pagination collects and deduplicates all posts in chronological e
 test('special episodes and revised duplicate episode numbers remain distinct posts',async()=>{
  const {ext}=load({get:async url=>url.endsWith('/animelist.json')?response(url,rows):response(url,archive(12,[[104,'SP'],[103,'01-v2'],[102,'01'],[101,'前導篇']]))});
  const detail=await ext.getDetail(base+'/?cat=12');assert.equal(detail.episodes.length,4);assert.equal(ingestFresh(detail.name,Array.from(detail.episodes)).length,4);
+});
+
+test('archive titles without permalink anchors and whitespace-separated category classes keep every episode',async()=>{
+ const html=archive(12,[[103,'03'],[102,'02'],[101,'01']]).replace(/<a href="\/\d+">(.*?)<\/a>/g,'$1').replace(/category-12/g,'\ncategory-12\t');
+ const {ext}=load({get:async url=>url.endsWith('/animelist.json')?response(url,rows):response(url,html)});
+ const detail=await ext.getDetail(base+'/?cat=12');assert.equal(detail.episodes.length,3);assert.deepEqual(Array.from(detail.episodes,e=>e.url),[base+'/103',base+'/102',base+'/101']);
+});
+
+test('empty native archive extraction falls back to rendered metadata on each page and retains page order',async()=>{
+ class MissingArticles extends Document{select(selector){return selector==='article'?[]:super.select(selector);}}
+ const calls=[];
+ const {ext}=load({document:MissingArticles,get:async url=>url.endsWith('/animelist.json')?response(url,rows):response(url,archive(12,[])),browser:async(url,headers,scripts)=>{
+  calls.push(url);assert.match(scripts[0],/"kind":"archive"/);
+  const second=url.includes('/page/2');return JSON.stringify({kind:'page',url,body:JSON.stringify({category:'12',entries:(second?[[101,'01']]:[[103,'03'],[102,'02']]).map(([id,label])=>({title:'動畫 ['+label+']',url:base+'/'+id,date:'2026-10-01T10:00:00+08:00'})),previous:second?[]:['/category/test/page/2']})});
+ }});
+ const detail=await ext.getDetail(base+'/?cat=12');assert.equal(detail.episodes.length,3);assert.equal(calls.length,2);assert.equal(detail.episodes.at(-1).url,base+'/101');
+});
+
+test('rendered archive capture reads article titles and IDs without requiring title links',async()=>{
+ const {context}=load(),script=vm.runInContext('a1BrowserScript("archive","12")',context);
+ const {document}=parseHTML(archive(12,[[103,'03'],[102,'02']],'/category/test/page/2').replace(/<a href="\/\d+">(.*?)<\/a>/g,'$1'));
+ Object.defineProperty(document,'cookie',{get(){throw Error('Cookie access forbidden');}});let captured;
+ await vm.runInNewContext(script,{window:{flutter_inappwebview:{callHandler:async(name,raw)=>{captured=JSON.parse(raw);}}},document,location:new URL(base+'/?cat=12'),URL});
+ assert.equal(captured.kind,'page');const data=JSON.parse(captured.body);assert.equal(data.category,'12');assert.equal(data.entries.length,2);assert.equal(data.entries[0].url,base+'/103');assert.equal(data.previous[0],'/category/test/page/2');
+});
+
+test('rendered archive failures stay explicit and do not return an incomplete catalogue',async()=>{
+ for(const body of ['bad json',JSON.stringify({category:'13',entries:[],previous:[]}),JSON.stringify({category:'12',entries:[],previous:[]}),JSON.stringify({category:'12',entries:[],previous:['https://evil.test/page/2']})]){
+  let calls=0;const {ext}=load({get:async url=>url.endsWith('/animelist.json')?response(url,rows):response(url,archive(12,[])),browser:async url=>{calls++;return JSON.stringify({kind:'page',url,body});}});
+  await assert.rejects(ext.getDetail(base+'/?cat=12'),/A1-(?:EPISODES|CATEGORY|PAGINATION)/);assert.equal(calls,1);
+ }
 });
 test('mismatched category, repeated pages and external pagination are rejected',async()=>{
  for(const html of [archive(13,[[101,'01']]),archive(12,[[101,'01']],base+'/?cat=12'),archive(12,[[101,'01']],'https://evil.test/page/2')]){
