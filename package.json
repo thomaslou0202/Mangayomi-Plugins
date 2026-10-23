@@ -2,7 +2,7 @@
   "name": "mangayomi-plugins",
   "version": "1.0.0",
   "private": true,
-  "description": "Native Mangayomi JavaScript novel repository: Wenku8, CZBooks, SFACG, 8book and TWBook",
+  "description": "Native Mangayomi JavaScript novel and anime extension repository",
   "type": "module",
   "engines": {
     "node": ">=22"

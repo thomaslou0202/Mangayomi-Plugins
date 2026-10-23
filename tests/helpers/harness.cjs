@@ -15,4 +15,4 @@ function load(name,{preferences={},browser=async()=>{throw new Error('Unexpected
     return {ext:context.ext,context};
 }
 const page=(url,html,extra={})=>JSON.stringify({kind:'page',url,html,...extra});
-module.exports={load,page,parseHTML};
+module.exports={load,page,parseHTML,Document};

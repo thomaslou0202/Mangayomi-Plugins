@@ -1,6 +1,8 @@
-# Mangayomi 中文小說套件庫
+# Mangayomi 中文小說與動畫套件庫
 
-提供 Mangayomi 原生 JavaScript 小說來源，依照 [Mangayomi 套件庫](https://github.com/kodjodevf/mangayomi-extensions)的 `novel_index.json` 格式整理。
+提供 Mangayomi 原生 JavaScript 小說及動畫來源，依照 [Mangayomi 套件庫](https://github.com/kodjodevf/mangayomi-extensions)的原生索引格式整理。小說與動畫使用各自的清單網址。
+
+## 小說來源
 
 | 來源 | 版本 | 功能 |
 | --- | --- | --- |
@@ -12,6 +14,14 @@
 
 最低版本設為 Mangayomi 0.9.9。新增來源使用固定 ID，來源清單及更新網址由本儲存庫產生。
 
+## 動畫來源
+
+| 來源 | 版本 | 功能 |
+| --- | --- | --- |
+| Anime1（測試版） | 0.1.0 | 站方更新順序清單、全站搜尋、年份／季節篩選、跨頁完整集數、站方原始影片 |
+
+Anime1 的使用方式與驗證範圍見 [Anime1 說明](docs/anime1.md)。
+
 ## 加入套件庫
 
 在電腦與 Android 手機／平板，各自到 Mangayomi 的「更多 → 設定 → 瀏覽 → 小說套件庫／來源儲存庫」，新增以下網址：
@@ -20,11 +30,19 @@
 https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/novel_index.json
 ```
 
-再到「瀏覽 → 小說擴充套件」，重新整理，顯示中文（zh）來源後，安裝需要的來源。已經加入本套件庫時，重新整理即可看到新增的三個來源。
+再到「瀏覽 → 小說擴充套件」，重新整理，顯示中文（zh）來源後，安裝需要的小說來源。
 
-這個網址提供安裝與更新清單。首次安裝不需要開發者模式，也不需要貼上程式碼。使用 GitHub 原始檔網址即可，無須啟用 GitHub Pages，也不必讓這台電腦持續開機。
+動畫需要另外在「動畫套件庫／來源儲存庫」加入以下網址：
 
-注意：要填的是上面的 `novel_index.json` 網址；GitHub 專案網址、`.git` 網址及 `repo.json` 都不是小說清單網址。
+```text
+https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/anime_index.json
+```
+
+接著到「瀏覽 → 動畫擴充套件」，重新整理並顯示中文（zh），安裝「Anime1（測試版）」。已加入小說清單的裝置，也要另外加入動畫清單。
+
+這兩個網址各自提供安裝與更新清單。首次安裝不需要開發者模式，也不需要貼上程式碼。使用 GitHub 原始檔網址即可，無須啟用 GitHub Pages，也不必讓這台電腦持續開機。
+
+注意：要填的是對應的 `novel_index.json` 或 `anime_index.json` 網址；GitHub 專案網址、`.git` 網址及 `repo.json` 都不是來源清單網址。
 
 ## 已有手動建立的來源
 
@@ -48,7 +66,7 @@ https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/novel_ind
 
 ### 章節順序
 
-所有來源皆使用全書連續編號，例如 `0001｜第一卷 · 序章`。章節清單選「按章節號」或「按名稱」，讓 `0001` 排在最前面。更新來源後，重新整理作品目錄，再離開並重開閱讀畫面。
+小說來源使用全書連續編號，例如 `0001｜第一卷 · 序章`；Anime1 的集數也使用連續序號。章節／集數清單選「按章節號」或「按名稱」，讓 `0001` 排在最前面。更新來源後，重新整理作品目錄，再離開並重開閱讀／播放畫面。
 
 首次測試閱讀器「下一章／上一章」時，讓章節篩選顯示全部。App 會將未讀、已下載等篩選套用到閱讀器，排除目前章節時可能回退到資料庫原有排列。
 
@@ -82,14 +100,15 @@ javascript/novel/src/zh/czbooks.js
 javascript/novel/src/zh/sfacg.js
 javascript/novel/src/zh/eightbook.js
 javascript/novel/src/zh/twbook.js
+javascript/anime/src/zh/anime1.js
 ```
 
 需要 Node.js 22 或更新版本。產生與檢查索引無額外套件；執行解析器測試時，先用 `npm ci --ignore-scripts` 安裝開發依賴。安裝到 Mangayomi 的來源仍是單一 JavaScript 檔，不需要 npm。
 
-SF、8book、石頭小說的程式碼維護在 `templates/`，共用程式放在 `templates/native-novel-common.js`；發佈時產生成三個可獨立執行的來源。請修改模板，避免直接修改隨後會被覆蓋的產出檔案。文庫8及小說狂人仍直接維護原有來源檔。
+SF、8book、石頭小說的程式碼維護在 `templates/`，共用程式放在 `templates/native-novel-common.js`；發佈時產生成三個可獨立執行的來源。請修改模板，避免直接修改隨後會被覆蓋的產出檔案。文庫8、小說狂人及 Anime1 直接維護來源檔。
 
 1. 修改來源，並增加該檔案 `mangayomiSources` 中的 `version`；保留原本的 `id`。
-2. 在儲存庫資料夾執行 `npm run build`，重新產生 `novel_index.json`、`repo.json` 與 `checksums.json`。
+2. 在儲存庫資料夾執行 `npm run build`，重新產生 `novel_index.json`、`anime_index.json`、`repo.json` 與 `checksums.json`。
 3. 執行 `npm run check` 及 `npm test`，確認模板、來源語法、解析器、章節排序、ID、檔案路徑、下載網址與產出檔案一致。
 4. 將修改與產生的檔案一起提交、推送至 `main`。
 5. 執行 `npm run verify:published`，確認公開索引與所有來源實際可下載，且雜湊與本機一致。
@@ -106,6 +125,8 @@ GitHub Actions 會在推送與 Pull Request 安裝測試依賴，執行 `npm run
 - 小說狂人已檢查 150 章與 2,562 章目錄，以及前兩章不同正文。
 - 新增三個來源均已檢查兩頁書庫、中文搜尋、目錄與前兩章不同正文，以及 App 章節去重／閱讀順序模型。解析器、動態取頁、字型、閱讀網域及分頁共有 32 項自動測試。
 - 實際公開網站測試記錄見 [新增來源測試報告](docs/three-sources-validation.json)；該檔只記錄章數、字數及雜湊，沒有附上小說正文。
+- Anime1 有 20 項自動測試；已驗證 28 集的跨頁目錄、兩頁動畫列表、搜尋，以及兩集影片各 2 KiB 的 MP4 回應。現有小說測試一併執行，合計 52 項通過。見 [Anime1 測試報告](docs/anime1-validation.json)。
+- Anime1 的實際 App 播放器、Android 介面及整集離線下載仍待實機確認；HTTP 部分讀取成功不代表已完整播放整集。
 - Android 介面、實際閱讀器切章與離線下載仍待實機確認；套件庫檢查不會登入網站或批次下載小說。
 
 ## 格式參考與授權

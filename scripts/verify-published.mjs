@@ -21,14 +21,14 @@ try {
   }
   const config = JSON.parse(local('repo.config.json'));
   const base = `https://raw.githubusercontent.com/${config.owner}/${config.repository}/${config.branch}`;
-  const [indexBytes, repoBytes] = await Promise.all([
-    fetchBytes(`${base}/novel_index.json`), fetchBytes(`${base}/repo.json`)
-  ]);
-  const index = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(indexBytes));
-  if (indexBytes[0] !== 0x5b || !Array.isArray(index)) throw new Error('Index is not a native Mangayomi JSON array');
-  if (!indexBytes.equals(local('novel_index.json')) || !repoBytes.equals(local('repo.json'))) {
-    throw new Error('Published metadata differs from local files; push changes or wait for GitHub raw cache');
-  }
+  const indexes = await Promise.all([['novel', 2], ['anime', 1]].map(async ([kind, itemType]) => {
+    const filename = `${kind}_index.json`, bytes = await fetchBytes(`${base}/${filename}`);
+    const entries = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    if (bytes[0] !== 0x5b || !Array.isArray(entries) || entries.some(entry => entry.itemType !== itemType)) throw new Error(`${kind} index is not a native array of itemType ${itemType}`);
+    if (!bytes.equals(local(filename))) throw new Error(`Published ${kind} metadata differs from local files; push changes or wait for GitHub raw cache`);
+    return {kind, count: entries.length};
+  }));
+  if (!(await fetchBytes(`${base}/repo.json`)).equals(local('repo.json'))) throw new Error('Published repo metadata differs from local files');
   const integrity = JSON.parse(local('checksums.json'));
   const results = await Promise.allSettled(integrity.files.map(async item => {
     const bytes = await fetchBytes(`${base}/${item.path}`);
@@ -39,7 +39,7 @@ try {
     if (result.status === 'rejected') throw result.reason;
     console.log(`Published OK: ${result.value}`);
   }
-  console.log(`Public install URL verified; ${index.length} sources accessible without login.`);
+  for (const index of indexes) console.log(`Public ${index.kind} install URL verified; ${index.count} sources accessible without login.`);
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;

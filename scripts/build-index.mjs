@@ -18,6 +18,7 @@ function https(value, field) {
 }
 
 function filesUnder(directory) {
+  if (!fs.existsSync(path.join(root, directory))) return [];
   return fs.readdirSync(path.join(root, directory), { withFileTypes: true })
     .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
     .flatMap(entry => {
@@ -39,8 +40,8 @@ try {
   }
   const website = `https://github.com/${config.owner}/${config.repository}`;
   const rawRoot = `https://raw.githubusercontent.com/${config.owner}/${config.repository}/${config.branch}`;
-  const files = filesUnder('javascript/novel/src');
-  if (!files.length) fail('No novel sources found');
+  const files = [...filesUnder('javascript/novel/src'), ...filesUnder('javascript/anime/src')];
+  if (!files.length) fail('No sources found');
   const entries = [];
   const ids = new Set();
   const names = new Set();
@@ -63,10 +64,11 @@ try {
       if (!Number.isSafeInteger(source.id) || source.id <= 0 || ids.has(source.id)) fail(`${relative}: invalid/duplicate source ID`);
       if (typeof source.name !== 'string' || !source.name.trim()) fail(`${relative}: missing name`);
       if (typeof source.lang !== 'string' || !/^[a-z]{2}(?:-[a-zA-Z]{2})?$/.test(source.lang)) fail(`${relative}: invalid language`);
-      const nameKey = `${source.lang}:${source.name}`;
+      const itemType = relative.startsWith('javascript/anime/') ? 1 : 2;
+      const nameKey = `${itemType}:${source.lang}:${source.name}`;
       if (names.has(nameKey)) fail(`${relative}: duplicate source name/language`);
-      if (source.itemType !== 2 || source.isManga !== false || source.sourceCodeLanguage !== 1 || source.typeSource !== 'single') {
-        fail(`${relative}: expected native JavaScript / single / novel source`);
+      if (source.itemType !== itemType || source.isManga !== false || source.sourceCodeLanguage !== 1 || source.typeSource !== 'single') {
+        fail(`${relative}: expected native JavaScript / single source of itemType ${itemType}`);
       }
       for (const field of ['version', 'appMinVerReq']) {
         if (typeof source[field] !== 'string' || !/^\d+\.\d+\.\d+$/.test(source[field])) fail(`${relative}: invalid ${field}`);
@@ -84,7 +86,7 @@ try {
         dateFormat: '', dateFormatLocale: '', isNsfw: source.isNsfw,
         hasCloudflare: source.hasCloudflare, sourceCodeUrl: `${rawRoot}/${relative}`,
         apiUrl: source.apiUrl || '', version: source.version, isManga: false,
-        itemType: 2, isFullData: false, appMinVerReq: source.appMinVerReq,
+        itemType, isFullData: false, appMinVerReq: source.appMinVerReq,
         additionalParams: '', sourceCodeLanguage: 1, notes: source.notes || ''
       });
     }
@@ -93,7 +95,8 @@ try {
   entries.sort((a, b) => a.id - b.id);
   const generated = new Map([
     ['repo.json', json({ name: config.name, website })],
-    ['novel_index.json', json(entries)]
+    ['novel_index.json', json(entries.filter(source => source.itemType === 2))],
+    ['anime_index.json', json(entries.filter(source => source.itemType === 1))]
   ]);
   const integrityFiles = [...files, ...generated.keys()].sort().map(relative => ({
     path: relative, sha256: sha256(generated.get(relative) || read(relative))
@@ -108,9 +111,9 @@ try {
       fs.writeFileSync(path.join(root, relative), bytes);
     }
   }
-  console.log(`${checking ? 'Verified' : 'Generated'} ${entries.length} novel sources; syntax, IDs, metadata, paths, URLs and hashes OK.`);
+  console.log(`${checking ? 'Verified' : 'Generated'} ${entries.length} sources; syntax, IDs, metadata, paths, URLs and hashes OK.`);
   for (const source of entries) console.log(`  ${source.name} ${source.version} (ID ${source.id})`);
-  console.log(`Repository URL: ${rawRoot}/novel_index.json`);
+  for (const kind of ['novel', 'anime']) console.log(`${kind} repository URL: ${rawRoot}/${kind}_index.json`);
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;

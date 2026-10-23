@@ -1,4 +1,4 @@
-name: Check novel repository
+name: Check extension repository
 
 on:
   push:
