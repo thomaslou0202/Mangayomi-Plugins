@@ -5,7 +5,7 @@
 const mangayomiSources = [{
     name: "漫畫人（測試版）", id: 1827634457, lang: "zh", baseUrl: "https://www.manhuaren.com", apiUrl: "",
     iconUrl: "https://www.manhuaren.com/favicon.ico", typeSource: "single", itemType: 0, isManga: true,
-    sourceCodeLanguage: 1, version: "0.1.0", appMinVerReq: "0.9.9", pkgPath: "manga/src/zh/manhuaren.js",
+    sourceCodeLanguage: 1, version: "0.1.1", appMinVerReq: "0.9.9", pkgPath: "manga/src/zh/manhuaren.js",
     hasCloudflare: true, isNsfw: false,
     notes: "支援站方熱門、最近更新、搜尋、完整章節及網頁可讀的漫畫圖片。搜尋沿用站方模糊比對；需登入、付費或限定官方 App 的內容不保證可讀。"
 }];
@@ -117,7 +117,13 @@ function mhBrowserScript(options) {
 class DefaultExtension extends MProvider {
     constructor() { super(); this.client = new Client(); this.browserQueue = Promise.resolve(); }
     get supportsLatest() { return true; }
-    getHeaders(url) { return {Referer: mhSite(url) ? url : MH_BASE + "/", Origin: MH_BASE}; }
+    getHeaders(url) {
+        const headers = {Origin: MH_BASE};
+        // The reader merges source headers AFTER PageUrl.headers. A base URL
+        // Referer here would overwrite every page's required chapter Referer.
+        if (mhSite(url) && !/^https:\/\/www\.manhuaren\.com\/?(?:[?#].*)?$/i.test(url)) headers.Referer = url;
+        return headers;
+    }
     getFilterList() { return []; }
     getSourcePreferences() { return []; }
     async _browser(view, options) {

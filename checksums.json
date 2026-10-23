@@ -7,7 +7,7 @@
     },
     {
       "path": "index.json",
-      "sha256": "9d2e8be1e1e440fcaa45dceda2dc8304529993aaef82261fbdbc3daf95abcae0"
+      "sha256": "a55d566072dc7736f0f7ee4ddcca17f4720d63854193ce296070df166c6d6298"
     },
     {
       "path": "javascript/anime/src/zh/anime1.js",
@@ -15,7 +15,7 @@
     },
     {
       "path": "javascript/manga/src/zh/manhuaren.js",
-      "sha256": "a32737c19a9365ab55c9076e503d72e05e86f3f3d76f0996903dd07156f2c8e7"
+      "sha256": "55b47ee920af932e3f45b29cd9482188d12f6132a246ec05e93002c8c4875bc6"
     },
     {
       "path": "javascript/novel/src/zh/czbooks.js",

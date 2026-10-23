@@ -1,85 +1,118 @@
 {
   "date": "2026-10-24",
-  "version": "0.1.0",
-  "sourceSha256": "a32737c19a9365ab55c9076e503d72e05e86f3f3d76f0996903dd07156f2c8e7",
-  "mode": "source JavaScript including packed-string-table decoder + real Dart html 0.15.7 / pseudom 1.0.1 selectors and http 1.6.0 IOClient + public website",
+  "version": "0.1.1",
+  "sourceSha256": "55b47ee920af932e3f45b29cd9482188d12f6132a246ec05e93002c8c4875bc6",
+  "mode": "source JavaScript + real Dart html/pseudom + actual v0.9.9+127 reader header-merge model + Dart IOClient full GET + Pillow full image decoding",
   "installedInApp": false,
-  "androidUiTested": false,
   "actualReaderUiTested": false,
+  "androidUiTested": false,
   "loginCredentialsUsed": false,
-  "series": [
+  "imageChecks": [
     {
-      "name": "大狗狗",
-      "chapters": 8,
-      "urlsInServerHtml": 8,
-      "uniqueUrls": 8,
-      "readerRetained": 8,
-      "readerOrderMatches": true
+      "series": "FX战士久留美",
+      "chapter": "0001｜第１话",
+      "pages": 46,
+      "chapterRefererRetainedAfterReaderMerge": true,
+      "downloadRefererRetained": true,
+      "firstAndLastImage": [
+        {
+          "status": 200,
+          "type": "image/jpeg",
+          "bytesRead": 214490,
+          "fullImageDecoded": true,
+          "format": "JPEG",
+          "width": 892,
+          "height": 1280
+        },
+        {
+          "status": 200,
+          "type": "image/jpeg",
+          "bytesRead": 241816,
+          "fullImageDecoded": true,
+          "format": "JPEG",
+          "width": 892,
+          "height": 1280
+        }
+      ]
     },
     {
-      "name": "落魄的哥哥其实是最强的",
-      "chapters": 100,
-      "urlsInServerHtml": 100,
-      "uniqueUrls": 100,
-      "readerRetained": 100,
-      "readerOrderMatches": true
-    }
-  ],
-  "imageChecks": [
+      "series": "FX战士久留美",
+      "chapter": "0002｜第２话",
+      "pages": 33,
+      "chapterRefererRetainedAfterReaderMerge": true,
+      "downloadRefererRetained": true,
+      "firstAndLastImage": [
+        {
+          "status": 200,
+          "type": "image/jpeg",
+          "bytesRead": 204075,
+          "fullImageDecoded": true,
+          "format": "JPEG",
+          "width": 947,
+          "height": 1360
+        },
+        {
+          "status": 200,
+          "type": "image/jpeg",
+          "bytesRead": 411939,
+          "fullImageDecoded": true,
+          "format": "JPEG",
+          "width": 1600,
+          "height": 1260
+        }
+      ]
+    },
+    {
+      "series": "FX战士久留美",
+      "chapter": "0053｜第５４话",
+      "pages": 30,
+      "chapterRefererRetainedAfterReaderMerge": true,
+      "downloadRefererRetained": true,
+      "firstAndLastImage": [
+        {
+          "status": 200,
+          "type": "image/jpeg",
+          "bytesRead": 266023,
+          "fullImageDecoded": true,
+          "format": "JPEG",
+          "width": 1199,
+          "height": 1685
+        },
+        {
+          "status": 200,
+          "type": "image/jpeg",
+          "bytesRead": 337253,
+          "fullImageDecoded": true,
+          "format": "JPEG",
+          "width": 1200,
+          "height": 1722
+        }
+      ]
+    },
     {
       "series": "大狗狗",
       "chapter": "0001｜第１话",
       "pages": 24,
-      "firstAndLastPage": [
+      "chapterRefererRetainedAfterReaderMerge": true,
+      "downloadRefererRetained": true,
+      "firstAndLastImage": [
         {
-          "status": 206,
+          "status": 200,
           "type": "image/jpeg",
-          "bytesRead": 2048,
-          "validImageSignature": true
+          "bytesRead": 182181,
+          "fullImageDecoded": true,
+          "format": "JPEG",
+          "width": 640,
+          "height": 916
         },
         {
-          "status": 206,
+          "status": 200,
           "type": "image/jpeg",
-          "bytesRead": 2048,
-          "validImageSignature": true
-        }
-      ]
-    },
-    {
-      "series": "大狗狗",
-      "chapter": "0008｜第８话",
-      "pages": 25,
-      "firstAndLastPage": [
-        {
-          "status": 206,
-          "type": "image/jpeg",
-          "bytesRead": 2048,
-          "validImageSignature": true
-        },
-        {
-          "status": 206,
-          "type": "image/jpeg",
-          "bytesRead": 2048,
-          "validImageSignature": true
-        }
-      ]
-    },
-    {
-      "series": "落魄的哥哥其实是最强的",
-      "chapter": "0001｜第１话",
-      "pages": 52,
-      "firstAndLastPage": [
-        {
-          "status": 206,
-          "type": "image/jpeg",
-          "bytesRead": 2048,
-          "validImageSignature": true
-        },
-        {
-          "status": 206,
-          "type": "image/jpeg",
-          "bytesRead": 2048,
-          "validImageSignature": true
+          "bytesRead": 34325,
+          "fullImageDecoded": true,
+          "format": "JPEG",
+          "width": 838,
+          "height": 1200
         }
       ]
     },
@@ -87,48 +120,53 @@
       "series": "落魄的哥哥其实是最强的",
       "chapter": "0100｜第４３-５１话",
       "pages": 449,
-      "firstAndLastPage": [
+      "chapterRefererRetainedAfterReaderMerge": true,
+      "downloadRefererRetained": true,
+      "firstAndLastImage": [
         {
-          "status": 206,
+          "status": 200,
           "type": "image/jpeg",
-          "bytesRead": 2048,
-          "validImageSignature": true
+          "bytesRead": 170746,
+          "fullImageDecoded": true,
+          "format": "JPEG",
+          "width": 650,
+          "height": 924
         },
         {
-          "status": 206,
+          "status": 200,
           "type": "image/jpeg",
-          "bytesRead": 2048,
-          "validImageSignature": true
+          "bytesRead": 492532,
+          "fullImageDecoded": true,
+          "format": "JPEG",
+          "width": 1125,
+          "height": 1600
         }
       ]
     }
   ],
-  "browse": {
-    "popularPageOne": 21,
-    "popularPageTwo": 21,
-    "latestPageOne": 21,
-    "differentPages": true
+  "regression": {
+    "series": "FX战士久留美",
+    "chapter": "0001｜第１话",
+    "pages": 46,
+    "oldGlobalHeadersOverwriteChapter": true,
+    "oldReaderRequestStatus": 403,
+    "newGlobalHeadersOmitReferer": true
   },
-  "search": {
-    "pageOne": 10,
-    "pageTwo": 10,
-    "differentPages": true,
-    "traditionalChineseQueryMatched": true
-  },
-  "parserCalls": 23,
-  "httpGets": 6,
-  "httpPosts": 6,
-  "noSignedImageUrlsOrCookieValuesStored": true,
+  "httpGets": 8,
+  "httpPosts": 0,
+  "parserCalls": 34,
+  "noImageFilesOrSignedUrlsStored": true,
   "status": "passed",
   "automatedTests": {
-    "manhuarenPassed": 16,
+    "manhuarenPassed": 17,
     "existingPassed": 59,
-    "totalPassed": 75,
+    "totalPassed": 76,
     "failed": 0
   },
-  "pageHeaders": {
-    "nativePageUrlObjects": true,
-    "referer": "full chapter URL",
-    "stateIndependent": true
+  "previousValidation": "manhuaren-validation-0.1.0.json",
+  "coverHeadersCheck": {
+    "globalRefererAbsent": true,
+    "status": 200,
+    "type": "image/jpeg"
   }
 }

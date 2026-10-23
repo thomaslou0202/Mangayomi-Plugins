@@ -1,6 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 const {Document,parseHTML}=require('./helpers/harness.cjs');
 const {ingestFresh,readingOrder}=require('./helpers/app-chapter-identity.cjs');
+const {readerHeaders,downloadHeaders}=require('./helpers/app-image-headers.cjs');
 const base='https://www.manhuaren.com',comic=base+'/manhua-test/',chapter=base+'/m101/';
 const reply=(url,body,statusCode=200)=>({statusCode,body:typeof body==='string'?body:JSON.stringify(body),headers:{},request:{url}});
 const item=(id=1)=>({Title:'漫畫 &amp; '+id,UrlKey:'manhua-test'+id,ShowPicUrlB:'https://mhfm2tw.cdndm5.com/'+id+'.jpg'});
@@ -44,7 +45,20 @@ test('wrong series, missing details and missing chapters are explicit failures',
 });
 test('page list reads escaped URL literals in order and supplies image request headers',async()=>{
  const script=String.raw`var newImgs=['https:\/\/manhua1.cdndm5.com\/a.jpg?x=1\u0026y=2',"//manhua1.cdndm5.com/b.jpg"];`;
- const {ext}=load({get:async url=>reply(url,chapterHtml(101,script))});const pages=Array.from(await ext.getPageList(chapter));assert.deepEqual(pages.map(page=>page.url),['https://manhua1.cdndm5.com/a.jpg?x=1&y=2','https://manhua1.cdndm5.com/b.jpg']);assert.equal(pages[0].headers.Referer,chapter);assert.equal(pages[1].headers.Referer,chapter);assert.equal(ext.getHeaders(base).Referer,base);
+ const {ext}=load({get:async url=>reply(url,chapterHtml(101,script))});const pages=Array.from(await ext.getPageList(chapter));assert.deepEqual(pages.map(page=>page.url),['https://manhua1.cdndm5.com/a.jpg?x=1&y=2','https://manhua1.cdndm5.com/b.jpg']);assert.equal(pages[0].headers.Referer,chapter);assert.equal(pages[1].headers.Referer,chapter);assert.equal(ext.getHeaders(base).Referer,undefined);
+});
+test('actual reader header merge preserves each chapter Referer with independently initialized source headers',async()=>{
+ const {ext}=load({get:async url=>reply(url,chapterHtml(Number(/\/m(\d+)\//.exec(url)[1])))});
+ const one=(await ext.getPageList(chapter))[0],two=(await ext.getPageList(base+'/m102/'))[0];
+ assert.equal(readerHeaders(one,{Referer:base,Origin:base}).Referer,base); // reproduces 0.1.0
+ const independent=load().ext;
+ for(const url of [base,base+'/',base+'/?from=test'])assert.equal(independent.getHeaders(url).Referer,undefined);
+ for(const [page,expected]of [[one,chapter],[two,base+'/m102/']]){
+  const globals=JSON.parse(JSON.stringify(independent.getHeaders(base)));
+  assert.equal(readerHeaders(page,globals).Referer,expected);assert.equal(downloadHeaders(page,globals).Referer,expected);
+  assert.equal(readerHeaders(JSON.parse(JSON.stringify(page)),globals).Referer,expected);
+ }
+ assert.equal(independent.getHeaders(base+'/search/').Referer,base+'/search/');
 });
 test('large packed dictionaries decode multi-digit base-62 tokens without evaluating scripts',async()=>{
  const encode=value=>{let result='';do{const digit=value%62;result=(digit<36?digit.toString(36):String.fromCharCode(digit+29))+result;value=Math.floor(value/62);}while(value);return result;};
