@@ -1,0 +1,552 @@
+diff --git a/lib/modules/novel/novel_reader_view.dart b/lib/modules/novel/novel_reader_view.dart
+index 3d39442..2382fb8 100644
+--- a/lib/modules/novel/novel_reader_view.dart
++++ b/lib/modules/novel/novel_reader_view.dart
+@@ -24,9 +24,11 @@ import 'package:mangayomi/modules/novel/tts/tts_settings_tab.dart';
+ import 'package:mangayomi/modules/novel/utils/novel_paginator.dart';
+ import 'package:mangayomi/modules/novel/utils/novel_reader_fonts.dart';
+ import 'package:mangayomi/modules/novel/widgets/novel_general_settings_tab.dart';
++import 'package:mangayomi/modules/novel/widgets/novel_illustration.dart';
+ import 'package:mangayomi/modules/novel/widgets/novel_reader_settings_sheet.dart';
+ import 'package:mangayomi/modules/widgets/custom_draggable_tabbar.dart';
+ import 'package:mangayomi/modules/widgets/error_state.dart';
++import 'package:mangayomi/modules/widgets/custom_extended_image_provider.dart';
+ import 'package:mangayomi/providers/l10n_providers.dart';
+ import 'package:mangayomi/services/get_html_content.dart';
+ import 'package:mangayomi/src/rust/api/epub.dart';
+@@ -34,6 +36,7 @@ import 'package:mangayomi/utils/extensions/dom_extensions.dart';
+ import 'package:mangayomi/utils/platform_utils.dart';
+ import 'package:mangayomi/utils/system_ui.dart';
+ import 'package:mangayomi/utils/utils.dart';
++import 'package:mangayomi/utils/headers.dart';
+ import 'package:mangayomi/modules/manga/reader/providers/push_router.dart';
+ import 'package:mangayomi/utils/extensions/build_context_extensions.dart';
+ import 'package:url_launcher/url_launcher.dart';
+@@ -41,7 +44,6 @@ import 'package:wakelock_plus/wakelock_plus.dart';
+ import 'package:window_manager/window_manager.dart';
+ import 'package:flutter_html/flutter_html.dart';
+ import 'package:html/dom.dart' as dom;
+-import 'package:flutter/widgets.dart' as widgets;
+ import 'package:mangayomi/modules/manga/reader/mixins/reader_auto_scroll.dart';
+ 
+ typedef DoubleClickAnimationListener = void Function();
+@@ -550,6 +552,9 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+                                                 : constraints.maxWidth;
+                                             final pageHeight =
+                                                 constraints.maxHeight;
++                                            final maxImageHeight = max(
++                                              1.0, pageHeight - padding * 2 - 24,
++                                            );
+ 
+                                             if (_cachedPagination == null ||
+                                                 _cachedPaginationWidth !=
+@@ -701,6 +706,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+                                                               child: _buildNovelHtmlWidget(
+                                                                 context: context,
+                                                                 htmlData: leftHtml,
++                                                                maxImageHeight: maxImageHeight,
+                                                                 fontFamily:
+                                                                     fontFamily,
+                                                                 fontSize: fontSize,
+@@ -740,6 +746,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+                                                                           context,
+                                                                       htmlData:
+                                                                           rightHtml,
++                                                                      maxImageHeight: maxImageHeight,
+                                                                       fontFamily:
+                                                                           fontFamily,
+                                                                       fontSize:
+@@ -779,6 +786,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+                                                         child: _buildNovelHtmlWidget(
+                                                           context: context,
+                                                           htmlData: pageHtml,
++                                                          maxImageHeight: maxImageHeight,
+                                                           fontFamily: fontFamily,
+                                                           fontSize: fontSize,
+                                                           lineHeight: lineHeight,
+@@ -1851,6 +1859,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+   Widget _buildNovelHtmlWidget({
+     required BuildContext context,
+     required String htmlData,
++    double? maxImageHeight,
+     required String? fontFamily,
+     required int fontSize,
+     required double lineHeight,
+@@ -1955,7 +1964,9 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+           tagsToExtend: {"img", "source"},
+           builder: (extensionContext) {
+             final element = extensionContext.node as dom.Element;
+-            final customWidget = _buildCustomWidgets(element);
++            final customWidget = _buildCustomWidgets(
++              element, maxImageHeight: maxImageHeight,
++            );
+             if (customWidget != null) {
+               return customWidget;
+             }
+@@ -1971,11 +1982,12 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+     );
+   }
+ 
+-  Widget? _buildCustomWidgets(dom.Element element) {
+-    if (epubBook == null) return null;
+-
+-    if (element.localName == "img" && element.getSrc != null) {
+-      final src = element.getSrc!;
++  Widget? _buildCustomWidgets(dom.Element element, {double? maxImageHeight}) {
++    if (element.localName != "img") return null;
++    final src = element.getSrc ?? element.attributes['data-src'];
++    if (src == null || src.trim().isEmpty) return null;
++    ImageProvider? provider;
++    if (epubBook != null) {
+       final fileName = src.split("/").last;
+       final image = epubBook!.images
+           .firstWhereOrNull(
+@@ -1985,34 +1997,55 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+           )
+           ?.content;
+ 
+-      if (image != null) {
+-        return Padding(
+-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+-          child: widgets.Image(
+-            errorBuilder: (context, error, stackTrace) => Container(
+-              padding: const EdgeInsets.all(8),
+-              color: Colors.red.withValues(alpha: 0.1),
+-              child: Row(
+-                mainAxisSize: MainAxisSize.min,
+-                children: [
+-                  const Icon(Icons.broken_image, color: Colors.red),
+-                  const SizedBox(width: 8),
+-                  Flexible(
+-                    child: Text(
+-                      'Image not loaded: $fileName',
+-                      style: const TextStyle(color: Colors.red),
+-                    ),
+-                  ),
+-                ],
+-              ),
+-            ),
+-            fit: BoxFit.contain,
+-            image: MemoryImage(image) as ImageProvider,
++      if (image != null) provider = MemoryImage(image);
++    } else {
++      final manga = chapter.manga.value;
++      if (manga == null || manga.source == null || manga.lang == null) {
++        return null;
++      }
++      final source = getSource(
++        manga.lang!,
++        manga.source!,
++        manga.sourceId,
++        installedOnly: true,
++      );
++      final uri = resolveNovelImageUri(
++        src: src,
++        chapterUrl: chapter.url,
++        sourceBaseUrl: source?.baseUrl,
++      );
++      if (uri == null) return null;
++      final headers = Map<String, String>.of(
++        ref.read(
++          headersProvider(
++            source: manga.source!,
++            lang: manga.lang!,
++            sourceId: manga.sourceId,
+           ),
++        ),
++      );
++      if (!headers.keys.any((key) => key.toLowerCase() == 'referer')) {
++        final referer = resolveNovelImageUri(
++          src: chapter.url ?? '',
++          chapterUrl: source?.baseUrl,
++          sourceBaseUrl: source?.baseUrl,
+         );
++        if (referer != null) headers['Referer'] = referer.toString();
+       }
++      // Reuse the app's image transport for source headers, normal WebView
++      // session cookies and disk caching, just as the manga reader does.
++      provider = CustomExtendedNetworkImageProvider(
++        uri.toString(),
++        headers: headers,
++      );
+     }
+-
+-    return null;
++    if (provider == null) return null;
++    return NovelIllustration(
++      image: provider,
++      maxHeight: maxImageHeight,
++      semanticLabel: element.attributes['alt'],
++      errorLabel: context.l10n.image_loading_error,
++      retryLabel: context.l10n.retry,
++    );
+   }
+ }
+diff --git a/lib/modules/novel/utils/novel_paginator.dart b/lib/modules/novel/utils/novel_paginator.dart
+index f150e04..fcbbd97 100644
+--- a/lib/modules/novel/utils/novel_paginator.dart
++++ b/lib/modules/novel/utils/novel_paginator.dart
+@@ -152,8 +152,10 @@ class NovelPaginator {
+ 
+       void flushParagraph() {
+         if (currentParagraphNodes.isEmpty) return;
+-        final combinedText =
+-            currentParagraphNodes.map((n) => n.text ?? '').join().trim();
++        final combinedText = currentParagraphNodes
++            .map((n) => n.text ?? '')
++            .join()
++            .trim();
+         if (combinedText.isNotEmpty) {
+           final p = dom.Element.tag('p');
+           if (element.attributes.containsKey('data-tts-index')) {
+@@ -174,7 +176,15 @@ class NovelPaginator {
+           final tag = node.localName?.toLowerCase() ?? '';
+           if (tag == 'br') {
+             flushParagraph();
+-          } else if (tag == 'div') {
++          } else if (const [
++                'div',
++                'article',
++                'section',
++                'main',
++                'figure',
++                'picture',
++              ].contains(tag) ||
++              (tag != 'table' && node.querySelector('img') != null)) {
+             flushParagraph();
+             processContainer(node);
+           } else if (tag == 'p' ||
+@@ -301,7 +311,9 @@ class NovelPaginator {
+     double estimateElementHeight(dom.Element el) {
+       final tagName = el.localName?.toLowerCase() ?? '';
+       if (tagName == 'img' || el.querySelector('img') != null) {
+-        return 220.0 + paragraphMargin;
++        // Image dimensions arrive asynchronously. Reserve a whole page so
++        // neighboring text/images cannot be pushed below its clipped edge.
++        return maxContentHeight;
+       }
+       if (tagName == 'table' || el.querySelector('table') != null) {
+         return 180.0 + paragraphMargin;
+diff --git a/lib/modules/novel/widgets/novel_illustration.dart b/lib/modules/novel/widgets/novel_illustration.dart
+new file mode 100644
+index 0000000..22dd0f2
+--- /dev/null
++++ b/lib/modules/novel/widgets/novel_illustration.dart
+@@ -0,0 +1,98 @@
++import 'dart:math' as math;
++
++import 'package:flutter/material.dart';
++
++/// An inline illustration with bounded height in paged reading modes.
++/// The caller supplies the provider so EPUB and online chapters share layout.
++class NovelIllustration extends StatefulWidget {
++  const NovelIllustration({
++    super.key,
++    required this.image,
++    required this.errorLabel,
++    required this.retryLabel,
++    this.semanticLabel,
++    this.maxHeight,
++  });
++
++  final ImageProvider image;
++  final String errorLabel;
++  final String retryLabel;
++  final String? semanticLabel;
++  final double? maxHeight;
++
++  @override
++  State<NovelIllustration> createState() => _NovelIllustrationState();
++}
++
++class _NovelIllustrationState extends State<NovelIllustration> {
++  int _attempt = 0;
++
++  Future<void> _retry() async {
++    await widget.image.evict();
++    if (mounted) setState(() => _attempt++);
++  }
++
++  @override
++  Widget build(BuildContext context) {
++    final height = widget.maxHeight ?? double.infinity;
++    return Padding(
++      padding: const EdgeInsets.symmetric(vertical: 8),
++      child: ConstrainedBox(
++        constraints: BoxConstraints(maxHeight: height),
++        child: Image(
++          key: ValueKey(_attempt),
++          image: widget.image,
++          width: double.infinity,
++          fit: BoxFit.contain,
++          semanticLabel: widget.semanticLabel,
++          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
++            if (frame != null || wasSynchronouslyLoaded) return child;
++            return SizedBox(
++              height: math.min(160, height),
++              child: const Center(child: CircularProgressIndicator()),
++            );
++          },
++          errorBuilder: (context, error, stackTrace) => SingleChildScrollView(
++            child: Column(
++              mainAxisSize: MainAxisSize.min,
++              children: [
++                const Icon(Icons.broken_image_outlined),
++                Text(widget.errorLabel, textAlign: TextAlign.center),
++                TextButton.icon(
++                  onPressed: _retry,
++                  icon: const Icon(Icons.refresh),
++                  label: Text(widget.retryLabel),
++                ),
++              ],
++            ),
++          ),
++        ),
++      ),
++    );
++  }
++}
++
++/// Resolve relative and protocol-relative source URLs without accepting local
++/// file paths or script/data URLs from an online chapter.
++Uri? resolveNovelImageUri({
++  required String src,
++  required String? chapterUrl,
++  required String? sourceBaseUrl,
++}) {
++  if (src.trim().isEmpty) return null;
++  try {
++    final source = Uri.tryParse(sourceBaseUrl ?? '');
++    final chapter =
++        source?.resolve(chapterUrl ?? '') ?? Uri.tryParse(chapterUrl ?? '');
++    final image = chapter?.resolve(src.trim()) ?? Uri.tryParse(src.trim());
++    if (image == null ||
++        !const ['http', 'https'].contains(image.scheme) ||
++        image.host.isEmpty ||
++        image.userInfo.isNotEmpty) {
++      return null;
++    }
++    return image;
++  } on FormatException {
++    return null;
++  }
++}
+diff --git a/test/modules/novel_illustration_test.dart b/test/modules/novel_illustration_test.dart
+new file mode 100644
+index 0000000..c68ba2d
+--- /dev/null
++++ b/test/modules/novel_illustration_test.dart
+@@ -0,0 +1,213 @@
++import 'dart:ui' as ui;
++
++import 'package:flutter/foundation.dart';
++import 'package:flutter/material.dart';
++import 'package:flutter_test/flutter_test.dart';
++import 'package:html/parser.dart' as html;
++import 'package:mangayomi/modules/novel/utils/novel_paginator.dart';
++import 'package:mangayomi/modules/novel/widgets/novel_illustration.dart';
++
++Widget reader(ImageProvider image, {double? maxHeight}) => MaterialApp(
++  home: Scaffold(
++    body: SingleChildScrollView(
++      child: SizedBox(
++        width: 300,
++        child: NovelIllustration(
++          image: image,
++          maxHeight: maxHeight,
++          errorLabel: 'Unable to load illustration',
++          retryLabel: 'Retry',
++          semanticLabel: 'Illustration',
++        ),
++      ),
++    ),
++  ),
++);
++
++class IllustrationProvider extends ImageProvider<IllustrationProvider> {
++  IllustrationProvider({this.failFirst = false});
++  final bool failFirst;
++  int attempts = 0;
++
++  @override
++  Future<IllustrationProvider> obtainKey(ImageConfiguration configuration) =>
++      SynchronousFuture(this);
++
++  @override
++  ImageStreamCompleter loadImage(
++    IllustrationProvider key,
++    ImageDecoderCallback decode,
++  ) {
++    attempts++;
++    if (failFirst && attempts == 1) {
++      return OneFrameImageStreamCompleter(Future.error(StateError('HTTP 503')));
++    }
++    final recorder = ui.PictureRecorder();
++    Canvas(recorder).drawRect(const Rect.fromLTWH(0, 0, 600, 1200), Paint());
++    final picture = recorder.endRecording();
++    final image = picture.toImageSync(600, 1200);
++    picture.dispose();
++    return OneFrameImageStreamCompleter(
++      SynchronousFuture(ImageInfo(image: image)),
++    );
++  }
++}
++
++void main() {
++  TestWidgetsFlutterBinding.ensureInitialized();
++  tearDown(() => PaintingBinding.instance.imageCache.clear());
++
++  testWidgets(
++    'online illustration shows in the body at its natural aspect ratio',
++    (tester) async {
++      await tester.pumpWidget(reader(IllustrationProvider()));
++      await tester.pump();
++      final image = find.byType(RawImage);
++      expect(image, findsOneWidget);
++      expect(tester.widget<RawImage>(image).image, isNotNull);
++      expect(tester.getSize(image), const Size(300, 600));
++      expect(tester.takeException(), isNull);
++    },
++  );
++
++  testWidgets('portrait illustration fits within a paged reader viewport', (
++    tester,
++  ) async {
++    await tester.pumpWidget(reader(IllustrationProvider(), maxHeight: 180));
++    await tester.pump();
++    expect(
++      tester.getSize(find.byType(RawImage)).height,
++      lessThanOrEqualTo(180),
++    );
++    expect(
++      tester.getSize(find.byType(NovelIllustration)).height,
++      lessThanOrEqualTo(196),
++    );
++    expect(tester.widget<RawImage>(find.byType(RawImage)).fit, BoxFit.contain);
++    expect(tester.takeException(), isNull);
++  });
++
++  testWidgets('a failed image offers retry and can load on the next attempt', (
++    tester,
++  ) async {
++    final provider = IllustrationProvider(failFirst: true);
++    await tester.pumpWidget(reader(provider));
++    await tester.pump();
++    expect(find.text('Unable to load illustration'), findsOneWidget);
++    await tester.tap(find.text('Retry'));
++    await tester.pumpAndSettle();
++    expect(provider.attempts, 2);
++    expect(find.text('Unable to load illustration'), findsNothing);
++    expect(tester.widget<RawImage>(find.byType(RawImage)).image, isNotNull);
++    expect(tester.takeException(), isNull);
++  });
++
++  testWidgets(
++    'EPUB memory images continue to render through the shared widget',
++    (tester) async {
++      final recorder = ui.PictureRecorder();
++      Canvas(recorder).drawRect(const Rect.fromLTWH(0, 0, 2, 3), Paint());
++      final picture = recorder.endRecording();
++      final decoded = picture.toImageSync(2, 3);
++      final bytes = await tester.runAsync(
++        () => decoded.toByteData(format: ui.ImageByteFormat.png),
++      );
++      picture.dispose();
++      decoded.dispose();
++      final image = MemoryImage(bytes!.buffer.asUint8List());
++      await tester.pumpWidget(reader(image));
++      await tester.runAsync(() async {
++        await precacheImage(
++          image,
++          tester.element(find.byType(NovelIllustration)),
++        );
++      });
++      await tester.pumpAndSettle();
++      expect(tester.widget<RawImage>(find.byType(RawImage)).image, isNotNull);
++      expect(tester.takeException(), isNull);
++    },
++  );
++
++  test(
++    'image URLs resolve against the actual chapter, including relative sources',
++    () {
++      Uri? resolve(
++        String src, {
++        String? chapter = '/novel/3/3152/138935.htm',
++      }) => resolveNovelImageUri(
++        src: src,
++        chapterUrl: chapter,
++        sourceBaseUrl: 'https://www.wenku8.net',
++      );
++      expect(
++        resolve('../images/1.jpg').toString(),
++        'https://www.wenku8.net/novel/3/images/1.jpg',
++      );
++      expect(
++        resolve('//pic.wenku8.com/a.jpg').toString(),
++        'https://pic.wenku8.com/a.jpg',
++      );
++      expect(
++        resolve('https://pic.wenku8.com/a.jpg').toString(),
++        'https://pic.wenku8.com/a.jpg',
++      );
++      for (final src in [
++        '',
++        'javascript:alert(1)',
++        'file:///C:/secret.jpg',
++        'data:image/png;base64,AAA',
++        'https://user:password@example.test/a.jpg',
++      ]) {
++        expect(resolve(src), isNull);
++      }
++    },
++  );
++
++  test('illustration-only chapters keep every image on separate pages in source order', () {
++    final images = List.generate(
++      17,
++      (i) => '<img src="https://pic.wenku8.com/$i.jpg"><br>',
++    ).join();
++    final source = '<div id="readerViewContent"><article>$images</article></div>';
++    for (final height in [200.0, 600.0]) {
++      final result = NovelPaginator.paginate(
++        htmlContent: source,
++        pageWidth: 300,
++        pageHeight: height,
++        fontSize: 16,
++        lineHeight: 1.5,
++      );
++      expect(result.pageCount, 17);
++      for (var i = 0; i < 17; i++) {
++        final images = html.parse(result.pages[i]).querySelectorAll('img');
++        expect(images, hasLength(1));
++        expect(
++          images.single.attributes['src'],
++          'https://pic.wenku8.com/$i.jpg',
++        );
++      }
++    }
++  });
++
++  test('paragraph and link wrapped images retain surrounding text and TTS positions', () {
++    const source =
++        '<div id="readerViewContent"><article><p data-tts-index="0">Before illustration.</p>'
++        '<p><a href="https://example.test"><img src="https://pic.wenku8.com/a.jpg"></a><br>'
++        '<span><img src="https://pic.wenku8.com/b.jpg"></span></p>'
++        '<p data-tts-index="1">After illustration.</p></article></div>';
++    final result = NovelPaginator.paginate(
++      htmlContent: source,
++      pageWidth: 300,
++      pageHeight: 350,
++      fontSize: 16,
++      lineHeight: 1.5,
++    );
++    expect(result.pageCount, 4);
++    expect(result.pages.first, contains('Before illustration.'));
++    expect(result.pages[1], contains('/a.jpg'));
++    expect(result.pages[2], contains('/b.jpg'));
++    expect(result.pages.last, contains('After illustration.'));
++    expect(result.blockToPageMap[0], 0);
++    expect(result.blockToPageMap[1], 3);
++  });
++}
