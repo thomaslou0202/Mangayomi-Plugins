@@ -35,11 +35,11 @@
     },
     {
       "path": "javascript/novel/src/zh/wenku8.js",
-      "sha256": "4fb8cf5959586b5fa66356a4fc01aa6161c628adb50ff6356e2077c30cb3708a"
+      "sha256": "951b54e66f1a8de392f1acd5e357847bde665531a676ab79dc6d45550164e628"
     },
     {
       "path": "novel_index.json",
-      "sha256": "4aff945575bf5bb5e9f4025731abf392c1bc59599dc47215c98891cdcaf29494"
+      "sha256": "5bf5cc6d9cf812486c64dc01e7f38bcc14db360e9b6aac69ea64e57d7f25882b"
     },
     {
       "path": "repo.json",

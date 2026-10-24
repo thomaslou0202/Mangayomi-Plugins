@@ -12,14 +12,14 @@
     "hasCloudflare": true,
     "sourceCodeUrl": "https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/javascript/novel/src/zh/wenku8.js",
     "apiUrl": "",
-    "version": "0.3.5",
+    "version": "0.3.6",
     "isManga": false,
     "itemType": 2,
     "isFullData": false,
     "appMinVerReq": "0.9.9",
     "additionalParams": "",
     "sourceCodeLanguage": 1,
-    "notes": "0.3.5 在含圖片的章節加入「在 App 內查看本章插圖」連結，使用內建 WebView 開啟原章節。Mangayomi 0.9.9 小說閱讀器仍不直接顯示線上圖片；已下載章節需重新下載。保留 0.3.4 的章節排序修正。密碼欄位不遮罩，設定與備份不保證加密。"
+    "notes": "0.3.6 移除章節開頭的 WebView 插圖查看連結，保留正文內全部插圖，配合 Mangayomi 插圖版直接閱讀。官方 0.9.9 閱讀器仍會隱藏線上圖片。更新後請重開章節，已下載的舊章節需重新下載。保留章節排序修正。密碼欄位不遮罩，設定與備份不保證加密。"
   },
   {
     "name": "小說狂人（測試版）",

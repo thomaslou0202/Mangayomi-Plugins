@@ -142,3 +142,13 @@ again to gain the link. Seven focused regression tests cover image-only and
 mixed chapters, text-only/empty content, repeated cleaning, URL restrictions,
 escaping and the source language setting. Native UI clicks and Android WebView
 rendering still need device confirmation.
+
+Version 0.3.6: Remove the illustration fallback banner
+The user confirmed that the custom Windows reader renders illustrations inline.
+Source output now contains the chapter heading and original sanitized body,
+without the generated WebView illustration action or image-count paragraph.
+All sanitized images and their order are preserved, including image-only
+chapters and images inside stripped external anchors. The seven Wenku8
+regressions now assert this behavior in both source language settings.
+Existing downloaded HTML must be downloaded again to remove its old banner.
+The upstream unmodified 0.9.9 reader still hides online images.
