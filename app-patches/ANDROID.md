@@ -6,6 +6,7 @@
 
 1. 將 `Mangayomi-0.9.9-illustrations-android.apk` 傳到手機或平板並安裝。這是通用 APK，安裝時會自動使用對應架構；最低 Android 7.0（API 24）。
 2. App 名稱為「Mangayomi 插圖版」，可以與原版並存，不必解除安裝原版。
+   首次啟動若開啟 Android 的「管理所有檔案」權限頁，請允許後返回 App。
 3. 若要帶入既有書庫，可先在原版匯出備份，再於插圖版還原；也可以設定原本的同步伺服器。兩個 App 的內部資料各自獨立。
 4. 在小說來源儲存庫加入 `https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/novel_index.json`，安裝／更新「輕小說文庫」至 0.3.6。
 5. 開啟插圖章節即可在正文內查看圖片。0.3.6 已移除開頭的 WebView 查看連結；已下載的舊章節需重新下載才會移除舊連結。
