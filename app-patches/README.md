@@ -5,6 +5,7 @@
 ## 修改內容
 
 - 線上小說的 `<img>` 可以直接顯示在正文中，沿用 App 的圖片傳輸、來源標頭、正常 WebView 工作階段及圖片快取。
+- 插圖請求會補上 App 設定的瀏覽器識別資訊，同時保留來源自訂的 User-Agent／Referer。文庫8 的圖片伺服器在沒有此識別資訊時會回應 403；已驗證回報章節的首尾圖片可完整取得及解碼。
 - 連續捲動依圖片比例顯示；單頁及雙頁模式讓每張插圖各佔一頁，縮放至頁面內，避免後半截被裁切。
 - 支援相對圖片網址、載入指示、失敗後重試，以及原本的 EPUB 圖片。
 - 保留章節名稱、章節順序與書庫資料格式；輕小說文庫套件的 WebView 查看連結仍可使用。
@@ -25,7 +26,7 @@ git clone --branch v0.9.9 https://github.com/kodjodevf/mangayomi.git
 cd mangayomi
 git apply C:/path/to/novel-inline-images.patch
 flutter pub get --enforce-lockfile
-flutter test --no-pub test/modules/novel_illustration_test.dart test/modules/novel_double_page_test.dart test/modules/novel_ref_after_dispose_test.dart
+flutter test --no-pub test/modules/novel_illustration_test.dart test/modules/novel_inline_html_test.dart test/modules/novel_double_page_test.dart test/modules/novel_ref_after_dispose_test.dart
 flutter build windows --release --no-pub --build-number=128
 ```
 

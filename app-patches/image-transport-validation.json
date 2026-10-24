@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-10-24T07:17:57.483Z",
+  "chapterUrl": "https://www.wenku8.net/novel/3/3152/138935.htm",
+  "images": 17,
+  "transport": "Dart IOClient with unchanged Wenku8 source Referer; complete first and last image GET and Pillow decoding",
+  "checks": [
+    {
+      "host": "pic.777743.xyz",
+      "status": 200,
+      "bytes": 270791,
+      "fullImageDecoded": true,
+      "format": "JPEG",
+      "width": 2254,
+      "height": 1235
+    },
+    {
+      "host": "pic.777743.xyz",
+      "status": 200,
+      "bytes": 69831,
+      "fullImageDecoded": true,
+      "format": "JPEG",
+      "width": 603,
+      "height": 1300
+    }
+  ],
+  "limitations": "This verifies source image transport and decoding, not a running custom Mangayomi reader window."
+}
