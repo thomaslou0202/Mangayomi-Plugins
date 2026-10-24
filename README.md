@@ -2,6 +2,12 @@
 
 提供 Mangayomi 原生 JavaScript 漫畫、小說及動畫來源，依照 [Mangayomi 套件庫](https://github.com/kodjodevf/mangayomi-extensions)的原生索引格式整理。三種類型各自使用獨立的清單網址。
 
+## Android 插圖版下載
+
+[直接下載 Android APK（0.9.9+128，約 133 MB）](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/android-illustrations-v0.9.9-128/Mangayomi-0.9.9-illustrations-android.apk) · [發行說明與安裝方式](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/tag/android-illustrations-v0.9.9-128)
+
+這是支援小說正文插圖的非官方測試版。手機、平板使用同一個 APK，最低 Android 7.0；App 名稱為「Mangayomi 插圖版」，可與原版並存。安裝後可還原原版備份或設定同步伺服器，並將「輕小說文庫」來源更新至 0.3.6。下載不需要登入 GitHub，也不需要電腦保持開機。
+
 ## 漫畫來源
 
 | 來源 | 版本 | 功能 |
