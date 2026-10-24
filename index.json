@@ -20,5 +20,27 @@
     "additionalParams": "",
     "sourceCodeLanguage": 1,
     "notes": "支援站方熱門、最近更新、搜尋、完整章節及網頁可讀的漫畫圖片。搜尋沿用站方模糊比對；需登入、付費或限定官方 App 的內容不保證可讀。"
+  },
+  {
+    "name": "Mangabz",
+    "id": 1827634458,
+    "baseUrl": "https://www.mangabz.com",
+    "lang": "zh",
+    "typeSource": "single",
+    "iconUrl": "https://www.mangabz.com/favicon.ico",
+    "dateFormat": "",
+    "dateFormatLocale": "",
+    "isNsfw": false,
+    "hasCloudflare": true,
+    "sourceCodeUrl": "https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/javascript/manga/src/zh/mangabz.js",
+    "apiUrl": "",
+    "version": "0.1.0",
+    "isManga": true,
+    "itemType": 0,
+    "isFullData": false,
+    "appMinVerReq": "0.9.9",
+    "additionalParams": "",
+    "sourceCodeLanguage": 1,
+    "notes": "支援熱門、最新、站方搜尋、隱藏章節目錄及網頁可讀圖片。沿用原站作品及章節 ID。網站驗證請在來源 WebView 完成。"
   }
 ]

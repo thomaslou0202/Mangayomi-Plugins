@@ -13,8 +13,10 @@
 | 來源 | 版本 | 功能 |
 | --- | --- | --- |
 | 漫畫人（測試版） | 0.1.1 | 熱門、最近更新、站方搜尋、完整網頁目錄、章節圖片、修正閱讀器覆蓋圖片來源網址造成的 403 |
+| Mangabz | 0.1.0 | 熱門、最新更新、中文搜尋、完整隱藏目錄、分批取得全部章節圖片 |
 
 漫畫人的使用方式與驗證範圍見 [漫畫人說明](docs/manhuaren.md)。
+Mangabz 的使用方式、備份相容格式與驗證範圍見 [Mangabz 說明](docs/mangabz.md)。
 
 ## 小說來源
 
@@ -44,7 +46,7 @@ Anime1 的使用方式與驗證範圍見 [Anime1 說明](docs/anime1.md)。
 https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/index.json
 ```
 
-再到「瀏覽 → 漫畫擴充套件」，重新整理並顯示中文（zh），安裝「漫畫人（測試版）」。原本只加入小說／動畫清單的裝置，也要另外加入這個漫畫清單。
+再到「瀏覽 → 漫畫擴充套件」，重新整理並顯示中文（zh），安裝「漫畫人（測試版）」或「Mangabz」。原本只加入小說／動畫清單的裝置，也要另外加入這個漫畫清單。
 
 在電腦與 Android 手機／平板，各自到 Mangayomi 的「更多 → 設定 → 瀏覽 → 小說套件庫／來源儲存庫」，新增以下網址：
 
@@ -119,6 +121,7 @@ https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/anime_ind
 
 ```text
 javascript/manga/src/zh/manhuaren.js
+javascript/manga/src/zh/mangabz.js
 javascript/novel/src/zh/wenku8.js
 javascript/novel/src/zh/czbooks.js
 javascript/novel/src/zh/sfacg.js

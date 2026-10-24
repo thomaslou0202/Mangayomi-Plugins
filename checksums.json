@@ -7,11 +7,15 @@
     },
     {
       "path": "index.json",
-      "sha256": "a55d566072dc7736f0f7ee4ddcca17f4720d63854193ce296070df166c6d6298"
+      "sha256": "560b2f7a7004b3109652423195635b619b48a448c349bc802a79277b3bedcd2a"
     },
     {
       "path": "javascript/anime/src/zh/anime1.js",
       "sha256": "001c0e27e2de1d9aa206ed979ebbcd6c0100cc1571cf0ef6f98ba3cc3bd2312c"
+    },
+    {
+      "path": "javascript/manga/src/zh/mangabz.js",
+      "sha256": "88ea1d011afbc687ad5b513a5f0f769a74f982097e67000b99931f2ca84aed46"
     },
     {
       "path": "javascript/manga/src/zh/manhuaren.js",
