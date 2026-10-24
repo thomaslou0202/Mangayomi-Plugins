@@ -34,4 +34,4 @@ flutter build windows --release --no-pub --build-number=128
 
 測試包含實際 Flutter 圖片元件、EPUB 記憶體圖片、錯誤重試、圖片網址解析、17 張插圖的頁面順序及原本的小說分頁回歸。完整 App 的網站圖片顯示仍需在執行檔中確認。
 
-上游原始碼及此修改均依 Mangayomi 的 MIT 授權使用。
+上游原始碼及此修改依 Mangayomi 的 Apache-2.0 授權使用；測試版附有上游完整授權文字。
