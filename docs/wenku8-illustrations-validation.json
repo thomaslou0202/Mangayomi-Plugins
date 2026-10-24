@@ -1,0 +1,25 @@
+{
+  "sourceVersion": "0.3.5",
+  "checkedAt": "2026-10-24T06:38:30.789Z",
+  "transport": "Installed Windows Mangayomi official WebView evaluation helper",
+  "bookId": 3152,
+  "catalogueChapters": 26,
+  "illustrationChapter": {
+    "name": "0009｜第一卷 · 插圖",
+    "url": "https://www.wenku8.net/novel/3/3152/138935.htm",
+    "scanlator": "",
+    "dateUpload": ""
+  },
+  "retainedImages": 17,
+  "actionText": "在 App 內查看本章插圖（共 17 張）",
+  "actionUrl": "https://www.wenku8.net/novel/3/3152/138935.htm",
+  "cleanPreservesLink": true,
+  "textOnlyChapter": {
+    "url": "https://www.wenku8.net/novel/3/3152/144705.htm",
+    "hasIllustrationAction": false
+  },
+  "limitations": [
+    "Source returned HTML and safe link checked through installed App helper; native reader link click and Android rendering not exercised.",
+    "Inline online images remain hidden by upstream Mangayomi 0.9.9; viewing requires WebView and network."
+  ]
+}

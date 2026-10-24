@@ -126,3 +126,19 @@ Active reader filters may still exclude the current chapter and make the app
 fall back to unsorted raw rows; initial validation should show all chapters.
 This tests models derived from the pinned Dart sources, not installed-reader
 button interactions or Android UI. Chapter URLs and original labels remain.
+
+Version 0.3.5: In-app illustration chapter link
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/modules/novel/novel_reader_view.dart
+https://github.com/kodjodevf/mangayomi/blob/v0.9.9/lib/services/get_html_content.dart
+The native reader's img/source TagExtension returns an empty widget whenever
+epubBook is null; online source chapters use that path. Its onLinkTap handler
+opens /mangawebview for normal anchors. Chapters containing retained images now
+include a visible, escaped link to their original Wenku8 chapter URL and an
+image count. Text-only chapters are unchanged. Cleaning downloaded HTML keeps
+only trusted Wenku8 chapter anchors and removes all other anchor attributes.
+Images remain in the returned HTML, but this does not enable inline images or
+offline image viewing. Existing downloaded chapter HTML must be downloaded
+again to gain the link. Seven focused regression tests cover image-only and
+mixed chapters, text-only/empty content, repeated cleaning, URL restrictions,
+escaping and the source language setting. Native UI clicks and Android WebView
+rendering still need device confirmation.
