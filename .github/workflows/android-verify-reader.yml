@@ -1,0 +1,69 @@
+name: Verify signed Android app after storage permission
+
+on:
+  push:
+    branches: [app-android-illustrations]
+    paths: [.github/workflows/android-verify-reader.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out verification script
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: patches
+      - name: Download existing signed APK without rebuilding
+        uses: actions/download-artifact@v4
+        with:
+          name: Mangayomi-0.9.9-illustrations-android
+          run-id: 40077826594
+          github-token: ${{ github.token }}
+          path: dist
+      - name: Verify unchanged signed APK
+        run: |
+          echo 'fc4a523a0f85ddd67d0639c832d9e665d1df06fe791ea2dc7f8edc28d6915522  dist/Mangayomi-0.9.9-illustrations-android.apk' | sha256sum -c -
+          rm -f dist/android-phone.png dist/android-tablet.png dist/android-smoke-result.txt
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify app foreground after storage permission
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+          script: |
+            adb install -r dist/Mangayomi-0.9.9-illustrations-android.apk
+            adb shell appops set --uid com.kodjodevf.mangayomi.illustrations MANAGE_EXTERNAL_STORAGE allow
+            bash patches/app-patches/android-smoke.sh
+            adb shell dumpsys activity activities > dist/android-foreground.txt
+            grep -E '(mResumedActivity|topResumedActivity).*com.kodjodevf.mangayomi.illustrations/' dist/android-foreground.txt
+      - name: Upload unchanged APK and completed foreground verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mangayomi-0.9.9-illustrations-android-verified
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
