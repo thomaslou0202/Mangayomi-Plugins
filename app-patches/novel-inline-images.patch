@@ -1,5 +1,5 @@
 diff --git a/lib/modules/novel/novel_reader_view.dart b/lib/modules/novel/novel_reader_view.dart
-index 3d39442..601aefe 100644
+index 3d39442..0a7380b 100644
 --- a/lib/modules/novel/novel_reader_view.dart
 +++ b/lib/modules/novel/novel_reader_view.dart
 @@ -17,6 +17,7 @@ import 'package:mangayomi/modules/manga/reader/mixins/reader_gestures.dart';
@@ -10,7 +10,7 @@ index 3d39442..601aefe 100644
  import 'package:mangayomi/modules/novel/novel_reader_controller_provider.dart';
  import 'package:mangayomi/modules/novel/tts/novel_tts_service.dart';
  import 'package:mangayomi/modules/novel/tts/tts_player_bar.dart';
-@@ -24,16 +25,20 @@ import 'package:mangayomi/modules/novel/tts/tts_settings_tab.dart';
+@@ -24,9 +25,11 @@ import 'package:mangayomi/modules/novel/tts/tts_settings_tab.dart';
  import 'package:mangayomi/modules/novel/utils/novel_paginator.dart';
  import 'package:mangayomi/modules/novel/utils/novel_reader_fonts.dart';
  import 'package:mangayomi/modules/novel/widgets/novel_general_settings_tab.dart';
@@ -21,9 +21,8 @@ index 3d39442..601aefe 100644
 +import 'package:mangayomi/modules/widgets/custom_extended_image_provider.dart';
  import 'package:mangayomi/providers/l10n_providers.dart';
  import 'package:mangayomi/services/get_html_content.dart';
-+import 'package:mangayomi/services/http/m_client.dart';
  import 'package:mangayomi/src/rust/api/epub.dart';
- import 'package:mangayomi/utils/extensions/dom_extensions.dart';
+@@ -34,6 +37,7 @@ import 'package:mangayomi/utils/extensions/dom_extensions.dart';
  import 'package:mangayomi/utils/platform_utils.dart';
  import 'package:mangayomi/utils/system_ui.dart';
  import 'package:mangayomi/utils/utils.dart';
@@ -31,7 +30,7 @@ index 3d39442..601aefe 100644
  import 'package:mangayomi/modules/manga/reader/providers/push_router.dart';
  import 'package:mangayomi/utils/extensions/build_context_extensions.dart';
  import 'package:url_launcher/url_launcher.dart';
-@@ -41,7 +46,6 @@ import 'package:wakelock_plus/wakelock_plus.dart';
+@@ -41,7 +45,6 @@ import 'package:wakelock_plus/wakelock_plus.dart';
  import 'package:window_manager/window_manager.dart';
  import 'package:flutter_html/flutter_html.dart';
  import 'package:html/dom.dart' as dom;
@@ -39,7 +38,7 @@ index 3d39442..601aefe 100644
  import 'package:mangayomi/modules/manga/reader/mixins/reader_auto_scroll.dart';
  
  typedef DoubleClickAnimationListener = void Function();
-@@ -550,6 +554,9 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+@@ -550,6 +553,9 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
                                                  : constraints.maxWidth;
                                              final pageHeight =
                                                  constraints.maxHeight;
@@ -49,7 +48,7 @@ index 3d39442..601aefe 100644
  
                                              if (_cachedPagination == null ||
                                                  _cachedPaginationWidth !=
-@@ -701,6 +708,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+@@ -701,6 +707,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
                                                                child: _buildNovelHtmlWidget(
                                                                  context: context,
                                                                  htmlData: leftHtml,
@@ -57,7 +56,7 @@ index 3d39442..601aefe 100644
                                                                  fontFamily:
                                                                      fontFamily,
                                                                  fontSize: fontSize,
-@@ -740,6 +748,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+@@ -740,6 +747,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
                                                                            context,
                                                                        htmlData:
                                                                            rightHtml,
@@ -65,7 +64,7 @@ index 3d39442..601aefe 100644
                                                                        fontFamily:
                                                                            fontFamily,
                                                                        fontSize:
-@@ -779,6 +788,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+@@ -779,6 +787,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
                                                          child: _buildNovelHtmlWidget(
                                                            context: context,
                                                            htmlData: pageHtml,
@@ -73,7 +72,7 @@ index 3d39442..601aefe 100644
                                                            fontFamily: fontFamily,
                                                            fontSize: fontSize,
                                                            lineHeight: lineHeight,
-@@ -1851,6 +1861,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+@@ -1851,6 +1860,7 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
    Widget _buildNovelHtmlWidget({
      required BuildContext context,
      required String htmlData,
@@ -81,7 +80,7 @@ index 3d39442..601aefe 100644
      required String? fontFamily,
      required int fontSize,
      required double lineHeight,
-@@ -1955,7 +1966,9 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+@@ -1955,7 +1965,9 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
            tagsToExtend: {"img", "source"},
            builder: (extensionContext) {
              final element = extensionContext.node as dom.Element;
@@ -92,7 +91,7 @@ index 3d39442..601aefe 100644
              if (customWidget != null) {
                return customWidget;
              }
-@@ -1971,11 +1984,12 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+@@ -1971,11 +1983,12 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
      );
    }
  
@@ -110,7 +109,7 @@ index 3d39442..601aefe 100644
        final fileName = src.split("/").last;
        final image = epubBook!.images
            .firstWhereOrNull(
-@@ -1985,34 +1999,53 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
+@@ -1985,34 +1998,53 @@ class _NovelWebViewState extends ConsumerState<NovelWebView>
            )
            ?.content;
  
@@ -165,7 +164,7 @@ index 3d39442..601aefe 100644
 +            sourceId: manga.sourceId,
 +          ),
 +        ),
-+        userAgent: normalizeUserAgent(ref.read(userAgentStateProvider)),
++        userAgent: ref.read(userAgentStateProvider),
 +        chapterUri: resolveNovelImageUri(
 +          src: chapter.url ?? '',
 +          chapterUrl: source?.baseUrl,
@@ -238,10 +237,11 @@ index f150e04..fcbbd97 100644
          return 180.0 + paragraphMargin;
 diff --git a/lib/modules/novel/widgets/novel_illustration.dart b/lib/modules/novel/widgets/novel_illustration.dart
 new file mode 100644
-index 0000000..1603f26
+index 0000000..e627840
 --- /dev/null
 +++ b/lib/modules/novel/widgets/novel_illustration.dart
-@@ -0,0 +1,117 @@
+@@ -0,0 +1,127 @@
++import 'dart:convert';
 +import 'dart:math' as math;
 +
 +import 'package:flutter/material.dart';
@@ -351,8 +351,17 @@ index 0000000..1603f26
 +}) {
 +  final headers = Map<String, String>.of(sourceHeaders);
 +  bool has(String name) => headers.keys.any((key) => key.toLowerCase() == name);
-+  if (!has('user-agent') && userAgent.trim().isNotEmpty) {
-+    headers['User-Agent'] = userAgent;
++  var agent = userAgent.trim();
++  if (agent.length >= 2 && agent.startsWith('"') && agent.endsWith('"')) {
++    try {
++      final decoded = jsonDecode(agent);
++      if (decoded is String) agent = decoded.trim();
++    } on FormatException {
++      // Retain the configured value if it is not a JSON-encoded string.
++    }
++  }
++  if (!has('user-agent') && agent.isNotEmpty) {
++    headers['User-Agent'] = agent;
 +  }
 +  if (!has('referer') && chapterUri != null) {
 +    headers['Referer'] = chapterUri.toString();
@@ -361,10 +370,10 @@ index 0000000..1603f26
 +}
 diff --git a/test/modules/novel_illustration_test.dart b/test/modules/novel_illustration_test.dart
 new file mode 100644
-index 0000000..a5f1190
+index 0000000..4bd16a6
 --- /dev/null
 +++ b/test/modules/novel_illustration_test.dart
-@@ -0,0 +1,250 @@
+@@ -0,0 +1,264 @@
 +import 'dart:ui' as ui;
 +
 +import 'package:flutter/foundation.dart';
@@ -590,6 +599,20 @@ index 0000000..a5f1190
 +        chapterUri: chapter,
 +      );
 +      expect(fallback['Referer'], chapter.toString());
++      expect(
++        novelImageHeaders(
++          sourceHeaders: {},
++          userAgent: '"Configured browser"',
++        )['User-Agent'],
++        'Configured browser',
++      );
++      expect(
++        novelImageHeaders(
++          sourceHeaders: {},
++          userAgent: '  ',
++        ).containsKey('User-Agent'),
++        isFalse,
++      );
 +    },
 +  );
 +
