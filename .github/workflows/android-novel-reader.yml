@@ -1,0 +1,152 @@
+name: Build Android Traditional Chinese illustration app
+
+on:
+  push:
+    branches: [app-traditional-chinese]
+    paths:
+      - app-patches/**
+      - .github/workflows/android-novel-reader.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-novel-illustrations-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CARGO_BUILD_JOBS: 3
+      JAVA_OPTS: -Xmx4096m -XX:MaxMetaspaceSize=512m
+      GRADLE_OPTS: -Xmx4096m -XX:MaxMetaspaceSize=512m
+    steps:
+      - name: Check out patch repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: patches
+      - name: Check out matching upstream Mangayomi source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: kodjodevf/mangayomi
+          ref: 34dea5fd450a4b4d7683a32bec31a9ba2f0b555d
+          path: app
+      - name: Apply shared reader and Android packaging changes
+        working-directory: app
+        run: |
+          git apply --check ../patches/app-patches/novel-inline-images.patch
+          git apply ../patches/app-patches/novel-inline-images.patch
+          git apply --check ../patches/app-patches/android-illustrations.patch
+          git apply ../patches/app-patches/android-illustrations.patch
+          git apply --check ../patches/app-patches/traditional-chinese.patch
+          git apply ../patches/app-patches/traditional-chinese.patch
+      - name: Install native build tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y clang ninja-build libjpeg-dev libpng-dev libavif-dev
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.8
+          channel: stable
+          cache: true
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+      - name: Cache Rust compilation
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/rust
+          cache-on-failure: true
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Install Android platform tools
+        run: |
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: 3.18.1
+      - name: Install locked dependencies
+        working-directory: app
+        run: flutter pub get --enforce-lockfile
+      - name: Generate complete Traditional Chinese localization
+        working-directory: app
+        run: flutter gen-l10n
+      - name: Analyze Traditional Chinese UI changes
+        working-directory: app
+        run: dart analyze $(cat ../patches/app-patches/traditional-chinese-files.txt)
+      - name: Analyze changed reader code
+        working-directory: app
+        run: dart analyze lib/modules/novel/widgets/novel_illustration.dart lib/modules/novel/novel_reader_view.dart lib/modules/novel/utils/novel_paginator.dart test/modules/novel_illustration_test.dart test/modules/novel_inline_html_test.dart
+      - name: Test inline illustrations and existing pagination
+        working-directory: app
+        run: flutter test --no-pub test/modules/novel_illustration_test.dart test/modules/novel_inline_html_test.dart test/modules/novel_double_page_test.dart test/modules/novel_ref_after_dispose_test.dart test/l10n/traditional_chinese_test.dart test/l10n/episode_count_test.dart
+      - name: Prepare dedicated release signing key
+        working-directory: app
+        env:
+          SIGNING_KEYSTORE: ${{ secrets.MANGAYOMI_ILLUSTRATIONS_KEYSTORE_BASE64 }}
+          SIGNING_PASSWORD: ${{ secrets.MANGAYOMI_ILLUSTRATIONS_KEYSTORE_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import base64, os
+          from pathlib import Path
+          key = os.environ['SIGNING_KEYSTORE']
+          password = os.environ['SIGNING_PASSWORD']
+          if not key or not password:
+              raise SystemExit('Dedicated Android signing secrets are not configured')
+          Path('android/app/illustrations-release.p12').write_bytes(base64.b64decode(key))
+          Path('android/key.properties').write_text('storePassword='+password+'\nkeyPassword='+password+'\nkeyAlias=illustrations\nstoreFile=illustrations-release.p12\n')
+          PY
+      - name: Build universal signed Android APK
+        working-directory: app
+        run: flutter build apk --release --no-pub --build-number=129
+      - name: Remove temporary signing files
+        if: always()
+        working-directory: app
+        run: rm -f android/app/illustrations-release.p12 android/key.properties
+      - name: Verify and package Android APK
+        run: |
+          mkdir -p dist
+          cp app/build/app/outputs/flutter-apk/app-release.apk dist/Mangayomi-0.9.9-zh-TW-android.apk
+          cp patches/app-patches/ANDROID.md dist/ANDROID-README.md
+          cp app/LICENSE dist/LICENSE.Mangayomi.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/*.apk > dist/signature-verification.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging dist/*.apk > dist/apk-metadata.txt
+          sha256sum dist/*.apk | tee dist/SHA256SUMS.txt
+          cd app/android && ./gradlew --stop
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install and launch on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+          script: bash patches/app-patches/android-smoke.sh
+      - name: Upload Android build and verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mangayomi-0.9.9-zh-TW-android
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14

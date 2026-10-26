@@ -1,0 +1,14 @@
+{
+  "appSourceCommit": "f17c0d0",
+  "upstreamCommit": "34dea5fd450a4b4d7683a32bec31a9ba2f0b555d",
+  "locale": "zh_TW",
+  "messageCount": 1085,
+  "templateCoverage": 1.0,
+  "newlyLocalizedMessages": 38,
+  "previouslyMissingMessages": 47,
+  "allPlaceholderNamesPreserved": true,
+  "freshInstallDefault": "zh_TW",
+  "existingExplicitLocalePreserved": true,
+  "databaseSchemaChanged": false,
+  "localNativeTestLimitation": "Windows Visual C++ compiler unavailable; CI runs actual Flutter tests and release builds."
+}
