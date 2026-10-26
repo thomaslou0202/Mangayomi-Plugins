@@ -8834,10 +8834,28 @@ index 4ecf298..95bd145 100644
      }
  
 diff --git a/lib/modules/more/settings/appearance/appearance_screen.dart b/lib/modules/more/settings/appearance/appearance_screen.dart
-index a99a828..baa2008 100644
+index a99a828..b8afa04 100644
 --- a/lib/modules/more/settings/appearance/appearance_screen.dart
 +++ b/lib/modules/more/settings/appearance/appearance_screen.dart
-@@ -106,10 +106,7 @@ class AppearanceScreen extends ConsumerWidget {
+@@ -22,17 +22,6 @@ import 'package:super_sliver_list/super_sliver_list.dart';
+ import 'package:mangayomi/modules/more/settings/appearance/providers/app_ui_scale_state_provider.dart';
+ import 'package:mangayomi/modules/widgets/tv_escapable_slider.dart';
+ 
+-final navigationItems = {
+-  "/MangaLibrary": "Manga",
+-  "/AnimeLibrary": "Anime",
+-  "/NovelLibrary": "Novel",
+-  "/updates": "Updates",
+-  "/history": "History",
+-  "/browse": "Browse",
+-  "/more": "More",
+-  "/trackerLibrary": "Tracking",
+-};
+-
+ class SettingsSection extends StatelessWidget {
+   final String title;
+   final List<Widget> children;
+@@ -106,10 +95,7 @@ class AppearanceScreen extends ConsumerWidget {
                    SwitchListTile(
                      secondary: const Icon(Icons.grid_view_outlined),
                      title: Text(context.l10n.tv_home_beta),
@@ -8850,10 +8868,35 @@ index a99a828..baa2008 100644
                      onChanged: (v) =>
                          ref.read(tvHomeStyleProvider.notifier).set(v),
 diff --git a/lib/modules/more/settings/appearance/custom_navigation_settings.dart b/lib/modules/more/settings/appearance/custom_navigation_settings.dart
-index f04f270..c4091e5 100644
+index f04f270..1e8efa7 100644
 --- a/lib/modules/more/settings/appearance/custom_navigation_settings.dart
 +++ b/lib/modules/more/settings/appearance/custom_navigation_settings.dart
-@@ -33,9 +33,7 @@ class _CustomNavigationSettingsState
+@@ -1,7 +1,6 @@
+ import 'package:flutter/material.dart';
+ import 'package:flutter_riverpod/flutter_riverpod.dart';
+ import 'package:mangayomi/modules/main_view/providers/tv_mode_provider.dart';
+-import 'package:mangayomi/modules/more/settings/appearance/appearance_screen.dart';
+ import 'package:mangayomi/modules/more/settings/reader/providers/reader_state_provider.dart';
+ import 'package:mangayomi/providers/l10n_providers.dart';
+ 
+@@ -18,6 +17,16 @@ class _CustomNavigationSettingsState
+   @override
+   Widget build(BuildContext context) {
+     final l10n = context.l10n;
++    final navigationLabels = {
++      '/MangaLibrary': l10n.manga,
++      '/AnimeLibrary': l10n.anime,
++      '/NovelLibrary': l10n.novel,
++      '/updates': l10n.updates,
++      '/history': l10n.history,
++      '/browse': l10n.browse,
++      '/more': l10n.more,
++      '/trackerLibrary': l10n.tracking,
++    };
+     final navigationOrder = ref.watch(navigationOrderStateProvider);
+     final hideItems = ref.watch(hideItemsStateProvider);
+     final mergeLibraryNavMobile = ref.watch(mergeLibraryNavMobileStateProvider);
+@@ -33,9 +42,7 @@ class _CustomNavigationSettingsState
                  SwitchListTile(
                    value: ref.watch(animeOnlyTvModeProvider),
                    title: Text(context.l10n.anime_only_tv_layout),
@@ -8864,6 +8907,15 @@ index f04f270..c4091e5 100644
                    onChanged: (value) {
                      ref.read(animeOnlyTvModeProvider.notifier).set(value);
                    },
+@@ -83,7 +90,7 @@ class _CustomNavigationSettingsState
+                             }
+                             ref.read(hideItemsStateProvider.notifier).set(temp);
+                           },
+-                    title: Text(navigationItems[navigation]!),
++                    title: Text(navigationLabels[navigation] ?? navigation),
+                   ),
+                 ),
+               ],
 diff --git a/lib/modules/more/settings/browse/browse_screen.dart b/lib/modules/more/settings/browse/browse_screen.dart
 index 8b1e428..b954703 100644
 --- a/lib/modules/more/settings/browse/browse_screen.dart
