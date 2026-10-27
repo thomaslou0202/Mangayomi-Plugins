@@ -2,11 +2,13 @@
 
 提供 Mangayomi 原生 JavaScript 漫畫、小說及動畫來源，依照 [Mangayomi 套件庫](https://github.com/kodjodevf/mangayomi-extensions)的原生索引格式整理。三種類型各自使用獨立的清單網址。
 
-## Android 插圖版下載
+## 繁體中文插圖版下載
 
-[直接下載 Android APK（0.9.9+128，約 133 MB）](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/android-illustrations-v0.9.9-128/Mangayomi-0.9.9-illustrations-android.apk) · [發行說明與安裝方式](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/tag/android-illustrations-v0.9.9-128)
+[Android 手機／平板 APK（0.9.9+129）](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/traditional-chinese-v0.9.9-129/Mangayomi-0.9.9-zh-TW-android.apk) · [Windows ZIP](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/traditional-chinese-v0.9.9-129/Mangayomi-0.9.9-zh-TW-windows.zip) · [發行說明與安裝方式](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/tag/traditional-chinese-v0.9.9-129)
 
-這是支援小說正文插圖的非官方測試版。手機、平板使用同一個 APK，最低 Android 7.0；App 名稱為「Mangayomi 插圖版」，可與原版並存。安裝後可還原原版備份或設定同步伺服器，並將「輕小說文庫」來源更新至 0.3.6。下載不需要登入 GitHub，也不需要電腦保持開機。
+這是支援小說正文插圖與「繁體中文（台灣）」介面的非官方測試版，繁體翻譯涵蓋目前全部 1,085 個介面字串。更新後若仍沿用英文或簡體，到「更多 → 設定 → 外觀 → 介面語言」選擇「繁體中文（台灣）」。
+
+手機、平板使用同一個 APK，最低 Android 7.0；App 名稱仍為「Mangayomi 插圖版」，可直接更新上一版插圖版，並與官方版並存。Windows 請解壓到獨立資料夾，關閉舊版後執行新版 `mangayomi.exe`，沿用原有書庫與設定。下載不需要登入 GitHub。[完整版本與驗證說明](docs/traditional-chinese-app.md)。
 
 ## 漫畫來源
 
