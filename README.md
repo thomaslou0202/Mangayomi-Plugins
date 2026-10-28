@@ -2,15 +2,15 @@
 
 提供 Mangayomi 原生 JavaScript 漫畫、小說及動畫來源，依照 [Mangayomi 套件庫](https://github.com/kodjodevf/mangayomi-extensions)的原生索引格式整理。三種類型各自使用獨立的清單網址。
 
-## 繁體中文插圖版下載（書庫效能／背景同步）
+## 繁體中文插圖版下載（漫畫來源白畫面修正）
 
-[Android 手機／平板 APK（0.9.9+130）](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/performance-v0.9.9-130/Mangayomi-0.9.9-performance-android.apk) · [Windows ZIP](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/performance-v0.9.9-130/Mangayomi-0.9.9-performance-windows.zip) · [發行說明與安裝方式](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/tag/performance-v0.9.9-130)
+[Android 手機／平板 APK（0.9.9+131）](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/source-list-fix-v0.9.9-131/Mangayomi-0.9.9-source-fix-android.apk) · [Windows ZIP](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/source-list-fix-v0.9.9-131/Mangayomi-0.9.9-source-fix-windows.zip) · [發行說明與安裝方式](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/tag/source-list-fix-v0.9.9-131)
 
-保留小說正文插圖與完整繁體中文介面，新增集中書庫統計、背景資料庫與同步處理，減少切換作品或大量同步時的卡頓。Android 同步開始後會顯示常駐通知，切換 App 或關閉螢幕仍可繼續；完成後自動結束服務。[完整版本與驗證說明](docs/performance-app.md)。
+修正舊套件／備份缺少「最近使用」等欄位，導致啟用漫畫來源後整個列表變成灰白畫面的問題。保留來源程式、ID、已有偏好與啟用／停用設定，更新後可重新啟用先前停用的漫畫來源。[完整修正說明](docs/source-list-fix-app.md)。
 
-手機、平板使用同一個 APK，最低 Android 7.0；App 名稱仍為「Mangayomi 插圖版」，可直接更新上一版插圖／繁體中文版本。Windows 請關閉舊版，解壓到獨立資料夾後執行 `mangayomi.exe`，沿用原有書庫與設定，不必重新匯入備份。下載不需要登入 GitHub。
+保留小說正文插圖、完整繁體中文介面、書庫效能與背景同步。手機、平板使用同一個 APK，最低 Android 7.0，可直接更新上一版插圖／效能版。Windows 請關閉舊版，解壓到獨立資料夾後執行 `mangayomi.exe`，沿用原書庫與設定。下載不需要登入 GitHub。
 
-介面語言可到「更多 → 設定 → 外觀 → 介面語言」選擇「繁體中文（台灣）」。[前一版繁體中文說明](docs/traditional-chinese-app.md)。
+介面語言位於「更多 → 設定 → 外觀 → 介面語言 → 繁體中文（台灣）」。[背景同步說明](docs/performance-app.md) · [繁體中文說明](docs/traditional-chinese-app.md)。
 
 ## 漫畫來源
 
