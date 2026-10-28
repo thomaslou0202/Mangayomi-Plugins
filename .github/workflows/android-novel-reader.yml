@@ -5,6 +5,7 @@ on:
     branches: [app-performance]
     paths:
       - app-patches/**
+      - android-tests/**
       - .github/workflows/android-novel-reader.yml
   workflow_dispatch:
 
@@ -45,6 +46,7 @@ jobs:
           git apply ../patches/app-patches/traditional-chinese.patch
           git apply --check ../patches/app-patches/performance.patch
           git apply ../patches/app-patches/performance.patch
+          cp ../patches/android-tests/SyncServiceInstrumentation.java android/app/src/androidTest/java/com/kodjodevf/mangayomi/SyncServiceInstrumentation.java
       - name: Install native build tools
         run: |
           sudo apt-get update -qq
