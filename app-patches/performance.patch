@@ -637,7 +637,7 @@ index 988c0aa..492d0a8 100644
      if (txn) {
        dbWriteQueue.run(
 diff --git a/lib/repositories/chapter_repository.dart b/lib/repositories/chapter_repository.dart
-index b1016aa..e9ff956 100644
+index b1016aa..da40c01 100644
 --- a/lib/repositories/chapter_repository.dart
 +++ b/lib/repositories/chapter_repository.dart
 @@ -33,18 +33,16 @@ class ChapterRepository {
@@ -665,18 +665,25 @@ index b1016aa..e9ff956 100644
        .findFirstSync();
  
    // Async twin, for callers already inside an async writeTxn/writeTransactionAsync
-@@ -102,8 +100,9 @@ class ChapterRepository {
+@@ -102,9 +100,15 @@ class ChapterRepository {
        isar.chapters.where().mangaIdEqualToAnyIsRead(mangaId).findAllSync();
  
    Stream<List<Chapter>> watchByMangaId(int mangaId) => isar.chapters
 -      .filter()
 -      .manga((q) => q.idEqualTo(mangaId))
+-      .watch(fireImmediately: true);
 +      .where()
 +      .mangaIdEqualToAnyIsRead(mangaId)
-+      .sortById()
-       .watch(fireImmediately: true);
++      .watch(fireImmediately: true)
++      // The composite index groups read/unread rows. Keep the original primary
++      // key order so a read-state change cannot reorder source chapters.
++      .map(
++        (chapters) =>
++            chapters..sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0)),
++      );
  
    // Stamps updatedAt for callers that just want to persist a mutated Chapter
+   // they already hold, without setting the timestamp themselves.
 diff --git a/lib/repositories/history_repository.dart b/lib/repositories/history_repository.dart
 index 62e1743..16867c4 100644
 --- a/lib/repositories/history_repository.dart
