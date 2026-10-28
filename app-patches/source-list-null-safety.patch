@@ -103,7 +103,7 @@ index 48a8665..26e7e4d 100644
                  ),
                  SliverToBoxAdapter(
 diff --git a/lib/modules/browse/sources/widgets/source_list_tile.dart b/lib/modules/browse/sources/widgets/source_list_tile.dart
-index 53a4826..bf1cd89 100644
+index 53a4826..4364a06 100644
 --- a/lib/modules/browse/sources/widgets/source_list_tile.dart
 +++ b/lib/modules/browse/sources/widgets/source_list_tile.dart
 @@ -11,6 +11,11 @@ import 'package:mangayomi/utils/extensions/build_context_extensions.dart';
@@ -149,7 +149,41 @@ index 53a4826..bf1cd89 100644
                : "${context.l10n.local_source} ${source.itemType.localized(context.l10n)}",
          ),
          trailing: SizedBox(
-@@ -117,11 +122,15 @@ class SourceListTile extends StatelessWidget {
+@@ -96,32 +101,34 @@ class SourceListTile extends StatelessWidget {
+           child: Row(
+             mainAxisAlignment: MainAxisAlignment.end,
+             children: [
+-              Consumer(
+-                builder: (context, ref, child) {
+-                  // final supportsLatest =  ref.watch(supportsLatestProvider(source: source));
+-                  // if (supportsLatest) {
+-                  return TextButton(
+-                    style: const ButtonStyle(
+-                      padding: WidgetStatePropertyAll(EdgeInsets.all(10)),
+-                    ),
+-                    onPressed: () =>
+-                        context.push('/mangaHome', extra: (source, true)),
+-                    child: Text(context.l10n.latest),
+-                  );
+-                  // }
+-                  // return const SizedBox.shrink();
+-                },
++              Flexible(
++                child: TextButton(
++                  style: const ButtonStyle(
++                    padding: WidgetStatePropertyAll(EdgeInsets.all(10)),
++                  ),
++                  onPressed: () =>
++                      context.push('/mangaHome', extra: (source, true)),
++                  child: Text(
++                    context.l10n.latest,
++                    maxLines: 1,
++                    overflow: TextOverflow.ellipsis,
++                  ),
++                ),
+               ),
+               const SizedBox(width: 10),
+               if (!isLocal)
                  IconButton(
                    padding: const EdgeInsets.all(0),
                    onPressed: () {
@@ -167,7 +201,7 @@ index 53a4826..bf1cd89 100644
                    ),
                  ),
              ],
-@@ -191,10 +200,10 @@ class TvSourceRow extends StatelessWidget {
+@@ -191,10 +198,10 @@ class TvSourceRow extends StatelessWidget {
                              .withValues(alpha: 0.5),
                          borderRadius: BorderRadius.circular(5),
                        ),
@@ -180,7 +214,7 @@ index 53a4826..bf1cd89 100644
                                fit: BoxFit.contain,
                                width: 37,
                                height: 37,
-@@ -216,7 +225,7 @@ class TvSourceRow extends StatelessWidget {
+@@ -216,7 +223,7 @@ class TvSourceRow extends StatelessWidget {
                          children: [
                            Text(
                              !isLocal
@@ -189,7 +223,7 @@ index 53a4826..bf1cd89 100644
                                  : "${context.l10n.local_source} ${source.itemType.localized(context.l10n)}",
                              style: const TextStyle(fontSize: 16),
                              maxLines: 1,
-@@ -226,7 +235,7 @@ class TvSourceRow extends StatelessWidget {
+@@ -226,7 +233,7 @@ class TvSourceRow extends StatelessWidget {
                              children: [
                                Text(
                                  completeLanguageName(
@@ -198,7 +232,7 @@ index 53a4826..bf1cd89 100644
                                  ),
                                  style: const TextStyle(
                                    fontWeight: FontWeight.w300,
-@@ -282,13 +291,17 @@ class TvSourceRow extends StatelessWidget {
+@@ -282,13 +289,17 @@ class TvSourceRow extends StatelessWidget {
              TvRowButton(
                focusNode: pinNode,
                onTap: () {
