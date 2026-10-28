@@ -2,13 +2,15 @@
 
 提供 Mangayomi 原生 JavaScript 漫畫、小說及動畫來源，依照 [Mangayomi 套件庫](https://github.com/kodjodevf/mangayomi-extensions)的原生索引格式整理。三種類型各自使用獨立的清單網址。
 
-## 繁體中文插圖版下載
+## 繁體中文插圖版下載（書庫效能／背景同步）
 
-[Android 手機／平板 APK（0.9.9+129）](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/traditional-chinese-v0.9.9-129/Mangayomi-0.9.9-zh-TW-android.apk) · [Windows ZIP](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/traditional-chinese-v0.9.9-129/Mangayomi-0.9.9-zh-TW-windows.zip) · [發行說明與安裝方式](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/tag/traditional-chinese-v0.9.9-129)
+[Android 手機／平板 APK（0.9.9+130）](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/performance-v0.9.9-130/Mangayomi-0.9.9-performance-android.apk) · [Windows ZIP](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/performance-v0.9.9-130/Mangayomi-0.9.9-performance-windows.zip) · [發行說明與安裝方式](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/tag/performance-v0.9.9-130)
 
-這是支援小說正文插圖與「繁體中文（台灣）」介面的非官方測試版，繁體翻譯涵蓋目前全部 1,085 個介面字串。更新後若仍沿用英文或簡體，到「更多 → 設定 → 外觀 → 介面語言」選擇「繁體中文（台灣）」。
+保留小說正文插圖與完整繁體中文介面，新增集中書庫統計、背景資料庫與同步處理，減少切換作品或大量同步時的卡頓。Android 同步開始後會顯示常駐通知，切換 App 或關閉螢幕仍可繼續；完成後自動結束服務。[完整版本與驗證說明](docs/performance-app.md)。
 
-手機、平板使用同一個 APK，最低 Android 7.0；App 名稱仍為「Mangayomi 插圖版」，可直接更新上一版插圖版，並與官方版並存。Windows 請解壓到獨立資料夾，關閉舊版後執行新版 `mangayomi.exe`，沿用原有書庫與設定。下載不需要登入 GitHub。[完整版本與驗證說明](docs/traditional-chinese-app.md)。
+手機、平板使用同一個 APK，最低 Android 7.0；App 名稱仍為「Mangayomi 插圖版」，可直接更新上一版插圖／繁體中文版本。Windows 請關閉舊版，解壓到獨立資料夾後執行 `mangayomi.exe`，沿用原有書庫與設定，不必重新匯入備份。下載不需要登入 GitHub。
+
+介面語言可到「更多 → 設定 → 外觀 → 介面語言」選擇「繁體中文（台灣）」。[前一版繁體中文說明](docs/traditional-chinese-app.md)。
 
 ## 漫畫來源
 
