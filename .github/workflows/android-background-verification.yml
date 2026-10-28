@@ -1,0 +1,67 @@
+name: Verify existing Android background sync APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      sourceRunId:
+        description: Completed Android build run containing both signed APKs
+        required: true
+        default: '40727925762'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  device-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: patches
+      - name: Download previously built signed APKs
+        uses: actions/download-artifact@v4
+        with:
+          name: Mangayomi-0.9.9-performance-android
+          path: dist
+          run-id: ${{ inputs.sourceRunId }}
+          github-token: ${{ github.token }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Verify each APK separately
+        run: |
+          sdkmanager 'build-tools;36.0.0'
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/Mangayomi-0.9.9-performance-android.apk > dist/signature-verification.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/background-service-test.apk > dist/test-signature-verification.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging dist/Mangayomi-0.9.9-performance-android.apk > dist/apk-metadata.txt
+          sha256sum dist/Mangayomi-0.9.9-performance-android.apk | tee dist/SHA256SUMS.txt
+          echo '${{ inputs.sourceRunId }}' > dist/source-build-run.txt
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify phone, tablet and background service
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+          script: bash patches/app-patches/android-smoke.sh
+      - name: Upload APKs and device verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mangayomi-0.9.9-performance-android
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14

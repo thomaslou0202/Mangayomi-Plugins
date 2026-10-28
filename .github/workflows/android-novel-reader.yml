@@ -132,8 +132,8 @@ jobs:
           cp patches/app-patches/PERFORMANCE.md dist/PERFORMANCE-README.md
           cp app/build/app/outputs/apk/androidTest/release/app-release-androidTest.apk dist/background-service-test.apk
           cp app/LICENSE dist/LICENSE.Mangayomi.txt
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/*.apk > dist/signature-verification.txt
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging dist/*.apk > dist/apk-metadata.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/Mangayomi-0.9.9-performance-android.apk > dist/signature-verification.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging dist/Mangayomi-0.9.9-performance-android.apk > dist/apk-metadata.txt
           sha256sum dist/*.apk | tee dist/SHA256SUMS.txt
           cd app/android && ./gradlew --stop
       - name: Enable emulator acceleration
