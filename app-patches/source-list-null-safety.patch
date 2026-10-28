@@ -220,10 +220,10 @@ index 53a4826..bf1cd89 100644
              ),
 diff --git a/test/modules/browse/source_metadata_test.dart b/test/modules/browse/source_metadata_test.dart
 new file mode 100644
-index 0000000..1184353
+index 0000000..e8d9f02
 --- /dev/null
 +++ b/test/modules/browse/source_metadata_test.dart
-@@ -0,0 +1,185 @@
+@@ -0,0 +1,200 @@
 +import 'dart:io';
 +
 +import 'package:flutter/material.dart';
@@ -238,7 +238,6 @@ index 0000000..1184353
 +import 'package:mangayomi/modules/browse/sources/sources_screen.dart';
 +import 'package:mangayomi/modules/browse/sources/widgets/source_list_tile.dart';
 +import 'package:mangayomi/modules/more/settings/browse/providers/browse_state_provider.dart';
-+import 'package:mangayomi/repositories/db_write_queue.dart';
 +
 +void main() {
 +  TestWidgetsFlutterBinding.ensureInitialized();
@@ -358,8 +357,10 @@ index 0000000..1184353
 +    testWidgets('${type.name} sources render persisted nullable flags', (
 +      tester,
 +    ) async {
-+      await app.isar.writeTxn(() => app.isar.sources.put(legacy(type)));
-+      final source = (await app.isar.sources.get(42))!;
++      final source = (await tester.runAsync(() async {
++        await app.isar.writeTxn(() => app.isar.sources.put(legacy(type)));
++        return app.isar.sources.getSync(42);
++      }))!;
 +      expect(source.lastUsed, isNull); // Old Isar rows bypass Source.fromJson.
 +      expect(source.isPinned, isNull);
 +      await show(tester, type, [source]);
@@ -369,6 +370,9 @@ index 0000000..1184353
 +        findsNWidgets(2),
 +      ); // Includes local files.
 +      expect(tester.takeException(), isNull);
++      // Dispose provider listeners before the temporary database is closed.
++      await tester.pumpWidget(const SizedBox.shrink());
++      await tester.pump();
 +    });
 +  }
 +  testWidgets('missing language and name do not break sorting or tiles', (
@@ -384,19 +388,27 @@ index 0000000..1184353
 +    expect(find.text('Unknown'), findsOneWidget);
 +    expect(find.text('Normal'), findsOneWidget);
 +    expect(tester.takeException(), isNull);
++    // Dispose provider listeners before the temporary database is closed.
++    await tester.pumpWidget(const SizedBox.shrink());
++    await tester.pump();
 +  });
 +  testWidgets(
 +    'pinning a legacy source persists the first pin without an exception',
 +    (tester) async {
 +      final source = legacy(ItemType.manga);
-+      await app.isar.writeTxn(() => app.isar.sources.put(source));
++      await tester.runAsync(
++        () => app.isar.writeTxn(() => app.isar.sources.put(source)),
++      );
 +      await show(tester, ItemType.manga, [source]);
 +      await tester.tap(
 +        find.widgetWithIcon(IconButton, Icons.push_pin_outlined),
 +      );
-+      await tester.runAsync(() => dbWriteQueue.run(() {}));
++      await tester.pump();
 +      expect(app.isar.sources.getSync(42)!.isPinned, true);
 +      expect(tester.takeException(), isNull);
++      // Dispose provider listeners before the temporary database is closed.
++      await tester.pumpWidget(const SizedBox.shrink());
++      await tester.pump();
 +    },
 +  );
 +  testWidgets(
@@ -406,6 +418,9 @@ index 0000000..1184353
 +      expect(find.text('No sources installed!'), findsOneWidget);
 +      expect(find.byType(SourceListTile), findsOneWidget);
 +      expect(tester.takeException(), isNull);
++      // Dispose provider listeners before the temporary database is closed.
++      await tester.pumpWidget(const SizedBox.shrink());
++      await tester.pump();
 +    },
 +  );
 +}
