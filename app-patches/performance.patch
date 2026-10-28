@@ -141,10 +141,10 @@ index 7f572c6..afcd405 100644
              "com.kodjodevf.mangayomi.libmtorrentserver",
 diff --git a/android/app/src/main/kotlin/com/kodjodevf/mangayomi/SyncBackgroundService.kt b/android/app/src/main/kotlin/com/kodjodevf/mangayomi/SyncBackgroundService.kt
 new file mode 100644
-index 0000000..7b2b980
+index 0000000..dce709b
 --- /dev/null
 +++ b/android/app/src/main/kotlin/com/kodjodevf/mangayomi/SyncBackgroundService.kt
-@@ -0,0 +1,77 @@
+@@ -0,0 +1,78 @@
 +package com.kodjodevf.mangayomi
 +
 +import android.app.Notification
@@ -177,6 +177,7 @@ index 0000000..7b2b980
 +            ))
 +        }
 +        val launch = packageManager.getLaunchIntentForPackage(packageName)
++            ?: Intent(this, MainActivity::class.java)
 +        val pending = PendingIntent.getActivity(this, 0, launch,
 +            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 +        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -506,6 +507,29 @@ index 74a7e15..c8b7857 100644
      final source = getSource(
        manga.lang!,
        manga.source!,
+diff --git a/lib/modules/more/data_and_storage/providers/restore.dart b/lib/modules/more/data_and_storage/providers/restore.dart
+index 790c560..d9e6eaf 100644
+--- a/lib/modules/more/data_and_storage/providers/restore.dart
++++ b/lib/modules/more/data_and_storage/providers/restore.dart
+@@ -2,6 +2,8 @@ import 'package:mangayomi/utils/localized_message.dart';
+ 
+ import 'dart:async';
+ 
++import 'package:mangayomi/services/database_worker.dart';
++
+ import 'package:archive/archive_io.dart';
+ import 'package:bot_toast/bot_toast.dart';
+ import 'package:collection/collection.dart';
+@@ -96,6 +98,9 @@ Future<void> doRestore(
+   ref.read(restoreSyncGuardProvider.notifier).start();
+   var uploadStarted = false;
+   try {
++    // Drain already queued background sync writes before replacing rows.
++    // The restore guard prevents a response arriving later from being queued.
++    await DatabaseWorker.instance.run<void>('barrier');
+     // Zip filenames aren't encrypted even when file content is, so this
+     // initial pass (no password) is always enough to list files and
+     // determine backup type. Password resolution only happens below, and
 diff --git a/lib/providers/storage_provider.dart b/lib/providers/storage_provider.dart
 index abac1cb..a34eb7f 100644
 --- a/lib/providers/storage_provider.dart
@@ -564,6 +588,27 @@ index abac1cb..a34eb7f 100644
        directory: dir!.path,
        name: "mangayomiDb",
        inspector: inspector,
+diff --git a/lib/repositories/category_repository.dart b/lib/repositories/category_repository.dart
+index 3065bc0..e1a504b 100644
+--- a/lib/repositories/category_repository.dart
++++ b/lib/repositories/category_repository.dart
+@@ -18,12 +18,10 @@ class CategoryRepository {
+       .updatedAtGreaterThan(since, include: true)
+       .findAllSync();
+ 
+-  Category? getByClientId(int clientId) => isar.categorys
+-      .filter()
+-      .clientIdEqualTo(clientId)
+-      .or()
+-      .idEqualTo(clientId)
+-      .findFirstSync();
++  // Use the clientId index first, then the legacy local-ID fallback.
++  Category? getByClientId(int clientId) =>
++      isar.categorys.where().clientIdEqualTo(clientId).findFirstSync() ??
++      isar.categorys.getSync(clientId);
+ 
+   // Async twin, for callers already inside an async writeTxn/writeTransactionAsync
+   // — Isar rejects a sync findAllSync() call from inside an async transaction.
 diff --git a/lib/repositories/changed_part_repository.dart b/lib/repositories/changed_part_repository.dart
 index 988c0aa..492d0a8 100644
 --- a/lib/repositories/changed_part_repository.dart
@@ -591,6 +636,131 @@ index 988c0aa..492d0a8 100644
    void clearAll(bool txn) {
      if (txn) {
        dbWriteQueue.run(
+diff --git a/lib/repositories/chapter_repository.dart b/lib/repositories/chapter_repository.dart
+index b1016aa..e9ff956 100644
+--- a/lib/repositories/chapter_repository.dart
++++ b/lib/repositories/chapter_repository.dart
+@@ -33,18 +33,16 @@ class ChapterRepository {
+       .updatedAtGreaterThan(since, include: true)
+       .findAllSync();
+ 
+-  Chapter? getByClientId(int clientId) => isar.chapters
+-      .filter()
+-      .clientIdEqualTo(clientId)
+-      .or()
+-      .idEqualTo(clientId)
+-      .findFirstSync();
++  // Use the clientId index first, then the legacy local-ID fallback.
++  Chapter? getByClientId(int clientId) =>
++      isar.chapters.where().clientIdEqualTo(clientId).findFirstSync() ??
++      isar.chapters.getSync(clientId);
+ 
+   Chapter? findByUrlAndMangaId(String url, int mangaId) => isar.chapters
++      .where()
++      .mangaIdEqualToAnyIsRead(mangaId)
+       .filter()
+       .urlEqualTo(url)
+-      .and()
+-      .mangaIdEqualTo(mangaId)
+       .findFirstSync();
+ 
+   // Async twin, for callers already inside an async writeTxn/writeTransactionAsync
+@@ -102,8 +100,9 @@ class ChapterRepository {
+       isar.chapters.where().mangaIdEqualToAnyIsRead(mangaId).findAllSync();
+ 
+   Stream<List<Chapter>> watchByMangaId(int mangaId) => isar.chapters
+-      .filter()
+-      .manga((q) => q.idEqualTo(mangaId))
++      .where()
++      .mangaIdEqualToAnyIsRead(mangaId)
++      .sortById()
+       .watch(fireImmediately: true);
+ 
+   // Stamps updatedAt for callers that just want to persist a mutated Chapter
+diff --git a/lib/repositories/history_repository.dart b/lib/repositories/history_repository.dart
+index 62e1743..16867c4 100644
+--- a/lib/repositories/history_repository.dart
++++ b/lib/repositories/history_repository.dart
+@@ -52,12 +52,10 @@ class HistoryRepository {
+       .updatedAtGreaterThan(since, include: true)
+       .findAllSync();
+ 
+-  History? getByClientId(int clientId) => isar.historys
+-      .filter()
+-      .clientIdEqualTo(clientId)
+-      .or()
+-      .idEqualTo(clientId)
+-      .findFirstSync();
++  // Use the clientId index first, then the legacy local-ID fallback.
++  History? getByClientId(int clientId) =>
++      isar.historys.where().clientIdEqualTo(clientId).findFirstSync() ??
++      isar.historys.getSync(clientId);
+ 
+   // Async twin, for callers already inside an async writeTxn/writeTransactionAsync
+   // — Isar rejects a sync findAllSync() call from inside an async transaction.
+diff --git a/lib/repositories/manga_repository.dart b/lib/repositories/manga_repository.dart
+index ea7080a..4162ab5 100644
+--- a/lib/repositories/manga_repository.dart
++++ b/lib/repositories/manga_repository.dart
+@@ -76,12 +76,10 @@ class MangaRepository {
+       .updatedAtGreaterThan(since, include: true)
+       .findAllSync();
+ 
+-  Manga? getByClientId(int clientId) => isar.mangas
+-      .filter()
+-      .clientIdEqualTo(clientId)
+-      .or()
+-      .idEqualTo(clientId)
+-      .findFirstSync();
++  // Use the clientId index first, then the legacy local-ID fallback.
++  Manga? getByClientId(int clientId) =>
++      isar.mangas.where().clientIdEqualTo(clientId).findFirstSync() ??
++      isar.mangas.getSync(clientId);
+ 
+   Manga? findByLinkAndItemType(String link, ItemType itemType) => isar.mangas
+       .filter()
+diff --git a/lib/repositories/track_repository.dart b/lib/repositories/track_repository.dart
+index aba4557..028692c 100644
+--- a/lib/repositories/track_repository.dart
++++ b/lib/repositories/track_repository.dart
+@@ -104,12 +104,10 @@ class TrackRepository {
+       .updatedAtGreaterThan(since, include: true)
+       .findAllSync();
+ 
+-  Track? getByClientId(int clientId) => isar.tracks
+-      .filter()
+-      .clientIdEqualTo(clientId)
+-      .or()
+-      .idEqualTo(clientId)
+-      .findFirstSync();
++  // Use the clientId index first, then the legacy local-ID fallback.
++  Track? getByClientId(int clientId) =>
++      isar.tracks.where().clientIdEqualTo(clientId).findFirstSync() ??
++      isar.tracks.getSync(clientId);
+ 
+   Track? findBySyncIdAndMangaId(int? syncId, int? mangaId) => isar.tracks
+       .filter()
+diff --git a/lib/repositories/update_repository.dart b/lib/repositories/update_repository.dart
+index ea9e400..352e58e 100644
+--- a/lib/repositories/update_repository.dart
++++ b/lib/repositories/update_repository.dart
+@@ -18,12 +18,10 @@ class UpdateRepository {
+       .updatedAtGreaterThan(since, include: true)
+       .findAllSync();
+ 
+-  Update? getByClientId(int clientId) => isar.updates
+-      .filter()
+-      .clientIdEqualTo(clientId)
+-      .or()
+-      .idEqualTo(clientId)
+-      .findFirstSync();
++  // Use the clientId index first, then the legacy local-ID fallback.
++  Update? getByClientId(int clientId) =>
++      isar.updates.where().clientIdEqualTo(clientId).findFirstSync() ??
++      isar.updates.getSync(clientId);
+ 
+   Update? findByMangaIdAndChapterName(int? mangaId, String? chapterName) => isar
+       .updates
 diff --git a/lib/services/database_worker.dart b/lib/services/database_worker.dart
 new file mode 100644
 index 0000000..409f934
@@ -1251,17 +1421,24 @@ index 3332557..62c17e0 100644
    return incoming
      ..id = current.id
 diff --git a/lib/services/sync_server.dart b/lib/services/sync_server.dart
-index fa8822d..1fcfae7 100644
+index fa8822d..70f6864 100644
 --- a/lib/services/sync_server.dart
 +++ b/lib/services/sync_server.dart
-@@ -1,3 +1,6 @@
+@@ -1,9 +1,13 @@
 +import 'package:mangayomi/services/database_worker.dart';
 +import 'package:mangayomi/services/sync/sync_background_service.dart';
 +
  // Riverpod-facing orchestration for the sync-server's `/api/sync/v1`
  // protocol. The wire transport lives in SyncApiClient, applying a pulled
  // response to local storage lives in SyncEntityApplier, and collecting local
-@@ -25,7 +28,6 @@ import 'package:mangayomi/providers/l10n_providers.dart';
+ // changes to upload lives in ChangedRows (services/sync/*) - this class only
+ // sequences those three pieces and turns their results into UI-facing state
+ // (toasts, progress, invalidated providers).
++import 'dart:async';
+ import 'dart:convert';
+ import 'dart:math';
+ 
+@@ -25,7 +29,6 @@ import 'package:mangayomi/providers/l10n_providers.dart';
  import 'package:mangayomi/services/http/m_client.dart';
  import 'package:mangayomi/services/sync/sync_api_client.dart';
  import 'package:mangayomi/services/sync/sync_change_collector.dart';
@@ -1269,10 +1446,11 @@ index fa8822d..1fcfae7 100644
  import 'package:mangayomi/utils/client_id.dart';
  import 'package:mangayomi/utils/platform_utils.dart';
  
-@@ -45,8 +47,9 @@ const _desktopOAuthCallbackPort = 48765;
+@@ -45,8 +48,10 @@ const _desktopOAuthCallbackPort = 48765;
  
  @riverpod
  class SyncServer extends _$SyncServer {
++  Completer<void>? _syncIdle;
 +  bool _allowRestore = false;
 +  String _serverAtStart = '', _tokenAtStart = '';
    final http = MClient.init(reqcopyWith: {'useDartHttpClient': true});
@@ -1280,15 +1458,27 @@ index fa8822d..1fcfae7 100644
    late final _apiClient = SyncApiClient(http);
  
    @override
-@@ -155,6 +158,7 @@ class SyncServer extends _$SyncServer {
+@@ -155,6 +160,19 @@ class SyncServer extends _$SyncServer {
      bool bypassRestoreGuard = false,
    }) async {
      if (!ref.mounted) return false;
-+    if (ref.read(syncProgressProvider(syncId: syncId)).active) return false;
++    if (ref.read(syncProgressProvider(syncId: syncId)).active) {
++      if (!bypassRestoreGuard || _syncIdle == null) return false;
++      // A restore first claims the guard; its upload waits for the old request
++      // to notice that guard and finish instead of silently skipping the upload.
++      await _syncIdle?.future;
++      return startSync(
++        l10n,
++        silent,
++        upload: upload,
++        download: download,
++        bypassRestoreGuard: true,
++      );
++    }
      // A restore in progress owns the sync server state until its own
      // post-restore upload runs (that call passes bypassRestoreGuard: true).
      // Anything else - the periodic timer or a manual trigger - must wait,
-@@ -166,11 +170,15 @@ class SyncServer extends _$SyncServer {
+@@ -166,11 +184,16 @@ class SyncServer extends _$SyncServer {
        return false;
      }
      if (!silent && l10n != null) {
@@ -1299,21 +1489,29 @@ index fa8822d..1fcfae7 100644
 +    _allowRestore = bypassRestoreGuard;
 +    _serverAtStart = _getServer();
 +    _tokenAtStart = _getAccessToken();
++    final idle = _syncIdle = Completer<void>();
      progress.begin();
      try {
 +      await SyncBackgroundService.start(l10n, askNotifications: !silent);
        if (!await _apiClient.checkVersion(_getServer())) {
          if (!silent && l10n != null) {
            botToast(l10n.sync_failed, second: 5);
-@@ -210,6 +218,7 @@ class SyncServer extends _$SyncServer {
+@@ -210,7 +233,13 @@ class SyncServer extends _$SyncServer {
        }
        return false;
      } finally {
-+      await SyncBackgroundService.stop();
-       progress.finish();
+-      progress.finish();
++      try {
++        await SyncBackgroundService.stop();
++      } finally {
++        progress.finish();
++        _syncIdle = null;
++        idle.complete();
++      }
      }
    }
-@@ -220,12 +229,15 @@ class SyncServer extends _$SyncServer {
+ 
+@@ -220,12 +249,15 @@ class SyncServer extends _$SyncServer {
    // until every entity has fully caught up, then saves the new `since`.
    // ------------------------------------------------------------------
  
@@ -1331,7 +1529,7 @@ index fa8822d..1fcfae7 100644
      );
    }
  
-@@ -237,6 +249,7 @@ class SyncServer extends _$SyncServer {
+@@ -237,6 +269,7 @@ class SyncServer extends _$SyncServer {
      required int since,
      ChangedRows? changed,
    }) async {
@@ -1339,7 +1537,7 @@ index fa8822d..1fcfae7 100644
      final chunks = changed?.chunked(_maxRowsPerEntity) ?? const [];
      final progress = ref.read(syncProgressProvider(syncId: syncId).notifier);
      progress.addTotal(chunks.length);
-@@ -246,7 +259,7 @@ class SyncServer extends _$SyncServer {
+@@ -246,7 +279,7 @@ class SyncServer extends _$SyncServer {
      var chunkIndex = 0;
  
      while (true) {
@@ -1348,7 +1546,7 @@ index fa8822d..1fcfae7 100644
        final hasChunk = chunkIndex < chunks.length;
        final body = <String, dynamic>{
          'since': since,
-@@ -257,7 +270,7 @@ class SyncServer extends _$SyncServer {
+@@ -257,7 +290,7 @@ class SyncServer extends _$SyncServer {
        if (hasChunk) chunkIndex += 1;
  
        final response = await _postSync(body);
@@ -1357,7 +1555,7 @@ index fa8822d..1fcfae7 100644
        if (hasChunk) progress.addDone(1);
        _trackDownloadProgress(progress, response);
  
-@@ -269,7 +282,10 @@ class SyncServer extends _$SyncServer {
+@@ -269,7 +302,10 @@ class SyncServer extends _$SyncServer {
        if (chunkIndex >= chunks.length && !hasMore) {
          final syncedAt = response['syncedAt'] as int?;
          if (syncedAt != null) {
@@ -1369,7 +1567,7 @@ index fa8822d..1fcfae7 100644
            notifier.setLastSync(DateTime.now().millisecondsSinceEpoch);
            await changed?.clearUploaded(notifier);
          }
-@@ -278,6 +294,12 @@ class SyncServer extends _$SyncServer {
+@@ -278,6 +314,12 @@ class SyncServer extends _$SyncServer {
      }
    }
  
@@ -1382,7 +1580,7 @@ index fa8822d..1fcfae7 100644
    // Adds this response's contribution to the progress bar using docs/sync_api.md's totalCounts and per-page row counts.
    void _trackDownloadProgress(
      SyncProgress progress,
-@@ -314,13 +336,16 @@ class SyncServer extends _$SyncServer {
+@@ -314,13 +356,16 @@ class SyncServer extends _$SyncServer {
    // traded for not being a one-click way to destroy real data by accident.
    // ------------------------------------------------------------------
  
@@ -1401,7 +1599,7 @@ index fa8822d..1fcfae7 100644
      );
    }
  
-@@ -361,7 +386,10 @@ class SyncServer extends _$SyncServer {
+@@ -361,7 +406,10 @@ class SyncServer extends _$SyncServer {
    // ------------------------------------------------------------------
  
    Future<void> _applyPulledEntities(Map<String, dynamic> response) async {
@@ -1562,12 +1760,44 @@ index 6b863a0..9eaf085 100644
 +    (r, id) => r.clientId = id,
 +  );
  }
+diff --git a/test/modules/more/data_and_storage/restore_replace_test.dart b/test/modules/more/data_and_storage/restore_replace_test.dart
+index dea87a3..fd7eaf3 100644
+--- a/test/modules/more/data_and_storage/restore_replace_test.dart
++++ b/test/modules/more/data_and_storage/restore_replace_test.dart
+@@ -1,5 +1,7 @@
+ import 'dart:io';
+ 
++import 'package:mangayomi/services/database_worker.dart';
++
+ import 'package:archive/archive.dart';
+ import 'package:bot_toast/bot_toast.dart';
+ import 'package:fixnum/fixnum.dart';
+@@ -134,6 +136,7 @@ void main() {
+   });
+ 
+   tearDown(() async {
++    await DatabaseWorker.instance.close();
+     await isar.close(deleteFromDisk: true);
+     if (directory.existsSync()) directory.deleteSync(recursive: true);
+   });
+@@ -185,9 +188,8 @@ void main() {
+         ],
+       );
+       final path = '${directory.path}/mihon_test.tachibk';
+-      File(
+-        path,
+-      ).writeAsBytesSync(GZipEncoder().encodeBytes(backup.writeToBuffer()));
++      File(path)
++          .writeAsBytesSync(GZipEncoder().encodeBytes(backup.writeToBuffer()));
+ 
+       await ref.read(
+         doRestoreProvider(path: path, context: ctx, merge: false).future,
 diff --git a/test/services/database_worker_test.dart b/test/services/database_worker_test.dart
 new file mode 100644
-index 0000000..a2eef4b
+index 0000000..7d0d4ca
 --- /dev/null
 +++ b/test/services/database_worker_test.dart
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,212 @@
 +import 'dart:async';
 +import 'dart:io';
 +
@@ -1577,9 +1807,11 @@ index 0000000..a2eef4b
 +import 'package:mangayomi/models/changed.dart';
 +import 'package:mangayomi/models/chapter.dart';
 +import 'package:mangayomi/models/manga.dart';
++import 'package:mangayomi/models/history.dart';
 +import 'package:mangayomi/models/settings.dart';
 +import 'package:mangayomi/providers/storage_provider.dart';
 +import 'package:mangayomi/repositories/changed_part_repository.dart';
++import 'package:mangayomi/repositories/chapter_repository.dart';
 +import 'package:mangayomi/services/database_worker.dart';
 +import 'package:mangayomi/services/library_chapter_summary.dart';
 +import 'package:mangayomi/services/sync/sync_change_collector.dart';
@@ -1719,6 +1951,34 @@ index 0000000..a2eef4b
 +          .findFirst();
 +      expect(chapter!.isRead, true);
 +      expect(await app.isar.chapters.count(), 1);
++    },
++  );
++
++  test(
++    'client lookup uses its index and history exports the local chapter link',
++    () async {
++      await app.isar.writeTxn(() async {
++        await app.isar.mangas.put(book(1));
++        await app.isar.chapters.putAll([
++          Chapter(id: 5, clientId: 90, mangaId: 1, name: 'correct', url: '/5'),
++          Chapter(id: 9, clientId: 5, mangaId: 1, name: 'other', url: '/9'),
++        ]);
++        await app.isar.historys.put(
++          History(
++            clientId: 77,
++            itemType: ItemType.manga,
++            chapterId: 5,
++            mangaId: 1,
++            date: '10',
++          ),
++        );
++      });
++      expect(chapterRepository.getByClientId(5)!.id, 9);
++      final snapshot = await DatabaseWorker.instance.run<ChangedRows>(
++        'collect',
++        0,
++      );
++      expect(snapshot.histories.single['chapterClientId'], 90);
 +    },
 +  );
 +

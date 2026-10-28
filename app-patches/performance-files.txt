@@ -3,8 +3,15 @@ lib/modules/library/providers/library_summary_provider.dart
 lib/modules/library/widgets/library_body.dart
 lib/modules/library/widgets/library_entry_utils.dart
 lib/modules/manga/detail/providers/update_manga_detail_providers.dart
+lib/modules/more/data_and_storage/providers/restore.dart
 lib/providers/storage_provider.dart
+lib/repositories/category_repository.dart
 lib/repositories/changed_part_repository.dart
+lib/repositories/chapter_repository.dart
+lib/repositories/history_repository.dart
+lib/repositories/manga_repository.dart
+lib/repositories/track_repository.dart
+lib/repositories/update_repository.dart
 lib/services/database_worker.dart
 lib/services/library_chapter_summary.dart
 lib/services/sync/sync_api_client.dart
@@ -13,6 +20,7 @@ lib/services/sync/sync_change_collector.dart
 lib/services/sync/sync_entity_applier.dart
 lib/services/sync_server.dart
 lib/utils/client_id.dart
+test/modules/more/data_and_storage/restore_replace_test.dart
 test/services/database_worker_test.dart
 test/services/library_chapter_summary_test.dart
 test/services/sync_background_transport_test.dart
