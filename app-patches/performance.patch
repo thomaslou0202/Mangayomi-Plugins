@@ -770,10 +770,10 @@ index ea9e400..352e58e 100644
        .updates
 diff --git a/lib/services/database_worker.dart b/lib/services/database_worker.dart
 new file mode 100644
-index 0000000..409f934
+index 0000000..6ade1dd
 --- /dev/null
 +++ b/lib/services/database_worker.dart
-@@ -0,0 +1,157 @@
+@@ -0,0 +1,161 @@
 +import 'dart:async';
 +import 'dart:isolate';
 +
@@ -905,9 +905,13 @@ index 0000000..409f934
 +          }
 +          result = builder.finish();
 +        case 'collect':
-+          result = ChangedRows.collectSnapshot(request[2] as int);
++          result = app.isar.txnSync(
++            () => ChangedRows.collectSnapshot(request[2] as int),
++          );
 +        case 'collectAll':
-+          result = ChangedRows.collectAll(forcedUpdatedAt: request[2] as int);
++          result = app.isar.txnSync(
++            () => ChangedRows.collectAll(forcedUpdatedAt: request[2] as int),
++          );
 +        case 'apply':
 +          result = await const SyncEntityApplier().apply(
 +            request[2] as Map<String, dynamic>,
@@ -1642,7 +1646,7 @@ index fa8822d..6e972e1 100644
    }
  
 diff --git a/lib/utils/client_id.dart b/lib/utils/client_id.dart
-index 6b863a0..9eaf085 100644
+index 6b863a0..5a45863 100644
 --- a/lib/utils/client_id.dart
 +++ b/lib/utils/client_id.dart
 @@ -1,3 +1,5 @@
@@ -1664,7 +1668,7 @@ index 6b863a0..9eaf085 100644
  
  /// Generates a `clientId`: a value made once when a synced row is created,
  /// then only ever compared, never regenerated for that row again (see
-@@ -50,54 +47,78 @@ int generateClientId() {
+@@ -50,54 +47,90 @@ int generateClientId() {
  /// before a sync's upload is built (covers a row made earlier in the same
  /// session, which startup's sweep couldn't have seen yet).
  ///
@@ -1749,45 +1753,57 @@ index 6b863a0..9eaf085 100644
 -  });
 +  await fill(
 +    isar.categorys,
-+    isar.categorys.filter().clientIdIsNull().findAllSync(),
++    isar.categorys.where().clientIdIsNull().findAllSync(),
 +    (r) => r.id,
 +    (r) => r.clientId,
-+    (r, id) => r.clientId = id,
++    (r, id) => r
++      ..clientId = id
++      ..updatedAt = DateTime.now().millisecondsSinceEpoch,
 +  );
 +  await fill(
 +    isar.mangas,
-+    isar.mangas.filter().clientIdIsNull().findAllSync(),
++    isar.mangas.where().clientIdIsNull().findAllSync(),
 +    (r) => r.id,
 +    (r) => r.clientId,
-+    (r, id) => r.clientId = id,
++    (r, id) => r
++      ..clientId = id
++      ..updatedAt = DateTime.now().millisecondsSinceEpoch,
 +  );
 +  await fill(
 +    isar.chapters,
-+    isar.chapters.filter().clientIdIsNull().findAllSync(),
++    isar.chapters.where().clientIdIsNull().findAllSync(),
 +    (r) => r.id,
 +    (r) => r.clientId,
-+    (r, id) => r.clientId = id,
++    (r, id) => r
++      ..clientId = id
++      ..updatedAt = DateTime.now().millisecondsSinceEpoch,
 +  );
 +  await fill(
 +    isar.tracks,
-+    isar.tracks.filter().clientIdIsNull().findAllSync(),
++    isar.tracks.where().clientIdIsNull().findAllSync(),
 +    (r) => r.id,
 +    (r) => r.clientId,
-+    (r, id) => r.clientId = id,
++    (r, id) => r
++      ..clientId = id
++      ..updatedAt = DateTime.now().millisecondsSinceEpoch,
 +  );
 +  await fill(
 +    isar.historys,
-+    isar.historys.filter().clientIdIsNull().findAllSync(),
++    isar.historys.where().clientIdIsNull().findAllSync(),
 +    (r) => r.id,
 +    (r) => r.clientId,
-+    (r, id) => r.clientId = id,
++    (r, id) => r
++      ..clientId = id
++      ..updatedAt = DateTime.now().millisecondsSinceEpoch,
 +  );
 +  await fill(
 +    isar.updates,
-+    isar.updates.filter().clientIdIsNull().findAllSync(),
++    isar.updates.where().clientIdIsNull().findAllSync(),
 +    (r) => r.id,
 +    (r) => r.clientId,
-+    (r, id) => r.clientId = id,
++    (r, id) => r
++      ..clientId = id
++      ..updatedAt = DateTime.now().millisecondsSinceEpoch,
 +  );
  }
 diff --git a/test/modules/more/data_and_storage/restore_replace_test.dart b/test/modules/more/data_and_storage/restore_replace_test.dart
@@ -1824,10 +1840,10 @@ index dea87a3..fd7eaf3 100644
          doRestoreProvider(path: path, context: ctx, merge: false).future,
 diff --git a/test/services/database_worker_test.dart b/test/services/database_worker_test.dart
 new file mode 100644
-index 0000000..076114a
+index 0000000..8764c35
 --- /dev/null
 +++ b/test/services/database_worker_test.dart
-@@ -0,0 +1,221 @@
+@@ -0,0 +1,266 @@
 +import 'dart:async';
 +import 'dart:io';
 +
@@ -2046,6 +2062,51 @@ index 0000000..076114a
 +        (await app.isar.changedParts.get(sent.id!))!,
 +      ]);
 +      expect(await app.isar.changedParts.count(), 0);
++    },
++  );
++
++  test(
++    'new client IDs remain uploadable and do not reset reader progress',
++    () async {
++      await app.isar.writeTxn(() async {
++        await app.isar.mangas.put(
++          book(1)
++            ..clientId = null
++            ..updatedAt = 1,
++        );
++        await app.isar.chapters.put(
++          Chapter(
++            id: 1,
++            mangaId: 1,
++            name: 'one',
++            url: '/one',
++            isRead: true,
++            isBookmarked: true,
++            lastPageRead: '12',
++            updatedAt: 1,
++          ),
++        );
++      });
++      final since = DateTime.now().millisecondsSinceEpoch;
++      await DatabaseWorker.instance.run<void>('backfill');
++      final first = (await app.isar.chapters.get(1))!;
++      expect(first.clientId, isNotNull);
++      expect(first.updatedAt, greaterThanOrEqualTo(since));
++      expect(
++        [first.isRead, first.isBookmarked, first.lastPageRead],
++        [true, true, '12'],
++      );
++      final snapshot = await DatabaseWorker.instance.run<ChangedRows>(
++        'collect',
++        since,
++      );
++      expect(snapshot.chapters.single['clientId'], first.clientId);
++      await DatabaseWorker.instance.run<void>('backfill');
++      final again = (await app.isar.chapters.get(1))!;
++      expect(
++        [again.clientId, again.updatedAt],
++        [first.clientId, first.updatedAt],
++      );
 +    },
 +  );
 +}
