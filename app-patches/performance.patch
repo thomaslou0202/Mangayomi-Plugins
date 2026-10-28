@@ -1288,6 +1288,22 @@ index 640e790..4170465 100644
  
  Map<String, dynamic> _settingsToWire(
    Settings settings, {
+diff --git a/lib/services/sync/sync_checkpoint.dart b/lib/services/sync/sync_checkpoint.dart
+new file mode 100644
+index 0000000..26a9767
+--- /dev/null
++++ b/lib/services/sync/sync_checkpoint.dart
+@@ -0,0 +1,10 @@
++import 'dart:math';
++
++/// A server watermark must not hide local edits made during the request. A
++/// download-only run uploads nothing, so retains the previous upload boundary.
++int nextSyncCheckpoint({
++  required int serverTime,
++  required int snapshotTime,
++  required int previousCheckpoint,
++  required bool uploadedChanges,
++}) => min(serverTime, uploadedChanges ? snapshotTime : previousCheckpoint);
 diff --git a/lib/services/sync/sync_entity_applier.dart b/lib/services/sync/sync_entity_applier.dart
 index 3332557..62c17e0 100644
 --- a/lib/services/sync/sync_entity_applier.dart
@@ -1428,7 +1444,7 @@ index 3332557..62c17e0 100644
    return incoming
      ..id = current.id
 diff --git a/lib/services/sync_server.dart b/lib/services/sync_server.dart
-index fa8822d..70f6864 100644
+index fa8822d..6e972e1 100644
 --- a/lib/services/sync_server.dart
 +++ b/lib/services/sync_server.dart
 @@ -1,9 +1,13 @@
@@ -1445,15 +1461,16 @@ index fa8822d..70f6864 100644
  import 'dart:convert';
  import 'dart:math';
  
-@@ -25,7 +29,6 @@ import 'package:mangayomi/providers/l10n_providers.dart';
+@@ -25,7 +29,7 @@ import 'package:mangayomi/providers/l10n_providers.dart';
  import 'package:mangayomi/services/http/m_client.dart';
  import 'package:mangayomi/services/sync/sync_api_client.dart';
  import 'package:mangayomi/services/sync/sync_change_collector.dart';
 -import 'package:mangayomi/services/sync/sync_entity_applier.dart';
++import 'package:mangayomi/services/sync/sync_checkpoint.dart';
  import 'package:mangayomi/utils/client_id.dart';
  import 'package:mangayomi/utils/platform_utils.dart';
  
-@@ -45,8 +48,10 @@ const _desktopOAuthCallbackPort = 48765;
+@@ -45,8 +49,10 @@ const _desktopOAuthCallbackPort = 48765;
  
  @riverpod
  class SyncServer extends _$SyncServer {
@@ -1465,7 +1482,7 @@ index fa8822d..70f6864 100644
    late final _apiClient = SyncApiClient(http);
  
    @override
-@@ -155,6 +160,19 @@ class SyncServer extends _$SyncServer {
+@@ -155,6 +161,19 @@ class SyncServer extends _$SyncServer {
      bool bypassRestoreGuard = false,
    }) async {
      if (!ref.mounted) return false;
@@ -1485,7 +1502,7 @@ index fa8822d..70f6864 100644
      // A restore in progress owns the sync server state until its own
      // post-restore upload runs (that call passes bypassRestoreGuard: true).
      // Anything else - the periodic timer or a manual trigger - must wait,
-@@ -166,11 +184,16 @@ class SyncServer extends _$SyncServer {
+@@ -166,11 +185,16 @@ class SyncServer extends _$SyncServer {
        return false;
      }
      if (!silent && l10n != null) {
@@ -1503,7 +1520,7 @@ index fa8822d..70f6864 100644
        if (!await _apiClient.checkVersion(_getServer())) {
          if (!silent && l10n != null) {
            botToast(l10n.sync_failed, second: 5);
-@@ -210,7 +233,13 @@ class SyncServer extends _$SyncServer {
+@@ -210,7 +234,13 @@ class SyncServer extends _$SyncServer {
        }
        return false;
      } finally {
@@ -1518,7 +1535,7 @@ index fa8822d..70f6864 100644
      }
    }
  
-@@ -220,12 +249,15 @@ class SyncServer extends _$SyncServer {
+@@ -220,12 +250,15 @@ class SyncServer extends _$SyncServer {
    // until every entity has fully caught up, then saves the new `since`.
    // ------------------------------------------------------------------
  
@@ -1536,7 +1553,7 @@ index fa8822d..70f6864 100644
      );
    }
  
-@@ -237,6 +269,7 @@ class SyncServer extends _$SyncServer {
+@@ -237,6 +270,7 @@ class SyncServer extends _$SyncServer {
      required int since,
      ChangedRows? changed,
    }) async {
@@ -1544,7 +1561,7 @@ index fa8822d..70f6864 100644
      final chunks = changed?.chunked(_maxRowsPerEntity) ?? const [];
      final progress = ref.read(syncProgressProvider(syncId: syncId).notifier);
      progress.addTotal(chunks.length);
-@@ -246,7 +279,7 @@ class SyncServer extends _$SyncServer {
+@@ -246,7 +280,7 @@ class SyncServer extends _$SyncServer {
      var chunkIndex = 0;
  
      while (true) {
@@ -1553,7 +1570,7 @@ index fa8822d..70f6864 100644
        final hasChunk = chunkIndex < chunks.length;
        final body = <String, dynamic>{
          'since': since,
-@@ -257,7 +290,7 @@ class SyncServer extends _$SyncServer {
+@@ -257,7 +291,7 @@ class SyncServer extends _$SyncServer {
        if (hasChunk) chunkIndex += 1;
  
        final response = await _postSync(body);
@@ -1562,19 +1579,25 @@ index fa8822d..70f6864 100644
        if (hasChunk) progress.addDone(1);
        _trackDownloadProgress(progress, response);
  
-@@ -269,7 +302,10 @@ class SyncServer extends _$SyncServer {
+@@ -269,7 +303,16 @@ class SyncServer extends _$SyncServer {
        if (chunkIndex >= chunks.length && !hasMore) {
          final syncedAt = response['syncedAt'] as int?;
          if (syncedAt != null) {
 -          notifier.setSince(syncedAt);
 +          // Edits made while uploading must still be eligible next time.
 +          notifier.setSince(
-+            min(syncedAt, changed?.collectedAt ?? syncStartedAt),
++            nextSyncCheckpoint(
++              serverTime: syncedAt,
++              snapshotTime: changed?.collectedAt ?? syncStartedAt,
++              previousCheckpoint:
++                  ref.read(synchingProvider(syncId: syncId)).since ?? 0,
++              uploadedChanges: changed != null,
++            ),
 +          );
            notifier.setLastSync(DateTime.now().millisecondsSinceEpoch);
            await changed?.clearUploaded(notifier);
          }
-@@ -278,6 +314,12 @@ class SyncServer extends _$SyncServer {
+@@ -278,6 +321,12 @@ class SyncServer extends _$SyncServer {
      }
    }
  
@@ -1587,7 +1610,7 @@ index fa8822d..70f6864 100644
    // Adds this response's contribution to the progress bar using docs/sync_api.md's totalCounts and per-page row counts.
    void _trackDownloadProgress(
      SyncProgress progress,
-@@ -314,13 +356,16 @@ class SyncServer extends _$SyncServer {
+@@ -314,13 +363,16 @@ class SyncServer extends _$SyncServer {
    // traded for not being a one-click way to destroy real data by accident.
    // ------------------------------------------------------------------
  
@@ -1606,7 +1629,7 @@ index fa8822d..70f6864 100644
      );
    }
  
-@@ -361,7 +406,10 @@ class SyncServer extends _$SyncServer {
+@@ -361,7 +413,10 @@ class SyncServer extends _$SyncServer {
    // ------------------------------------------------------------------
  
    Future<void> _applyPulledEntities(Map<String, dynamic> response) async {
@@ -1801,10 +1824,10 @@ index dea87a3..fd7eaf3 100644
          doRestoreProvider(path: path, context: ctx, merge: false).future,
 diff --git a/test/services/database_worker_test.dart b/test/services/database_worker_test.dart
 new file mode 100644
-index 0000000..7d0d4ca
+index 0000000..076114a
 --- /dev/null
 +++ b/test/services/database_worker_test.dart
-@@ -0,0 +1,212 @@
+@@ -0,0 +1,221 @@
 +import 'dart:async';
 +import 'dart:io';
 +
@@ -1967,7 +1990,14 @@ index 0000000..7d0d4ca
 +      await app.isar.writeTxn(() async {
 +        await app.isar.mangas.put(book(1));
 +        await app.isar.chapters.putAll([
-+          Chapter(id: 5, clientId: 90, mangaId: 1, name: 'correct', url: '/5'),
++          Chapter(
++            id: 5,
++            clientId: 90,
++            mangaId: 1,
++            name: 'correct',
++            url: '/5',
++            isRead: true,
++          ),
 +          Chapter(id: 9, clientId: 5, mangaId: 1, name: 'other', url: '/9'),
 +        ]);
 +        await app.isar.historys.put(
@@ -1981,6 +2011,8 @@ index 0000000..7d0d4ca
 +        );
 +      });
 +      expect(chapterRepository.getByClientId(5)!.id, 9);
++      final sourceOrder = await chapterRepository.watchByMangaId(1).first;
++      expect(sourceOrder.map((chapter) => chapter.id), [5, 9]);
 +      final snapshot = await DatabaseWorker.instance.run<ChangedRows>(
 +        'collect',
 +        0,
@@ -2135,4 +2167,47 @@ index 0000000..904ba74
 +      expect(response['syncedAt'], 10);
 +    },
 +  );
++}
+diff --git a/test/services/sync_checkpoint_test.dart b/test/services/sync_checkpoint_test.dart
+new file mode 100644
+index 0000000..d5491a8
+--- /dev/null
++++ b/test/services/sync_checkpoint_test.dart
+@@ -0,0 +1,37 @@
++import 'package:flutter_test/flutter_test.dart';
++import 'package:mangayomi/services/sync/sync_checkpoint.dart';
++
++void main() {
++  test('edits made during upload remain after the next checkpoint', () {
++    final checkpoint = nextSyncCheckpoint(
++      serverTime: 300,
++      snapshotTime: 200,
++      previousCheckpoint: 100,
++      uploadedChanges: true,
++    );
++    expect(checkpoint, 200);
++    expect(250 >= checkpoint, isTrue); // a reading event during the request
++  });
++  test('download-only does not acknowledge unsent local changes', () {
++    expect(
++      nextSyncCheckpoint(
++        serverTime: 300,
++        snapshotTime: 200,
++        previousCheckpoint: 100,
++        uploadedChanges: false,
++      ),
++      100,
++    );
++  });
++  test('a server clock behind this device is still a safe watermark', () {
++    expect(
++      nextSyncCheckpoint(
++        serverTime: 150,
++        snapshotTime: 200,
++        previousCheckpoint: 100,
++        uploadedChanges: true,
++      ),
++      150,
++    );
++  });
 +}

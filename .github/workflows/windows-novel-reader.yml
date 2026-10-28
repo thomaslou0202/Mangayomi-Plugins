@@ -70,7 +70,7 @@ jobs:
         run: dart analyze lib/modules/novel/widgets/novel_illustration.dart lib/modules/novel/novel_reader_view.dart lib/modules/novel/utils/novel_paginator.dart test/modules/novel_illustration_test.dart test/modules/novel_inline_html_test.dart
       - name: Test real database background work and large sync payloads
         working-directory: app
-        run: flutter test --no-pub test/services/database_worker_test.dart test/services/library_chapter_summary_test.dart test/services/sync_background_transport_test.dart test/modules/library/library_unread_sort_test.dart test/repositories/manga_repository_test.dart test/modules/more/data_and_storage/restore_replace_test.dart test/settings/settings_clobber_test.dart
+        run: flutter test --no-pub test/services/database_worker_test.dart test/services/library_chapter_summary_test.dart test/services/sync_background_transport_test.dart test/services/sync_checkpoint_test.dart test/modules/library/library_unread_sort_test.dart test/repositories/manga_repository_test.dart test/modules/more/data_and_storage/restore_replace_test.dart test/settings/settings_clobber_test.dart
       - name: Test inline illustrations and existing pagination
         working-directory: app
         run: flutter test --no-pub test/modules/novel_illustration_test.dart test/modules/novel_inline_html_test.dart test/modules/novel_double_page_test.dart test/modules/novel_ref_after_dispose_test.dart test/l10n/traditional_chinese_test.dart test/l10n/episode_count_test.dart
