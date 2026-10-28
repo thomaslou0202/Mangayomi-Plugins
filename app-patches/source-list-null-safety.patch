@@ -1,0 +1,411 @@
+diff --git a/lib/models/source.dart b/lib/models/source.dart
+index 840ffde..e0a1b37 100644
+--- a/lib/models/source.dart
++++ b/lib/models/source.dart
+@@ -132,31 +132,31 @@ class Source {
+     baseUrl = json['baseUrl'];
+     dateFormat = json['dateFormat'];
+     dateFormatLocale = json['dateFormatLocale'];
+-    hasCloudflare = json['hasCloudflare'];
++    hasCloudflare = json['hasCloudflare'] ?? false;
+     headers = json['headers'];
+     supportLatest = json['supportLatest'];
+     filterList = json['filterList'];
+     preferenceList = json['preferenceList'];
+-    iconUrl = json['iconUrl'];
++    iconUrl = json['iconUrl'] ?? '';
+     id = json['id'] is int ? json['id'] : null;
+-    isActive = json['isActive'];
+-    isAdded = json['isAdded'];
+-    isFullData = json['isFullData'];
++    isActive = json['isActive'] ?? true;
++    isAdded = json['isAdded'] ?? false;
++    isFullData = json['isFullData'] ?? false;
+     isManga = json['isManga'];
+     itemType = ItemType.values[json['itemType'] ?? 0];
+-    isNsfw = json['isNsfw'];
+-    isPinned = json['isPinned'];
+-    lang = json['lang'];
+-    lastUsed = json['lastUsed'];
+-    name = json['name'];
++    isNsfw = json['isNsfw'] ?? false;
++    isPinned = json['isPinned'] ?? false;
++    lang = json['lang'] ?? '';
++    lastUsed = json['lastUsed'] ?? false;
++    name = json['name'] ?? '';
+     sourceCode = json['sourceCode'];
+     sourceCodeUrl = json['sourceCodeUrl'];
+     typeSource = json['typeSource'];
+     version = json['version'];
+     versionLast = json['versionLast'];
+     additionalParams = json['additionalParams'] ?? "";
+-    isObsolete = json['isObsolete'];
+-    isLocal = json['isLocal'];
++    isObsolete = json['isObsolete'] ?? false;
++    isLocal = json['isLocal'] ?? false;
+     sourceCodeLanguage =
+         SourceCodeLanguage.values[json['sourceCodeLanguage'] ?? 0];
+     notes = json['notes'] ?? "";
+diff --git a/lib/modules/browse/sources/sources_screen.dart b/lib/modules/browse/sources/sources_screen.dart
+index 48a8665..26e7e4d 100644
+--- a/lib/modules/browse/sources/sources_screen.dart
++++ b/lib/modules/browse/sources/sources_screen.dart
+@@ -150,10 +150,14 @@ class _SourcesScreenState extends ConsumerState<SourcesScreen> {
+               ],
+             );
+           }
+-          final lastUsedEntries = sources.where((e) => e.lastUsed!).toList();
+-          final isPinnedEntries = sources.where((e) => e.isPinned!).toList();
++          final lastUsedEntries = sources
++              .where((e) => (e.lastUsed ?? false))
++              .toList();
++          final isPinnedEntries = sources
++              .where((e) => (e.isPinned ?? false))
++              .toList();
+           final allEntriesWithoutIspinned = sources
+-              .where((element) => !element.isPinned!)
++              .where((element) => !(element.isPinned ?? false))
+               .toList();
+           final showWarning = sources
+               .where((e) => e.sourceCodeLanguage == SourceCodeLanguage.mihon)
+@@ -192,7 +196,7 @@ class _SourcesScreenState extends ConsumerState<SourcesScreen> {
+                   },
+                   groupComparator: (group1, group2) => group1.compareTo(group2),
+                   itemComparator: (item1, item2) =>
+-                      item1.name!.compareTo(item2.name!),
++                      (item1.name ?? '').compareTo(item2.name ?? ''),
+                   order: GroupedListOrder.ASC,
+                 ),
+                 CustomSliverGroupedListView<Source, String>(
+@@ -217,13 +221,13 @@ class _SourcesScreenState extends ConsumerState<SourcesScreen> {
+                   },
+                   groupComparator: (group1, group2) => group1.compareTo(group2),
+                   itemComparator: (item1, item2) =>
+-                      item1.name!.compareTo(item2.name!),
++                      (item1.name ?? '').compareTo(item2.name ?? ''),
+                   order: GroupedListOrder.ASC,
+                 ),
+                 CustomSliverGroupedListView<Source, String>(
+                   elements: allEntriesWithoutIspinned,
+                   groupBy: (element) =>
+-                      completeLanguageName(element.lang!.toLowerCase()),
++                      completeLanguageName((element.lang ?? '').toLowerCase()),
+                   groupSeparatorBuilder: (String groupByValue) => Padding(
+                     padding: const EdgeInsets.only(left: 12),
+                     child: Row(
+@@ -243,7 +247,7 @@ class _SourcesScreenState extends ConsumerState<SourcesScreen> {
+                   },
+                   groupComparator: (group1, group2) => group1.compareTo(group2),
+                   itemComparator: (item1, item2) =>
+-                      item1.name!.compareTo(item2.name!),
++                      (item1.name ?? '').compareTo(item2.name ?? ''),
+                   order: GroupedListOrder.ASC,
+                 ),
+                 SliverToBoxAdapter(
+diff --git a/lib/modules/browse/sources/widgets/source_list_tile.dart b/lib/modules/browse/sources/widgets/source_list_tile.dart
+index 53a4826..bf1cd89 100644
+--- a/lib/modules/browse/sources/widgets/source_list_tile.dart
++++ b/lib/modules/browse/sources/widgets/source_list_tile.dart
+@@ -11,6 +11,11 @@ import 'package:mangayomi/utils/extensions/build_context_extensions.dart';
+ import 'package:mangayomi/utils/item_type_localization.dart';
+ import 'package:mangayomi/utils/language.dart';
+ 
++String _sourceName(Source source, BuildContext context) {
++  final name = source.name?.trim() ?? '';
++  return name.isEmpty ? context.l10n.unknown : name;
++}
++
+ class SourceListTile extends StatelessWidget {
+   final ItemType itemType;
+   final Source source;
+@@ -41,10 +46,10 @@ class SourceListTile extends StatelessWidget {
+                 .withValues(alpha: 0.5),
+             borderRadius: BorderRadius.circular(5),
+           ),
+-          child: source.iconUrl!.isEmpty
++          child: (source.iconUrl ?? '').isEmpty
+               ? const Icon(Icons.extension_rounded)
+               : cachedNetworkImage(
+-                  imageUrl: source.iconUrl!,
++                  imageUrl: source.iconUrl ?? '',
+                   fit: BoxFit.contain,
+                   width: 37,
+                   height: 37,
+@@ -59,7 +64,7 @@ class SourceListTile extends StatelessWidget {
+         subtitle: Row(
+           children: [
+             Text(
+-              completeLanguageName(source.lang!.toLowerCase()),
++              completeLanguageName((source.lang ?? '').toLowerCase()),
+               style: const TextStyle(fontWeight: FontWeight.w300, fontSize: 12),
+             ),
+             if (source.isNsfw ?? false)
+@@ -88,7 +93,7 @@ class SourceListTile extends StatelessWidget {
+         ),
+         title: Text(
+           !isLocal
+-              ? source.name!
++              ? _sourceName(source, context)
+               : "${context.l10n.local_source} ${source.itemType.localized(context.l10n)}",
+         ),
+         trailing: SizedBox(
+@@ -117,11 +122,15 @@ class SourceListTile extends StatelessWidget {
+                 IconButton(
+                   padding: const EdgeInsets.all(0),
+                   onPressed: () {
+-                    sourceRepository.save(source..isPinned = !source.isPinned!);
++                    sourceRepository.save(
++                      source..isPinned = !(source.isPinned ?? false),
++                    );
+                   },
+                   icon: Icon(
+                     Icons.push_pin_outlined,
+-                    color: source.isPinned! ? context.primaryColor : null,
++                    color: (source.isPinned ?? false)
++                        ? context.primaryColor
++                        : null,
+                   ),
+                 ),
+             ],
+@@ -191,10 +200,10 @@ class TvSourceRow extends StatelessWidget {
+                             .withValues(alpha: 0.5),
+                         borderRadius: BorderRadius.circular(5),
+                       ),
+-                      child: source.iconUrl!.isEmpty
++                      child: (source.iconUrl ?? '').isEmpty
+                           ? const Icon(Icons.extension_rounded)
+                           : cachedNetworkImage(
+-                              imageUrl: source.iconUrl!,
++                              imageUrl: source.iconUrl ?? '',
+                               fit: BoxFit.contain,
+                               width: 37,
+                               height: 37,
+@@ -216,7 +225,7 @@ class TvSourceRow extends StatelessWidget {
+                         children: [
+                           Text(
+                             !isLocal
+-                                ? source.name!
++                                ? _sourceName(source, context)
+                                 : "${context.l10n.local_source} ${source.itemType.localized(context.l10n)}",
+                             style: const TextStyle(fontSize: 16),
+                             maxLines: 1,
+@@ -226,7 +235,7 @@ class TvSourceRow extends StatelessWidget {
+                             children: [
+                               Text(
+                                 completeLanguageName(
+-                                  source.lang!.toLowerCase(),
++                                  (source.lang ?? '').toLowerCase(),
+                                 ),
+                                 style: const TextStyle(
+                                   fontWeight: FontWeight.w300,
+@@ -282,13 +291,17 @@ class TvSourceRow extends StatelessWidget {
+             TvRowButton(
+               focusNode: pinNode,
+               onTap: () {
+-                sourceRepository.save(source..isPinned = !source.isPinned!);
++                sourceRepository.save(
++                  source..isPinned = !(source.isPinned ?? false),
++                );
+               },
+               child: Padding(
+                 padding: const EdgeInsets.all(12),
+                 child: Icon(
+                   Icons.push_pin_outlined,
+-                  color: source.isPinned! ? context.primaryColor : null,
++                  color: (source.isPinned ?? false)
++                      ? context.primaryColor
++                      : null,
+                 ),
+               ),
+             ),
+diff --git a/test/modules/browse/source_metadata_test.dart b/test/modules/browse/source_metadata_test.dart
+new file mode 100644
+index 0000000..1184353
+--- /dev/null
++++ b/test/modules/browse/source_metadata_test.dart
+@@ -0,0 +1,185 @@
++import 'dart:io';
++
++import 'package:flutter/material.dart';
++import 'package:flutter_riverpod/flutter_riverpod.dart';
++import 'package:flutter_test/flutter_test.dart';
++import 'package:isar_community/isar.dart';
++import 'package:mangayomi/l10n/generated/app_localizations.dart';
++import 'package:mangayomi/main.dart' as app;
++import 'package:mangayomi/models/manga.dart';
++import 'package:mangayomi/models/settings.dart';
++import 'package:mangayomi/models/source.dart';
++import 'package:mangayomi/modules/browse/sources/sources_screen.dart';
++import 'package:mangayomi/modules/browse/sources/widgets/source_list_tile.dart';
++import 'package:mangayomi/modules/more/settings/browse/providers/browse_state_provider.dart';
++import 'package:mangayomi/repositories/db_write_queue.dart';
++
++void main() {
++  TestWidgetsFlutterBinding.ensureInitialized();
++  late Directory directory;
++
++  setUpAll(() async {
++    final overrides = HttpOverrides.current;
++    HttpOverrides.global = null;
++    try {
++      await Isar.initializeIsarCore(download: true);
++    } finally {
++      HttpOverrides.global = overrides;
++    }
++  });
++  setUp(() async {
++    directory = await Directory.systemTemp.createTemp('source_metadata_');
++    app.isar = await Isar.open(
++      [SourceSchema, SettingsSchema],
++      directory: directory.path,
++      name: 'source_${directory.path.hashCode}',
++    );
++    await app.isar.writeTxn(() => app.isar.settings.put(Settings()));
++  });
++  tearDown(() async {
++    await app.isar.close(deleteFromDisk: true);
++    await directory.delete(recursive: true);
++  });
++
++  Source legacy(ItemType type) =>
++      Source(
++          id: 42,
++          name: 'Legacy ${type.name}',
++          lang: 'zh',
++          itemType: type,
++          isAdded: true,
++        )
++        ..lastUsed = null
++        ..isPinned = null
++        ..isNsfw = null
++        ..iconUrl = null;
++
++  Future<void> show(
++    WidgetTester tester,
++    ItemType type,
++    List<Source> sources,
++  ) async {
++    await tester.pumpWidget(
++      ProviderScope(
++        overrides: [
++          getSourcesStreamProvider(type)
++              .overrideWith((ref) => Stream.value(sources)),
++          isExtensionServerInstalledStreamProvider.overrideWith(
++            (ref) => Stream.value(true),
++          ),
++        ],
++        child: MaterialApp(
++          locale: const Locale('en'),
++          localizationsDelegates: AppLocalizations.localizationsDelegates,
++          supportedLocales: AppLocalizations.supportedLocales,
++          home: Scaffold(
++            body: SourcesScreen(
++              itemType: type,
++              tabs: const [],
++              tabIndex: (_) {},
++            ),
++          ),
++        ),
++      ),
++    );
++    await tester.pumpAndSettle();
++  }
++
++  test('old JSON uses constructor defaults for missing display metadata', () {
++    final source = Source.fromJson({'id': 7, 'itemType': 0});
++    expect(
++      [source.lastUsed, source.isPinned, source.isNsfw, source.isAdded],
++      [false, false, false, false],
++    );
++    expect(source.isActive, true);
++    expect([source.name, source.lang, source.iconUrl], ['', '', '']);
++  });
++  test(
++    'explicit nulls are repaired while saved preferences and identity survive',
++    () {
++      final source = Source.fromJson({
++        'id': 8,
++        'itemType': 0,
++        'name': 'Saved source',
++        'isActive': false,
++        'isAdded': true,
++        'isPinned': true,
++        'lastUsed': true,
++        'isNsfw': true,
++        'lang': null,
++        'iconUrl': null,
++        'sourceCode': 'existing-code',
++      });
++      expect(
++        [source.id, source.name, source.sourceCode],
++        [8, 'Saved source', 'existing-code'],
++      );
++      expect(
++        [
++          source.isActive,
++          source.isAdded,
++          source.isPinned,
++          source.lastUsed,
++          source.isNsfw,
++        ],
++        [false, true, true, true, true],
++      );
++      expect([source.lang, source.iconUrl], ['', '']);
++    },
++  );
++
++  for (final type in ItemType.values) {
++    testWidgets('${type.name} sources render persisted nullable flags', (
++      tester,
++    ) async {
++      await app.isar.writeTxn(() => app.isar.sources.put(legacy(type)));
++      final source = (await app.isar.sources.get(42))!;
++      expect(source.lastUsed, isNull); // Old Isar rows bypass Source.fromJson.
++      expect(source.isPinned, isNull);
++      await show(tester, type, [source]);
++      expect(find.text('Legacy ${type.name}'), findsOneWidget);
++      expect(
++        find.byType(SourceListTile),
++        findsNWidgets(2),
++      ); // Includes local files.
++      expect(tester.takeException(), isNull);
++    });
++  }
++  testWidgets('missing language and name do not break sorting or tiles', (
++    tester,
++  ) async {
++    final source = legacy(ItemType.manga)
++      ..lang = null
++      ..name = null;
++    await show(tester, ItemType.manga, [
++      source,
++      Source(id: 43, name: 'Normal', lang: 'zh'),
++    ]);
++    expect(find.text('Unknown'), findsOneWidget);
++    expect(find.text('Normal'), findsOneWidget);
++    expect(tester.takeException(), isNull);
++  });
++  testWidgets(
++    'pinning a legacy source persists the first pin without an exception',
++    (tester) async {
++      final source = legacy(ItemType.manga);
++      await app.isar.writeTxn(() => app.isar.sources.put(source));
++      await show(tester, ItemType.manga, [source]);
++      await tester.tap(
++        find.widgetWithIcon(IconButton, Icons.push_pin_outlined),
++      );
++      await tester.runAsync(() => dbWriteQueue.run(() {}));
++      expect(app.isar.sources.getSync(42)!.isPinned, true);
++      expect(tester.takeException(), isNull);
++    },
++  );
++  testWidgets(
++    'no enabled sources still shows the empty state and local files',
++    (tester) async {
++      await show(tester, ItemType.manga, []);
++      expect(find.text('No sources installed!'), findsOneWidget);
++      expect(find.byType(SourceListTile), findsOneWidget);
++      expect(tester.takeException(), isNull);
++    },
++  );
++}

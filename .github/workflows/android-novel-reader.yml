@@ -1,4 +1,4 @@
-name: Build Android background library and sync app
+name: Build Android source metadata fix app
 
 on:
   push:
@@ -46,6 +46,8 @@ jobs:
           git apply ../patches/app-patches/traditional-chinese.patch
           git apply --check ../patches/app-patches/performance.patch
           git apply ../patches/app-patches/performance.patch
+          git apply --check ../patches/app-patches/source-list-null-safety.patch
+          git apply ../patches/app-patches/source-list-null-safety.patch
           cp ../patches/android-tests/SyncServiceInstrumentation.java android/app/src/androidTest/java/com/kodjodevf/mangayomi/SyncServiceInstrumentation.java
       - name: Install native build tools
         run: |
@@ -95,12 +97,15 @@ jobs:
       - name: Analyze background library and sync code
         working-directory: app
         run: dart analyze $(cat ../patches/app-patches/performance-files.txt)
+      - name: Analyze legacy source metadata fix
+        working-directory: app
+        run: dart analyze $(cat ../patches/app-patches/source-list-files.txt)
       - name: Analyze changed reader code
         working-directory: app
         run: dart analyze lib/modules/novel/widgets/novel_illustration.dart lib/modules/novel/novel_reader_view.dart lib/modules/novel/utils/novel_paginator.dart test/modules/novel_illustration_test.dart test/modules/novel_inline_html_test.dart
       - name: Test real database background work and large sync payloads
         working-directory: app
-        run: flutter test --no-pub test/services/database_worker_test.dart test/services/library_chapter_summary_test.dart test/services/sync_background_transport_test.dart test/services/sync_checkpoint_test.dart test/modules/library/library_unread_sort_test.dart test/repositories/manga_repository_test.dart test/modules/more/data_and_storage/restore_replace_test.dart test/settings/settings_clobber_test.dart
+        run: flutter test --no-pub test/modules/browse/source_metadata_test.dart test/services/database_worker_test.dart test/services/library_chapter_summary_test.dart test/services/sync_background_transport_test.dart test/services/sync_checkpoint_test.dart test/modules/library/library_unread_sort_test.dart test/repositories/manga_repository_test.dart test/modules/more/data_and_storage/restore_replace_test.dart test/settings/settings_clobber_test.dart
       - name: Test inline illustrations and existing pagination
         working-directory: app
         run: flutter test --no-pub test/modules/novel_illustration_test.dart test/modules/novel_inline_html_test.dart test/modules/novel_double_page_test.dart test/modules/novel_ref_after_dispose_test.dart test/l10n/traditional_chinese_test.dart test/l10n/episode_count_test.dart
@@ -122,20 +127,20 @@ jobs:
           PY
       - name: Build universal signed Android APK
         working-directory: app
-        run: flutter build apk --release --no-pub --build-number=130
+        run: flutter build apk --release --no-pub --build-number=131
       - name: Build Android background service device test
         working-directory: app/android
         run: ./gradlew assembleReleaseAndroidTest
       - name: Verify and package Android APK
         run: |
           mkdir -p dist
-          cp app/build/app/outputs/flutter-apk/app-release.apk dist/Mangayomi-0.9.9-performance-android.apk
+          cp app/build/app/outputs/flutter-apk/app-release.apk dist/Mangayomi-0.9.9-source-fix-android.apk
           cp patches/app-patches/ANDROID.md dist/ANDROID-README.md
           cp patches/app-patches/PERFORMANCE.md dist/PERFORMANCE-README.md
           cp app/build/app/outputs/apk/androidTest/release/app-release-androidTest.apk dist/background-service-test.apk
           cp app/LICENSE dist/LICENSE.Mangayomi.txt
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/Mangayomi-0.9.9-performance-android.apk > dist/signature-verification.txt
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging dist/Mangayomi-0.9.9-performance-android.apk > dist/apk-metadata.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/Mangayomi-0.9.9-source-fix-android.apk > dist/signature-verification.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging dist/Mangayomi-0.9.9-source-fix-android.apk > dist/apk-metadata.txt
           sha256sum dist/*.apk | tee dist/SHA256SUMS.txt
           cd app/android && ./gradlew --stop
       - name: Enable emulator acceleration
@@ -161,7 +166,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Mangayomi-0.9.9-performance-android
+          name: Mangayomi-0.9.9-source-fix-android
           path: dist/
           if-no-files-found: error
           retention-days: 14

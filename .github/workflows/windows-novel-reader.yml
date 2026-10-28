@@ -1,4 +1,4 @@
-name: Build Windows background library and sync app
+name: Build Windows source metadata fix app
 
 on:
   push:
@@ -39,6 +39,8 @@ jobs:
           git apply ../patches/app-patches/traditional-chinese.patch
           git apply --check --exclude='android/**' ../patches/app-patches/performance.patch
           git apply --exclude='android/**' ../patches/app-patches/performance.patch
+          git apply --check ../patches/app-patches/source-list-null-safety.patch
+          git apply ../patches/app-patches/source-list-null-safety.patch
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -65,18 +67,24 @@ jobs:
         run: |
           $targets = Get-Content ../patches/app-patches/performance-files.txt
           dart analyze @targets
+      - name: Analyze legacy source metadata fix
+        working-directory: app
+        shell: pwsh
+        run: |
+          $targets = Get-Content ../patches/app-patches/source-list-files.txt
+          dart analyze @targets
       - name: Analyze changed reader code
         working-directory: app
         run: dart analyze lib/modules/novel/widgets/novel_illustration.dart lib/modules/novel/novel_reader_view.dart lib/modules/novel/utils/novel_paginator.dart test/modules/novel_illustration_test.dart test/modules/novel_inline_html_test.dart
       - name: Test real database background work and large sync payloads
         working-directory: app
-        run: flutter test --no-pub test/services/database_worker_test.dart test/services/library_chapter_summary_test.dart test/services/sync_background_transport_test.dart test/services/sync_checkpoint_test.dart test/modules/library/library_unread_sort_test.dart test/repositories/manga_repository_test.dart test/modules/more/data_and_storage/restore_replace_test.dart test/settings/settings_clobber_test.dart
+        run: flutter test --no-pub test/modules/browse/source_metadata_test.dart test/services/database_worker_test.dart test/services/library_chapter_summary_test.dart test/services/sync_background_transport_test.dart test/services/sync_checkpoint_test.dart test/modules/library/library_unread_sort_test.dart test/repositories/manga_repository_test.dart test/modules/more/data_and_storage/restore_replace_test.dart test/settings/settings_clobber_test.dart
       - name: Test inline illustrations and existing pagination
         working-directory: app
         run: flutter test --no-pub test/modules/novel_illustration_test.dart test/modules/novel_inline_html_test.dart test/modules/novel_double_page_test.dart test/modules/novel_ref_after_dispose_test.dart test/l10n/traditional_chinese_test.dart test/l10n/episode_count_test.dart
       - name: Build Windows release
         working-directory: app
-        run: flutter build windows --release --no-pub --build-number=130
+        run: flutter build windows --release --no-pub --build-number=131
       - name: Package test app
         shell: pwsh
         run: |
@@ -84,12 +92,12 @@ jobs:
           Copy-Item patches/app-patches/README.md app/build/windows/x64/runner/Release/ILLUSTRATIONS-README.md
           Copy-Item patches/app-patches/PERFORMANCE.md app/build/windows/x64/runner/Release/PERFORMANCE-README.md
           Copy-Item app/LICENSE app/build/windows/x64/runner/Release/LICENSE.Mangayomi.txt
-          Compress-Archive -Path app/build/windows/x64/runner/Release/* -DestinationPath dist/Mangayomi-0.9.9-performance-windows.zip
-          Get-FileHash dist/Mangayomi-0.9.9-performance-windows.zip -Algorithm SHA256 | Format-List
+          Compress-Archive -Path app/build/windows/x64/runner/Release/* -DestinationPath dist/Mangayomi-0.9.9-source-fix-windows.zip
+          Get-FileHash dist/Mangayomi-0.9.9-source-fix-windows.zip -Algorithm SHA256 | Format-List
       - name: Upload Windows test app
         uses: actions/upload-artifact@v4
         with:
-          name: Mangayomi-0.9.9-performance-windows
-          path: dist/Mangayomi-0.9.9-performance-windows.zip
+          name: Mangayomi-0.9.9-source-fix-windows
+          path: dist/Mangayomi-0.9.9-source-fix-windows.zip
           if-no-files-found: error
           retention-days: 14

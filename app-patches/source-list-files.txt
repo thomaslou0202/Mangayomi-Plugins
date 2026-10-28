@@ -1,0 +1,4 @@
+lib/models/source.dart
+lib/modules/browse/sources/sources_screen.dart
+lib/modules/browse/sources/widgets/source_list_tile.dart
+test/modules/browse/source_metadata_test.dart

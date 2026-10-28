@@ -2,7 +2,7 @@
 set -euo pipefail
 package=com.kodjodevf.mangayomi.illustrations
 activity=com.kodjodevf.mangayomi.MainActivity
-adb install -r dist/Mangayomi-0.9.9-performance-android.apk
+adb install -r dist/Mangayomi-0.9.9-source-fix-android.apk
 # Fresh installs otherwise open Android's storage settings instead of the app.
 adb shell appops set --uid "$package" MANAGE_EXTERNAL_STORAGE allow
 adb logcat -c
