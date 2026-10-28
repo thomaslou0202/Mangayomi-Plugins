@@ -1,0 +1,1871 @@
+diff --git a/android/app/build.gradle b/android/app/build.gradle
+index 1057a5f..39484cc 100644
+--- a/android/app/build.gradle
++++ b/android/app/build.gradle
+@@ -47,6 +47,7 @@ android {
+     }
+ 
+     defaultConfig {
++        testInstrumentationRunner "com.kodjodevf.mangayomi.SyncServiceInstrumentation"
+         
+         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+         applicationId "com.kodjodevf.mangayomi.illustrations"
+@@ -64,6 +65,7 @@ android {
+         }
+     }
+ 
++    testBuildType "release"
+     signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+diff --git a/android/app/src/androidTest/java/com/kodjodevf/mangayomi/SyncServiceInstrumentation.java b/android/app/src/androidTest/java/com/kodjodevf/mangayomi/SyncServiceInstrumentation.java
+new file mode 100644
+index 0000000..8ff82f7
+--- /dev/null
++++ b/android/app/src/androidTest/java/com/kodjodevf/mangayomi/SyncServiceInstrumentation.java
+@@ -0,0 +1,60 @@
++package com.kodjodevf.mangayomi;
++
++import android.app.Instrumentation;
++import android.content.Intent;
++import android.os.Build;
++import android.os.Bundle;
++import android.os.SystemClock;
++
++/** Device test only; excluded from the distributed APK. Uses no sync account. */
++public class SyncServiceInstrumentation extends Instrumentation {
++    @Override public void onCreate(Bundle arguments) {
++        super.onCreate(arguments);
++        start();
++    }
++
++    private void check(boolean condition, String message) {
++        if (!condition) throw new AssertionError(message);
++    }
++
++    @Override public void onStart() {
++        Bundle result = new Bundle();
++        Intent service = new Intent(getTargetContext(), SyncBackgroundService.class);
++        try {
++            // The normal app starts the service while visible, then can go home.
++            Intent launch = getTargetContext().getPackageManager()
++                .getLaunchIntentForPackage(getTargetContext().getPackageName());
++            launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
++            getTargetContext().startActivity(launch);
++            SystemClock.sleep(3000);
++            service.putExtra("title", "同步背景服務測試");
++            service.putExtra("text", "驗證切換 App、關閉螢幕與完成後清理");
++            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
++                getTargetContext().startForegroundService(service);
++            } else getTargetContext().startService(service);
++            SystemClock.sleep(3000);
++            check(SyncBackgroundService.Companion.getRunning(), "service did not start");
++            check(SyncBackgroundService.Companion.getHoldingWakeLock(), "no CPU wake lock");
++            getUiAutomation().executeShellCommand("input keyevent KEYCODE_HOME").close();
++            SystemClock.sleep(3000);
++            check(SyncBackgroundService.Companion.getRunning(), "service stopped in background");
++            getUiAutomation().executeShellCommand("input keyevent KEYCODE_SLEEP").close();
++            SystemClock.sleep(5000);
++            check(SyncBackgroundService.Companion.getRunning(), "service stopped with screen off");
++            check(SyncBackgroundService.Companion.getHoldingWakeLock(), "wake lock released early");
++            getTargetContext().stopService(service);
++            SystemClock.sleep(2000);
++            check(!SyncBackgroundService.Companion.getRunning(), "service did not stop");
++            check(!SyncBackgroundService.Companion.getHoldingWakeLock(), "wake lock leaked");
++            result.putString("stream", "BACKGROUND_SYNC_SERVICE_PASSED: start, home, screen off, cleanup\n");
++            finish(-1, result);
++        } catch (Throwable error) {
++            result.putString("stream", "BACKGROUND_SYNC_SERVICE_FAILED: " + error + "\n");
++            finish(0, result);
++        } finally {
++            getTargetContext().stopService(service);
++            try { getUiAutomation().executeShellCommand("input keyevent KEYCODE_WAKEUP").close(); }
++            catch (Exception ignored) { }
++        }
++    }
++}
+diff --git a/android/app/src/main/AndroidManifest.xml b/android/app/src/main/AndroidManifest.xml
+index cc9f070..b2a6814 100644
+--- a/android/app/src/main/AndroidManifest.xml
++++ b/android/app/src/main/AndroidManifest.xml
+@@ -1,6 +1,10 @@
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+     package="com.kodjodevf.mangayomi">
+     <uses-permission android:name="android.permission.INTERNET" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
++    <uses-permission android:name="android.permission.WAKE_LOCK" />
++    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+@@ -23,6 +27,9 @@
+         android:icon="@mipmap/launcher_icon"
+         android:banner="@drawable/tv_banner"
+         android:usesCleartextTraffic="true">
++        <service android:name=".SyncBackgroundService"
++            android:exported="false" android:foregroundServiceType="dataSync"
++            android:stopWithTask="true" />
+         <activity
+             android:name=".MainActivity"
+             android:exported="true"
+diff --git a/android/app/src/main/kotlin/com/kodjodevf/mangayomi/MainActivity.kt b/android/app/src/main/kotlin/com/kodjodevf/mangayomi/MainActivity.kt
+index 7f572c6..afcd405 100644
+--- a/android/app/src/main/kotlin/com/kodjodevf/mangayomi/MainActivity.kt
++++ b/android/app/src/main/kotlin/com/kodjodevf/mangayomi/MainActivity.kt
+@@ -20,6 +20,25 @@ class MainActivity: FlutterFragmentActivity() {
+ 
+     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
+         super.configureFlutterEngine(flutterEngine)
++        MethodChannel(flutterEngine.dartExecutor.binaryMessenger,
++            "com.kodjodevf.mangayomi.sync").setMethodCallHandler { call, result ->
++            val intent = Intent(this, SyncBackgroundService::class.java)
++            try {
++                when (call.method) {
++                    "start" -> {
++                        intent.putExtra("title", call.argument<String>("title"))
++                        intent.putExtra("text", call.argument<String>("text"))
++                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent)
++                        else startService(intent)
++                        result.success(null)
++                    }
++                    "stop" -> { stopService(intent); result.success(null) }
++                    else -> result.notImplemented()
++                }
++            } catch (error: Exception) {
++                result.error("SYNC_BACKGROUND", error.message, null)
++            }
++        }
+         MethodChannel(
+             flutterEngine.dartExecutor.binaryMessenger,
+             "com.kodjodevf.mangayomi.libmtorrentserver",
+diff --git a/android/app/src/main/kotlin/com/kodjodevf/mangayomi/SyncBackgroundService.kt b/android/app/src/main/kotlin/com/kodjodevf/mangayomi/SyncBackgroundService.kt
+new file mode 100644
+index 0000000..7b2b980
+--- /dev/null
++++ b/android/app/src/main/kotlin/com/kodjodevf/mangayomi/SyncBackgroundService.kt
+@@ -0,0 +1,77 @@
++package com.kodjodevf.mangayomi
++
++import android.app.Notification
++import android.app.NotificationChannel
++import android.app.NotificationManager
++import android.app.PendingIntent
++import android.app.Service
++import android.content.Intent
++import android.content.pm.ServiceInfo
++import android.os.Build
++import android.os.IBinder
++import android.os.PowerManager
++
++/** Runs only for an active sync. Does not restart itself or store credentials. */
++class SyncBackgroundService : Service() {
++    companion object {
++        @Volatile var running = false
++            private set
++        @Volatile var holdingWakeLock = false
++            private set
++    }
++    private var wakeLock: PowerManager.WakeLock? = null
++
++    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
++        val manager = getSystemService(NotificationManager::class.java)
++        val channel = "mangayomi_sync"
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
++            manager.createNotificationChannel(NotificationChannel(
++                channel, "Mangayomi 同步", NotificationManager.IMPORTANCE_LOW,
++            ))
++        }
++        val launch = packageManager.getLaunchIntentForPackage(packageName)
++        val pending = PendingIntent.getActivity(this, 0, launch,
++            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
++        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
++            Notification.Builder(this, channel)
++        } else {
++            @Suppress("DEPRECATION")
++            Notification.Builder(this)
++        }
++        val notification = builder
++            .setSmallIcon(android.R.drawable.stat_notify_sync)
++            .setContentTitle(intent?.getStringExtra("title") ?: "Mangayomi 同步")
++            .setContentText(intent?.getStringExtra("text") ?: "正在背景同步書庫")
++            .setContentIntent(pending)
++            .setOngoing(true)
++            .setOnlyAlertOnce(true)
++            .setProgress(0, 0, true)
++            .build()
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
++            startForeground(130, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
++        } else {
++            startForeground(130, notification)
++        }
++        if (wakeLock == null) {
++            wakeLock = (getSystemService(POWER_SERVICE) as PowerManager)
++                .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "$packageName:sync")
++                .apply { acquire(30 * 60 * 1000L) }
++        }
++        running = true
++        holdingWakeLock = wakeLock?.isHeld == true
++        return START_NOT_STICKY
++    }
++
++    override fun onTimeout(startId: Int, fgsType: Int) { stopSelf() }
++
++    override fun onDestroy() {
++        wakeLock?.let { if (it.isHeld) it.release() }
++        wakeLock = null
++        running = false
++        holdingWakeLock = false
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) stopForeground(STOP_FOREGROUND_REMOVE)
++        super.onDestroy()
++    }
++
++    override fun onBind(intent: Intent?): IBinder? = null
++}
+diff --git a/lib/modules/library/providers/library_filter_provider.dart b/lib/modules/library/providers/library_filter_provider.dart
+index e2e5418..ea9fcfc 100644
+--- a/lib/modules/library/providers/library_filter_provider.dart
++++ b/lib/modules/library/providers/library_filter_provider.dart
+@@ -1,5 +1,5 @@
++import 'package:mangayomi/modules/library/providers/library_summary_provider.dart';
+ import 'package:mangayomi/models/settings.dart';
+-import 'package:mangayomi/utils/extensions/manga_extensions.dart';
+ import 'package:mangayomi/models/manga.dart';
+ import 'package:mangayomi/repositories/download_repository.dart';
+ import 'package:mangayomi/repositories/track_repository.dart';
+@@ -64,8 +64,7 @@ List<Manga> filteredLibraryManga(
+   required List<String> sourceIds,
+   required Settings settings,
+ }) {
+-  final downloadedIds =
+-      ref.watch(downloadedChapterIdsProvider).asData?.value ?? const <int>{};
++  final summaries = ref.watch(librarySummaryProvider).asData?.value;
+   final trackedIds =
+       ref.watch(trackedMangaIdsProvider).asData?.value ?? const <int>{};
+ 
+@@ -78,38 +77,31 @@ List<Manga> filteredLibraryManga(
+         .toList();
+   } else {
+     mangas = data.where((element) {
++      final summary = summaryFor(summaries, element.id);
+       // Filter by download — uses Set lookup instead of per-chapter Isar query
+       if (downloadFilterType == 1 || downloadedOnly) {
+-        final hasDownloaded = element.chapters.any(
+-          (chap) => chap.id != null && downloadedIds.contains(chap.id),
+-        );
++        final hasDownloaded = summary.downloaded > 0;
+         if (!hasDownloaded) return false;
+       } else if (downloadFilterType == 2) {
+-        final allNotDownloaded = element.chapters.every(
+-          (chap) => chap.id == null || !downloadedIds.contains(chap.id),
+-        );
++        final allNotDownloaded = summary.downloaded == 0;
+         if (!allNotDownloaded) return false;
+       }
+ 
+       // Filter by unread or started
+       if (unreadFilterType == 1 || startedFilterType == 1) {
+-        final hasUnread = element.chapters.any((chap) => !chap.isRead!);
++        final hasUnread = summary.unread > 0;
+         if (!hasUnread) return false;
+       } else if (unreadFilterType == 2 || startedFilterType == 2) {
+-        final allRead = element.chapters.every((chap) => chap.isRead!);
++        final allRead = summary.unread == 0;
+         if (!allRead) return false;
+       }
+ 
+       // Filter by bookmarked
+       if (bookmarkedFilterType == 1) {
+-        final hasBookmarked = element.chapters.any(
+-          (chap) => chap.isBookmarked!,
+-        );
++        final hasBookmarked = summary.bookmarked > 0;
+         if (!hasBookmarked) return false;
+       } else if (bookmarkedFilterType == 2) {
+-        final allNotBookmarked = element.chapters.every(
+-          (chap) => !chap.isBookmarked!,
+-        );
++        final allNotBookmarked = summary.bookmarked == 0;
+         if (!allNotBookmarked) return false;
+       }
+ 
+@@ -154,7 +146,13 @@ List<Manga> filteredLibraryManga(
+       for (final manga in mangas) {
+         if (manga.id != null) {
+           // Scanlator-aware unread count (respects the per-manga filter).
+-          unreadCounts[manga.id!] = manga.unreadChaptersCount(settings);
++          unreadCounts[manga.id!] = summaryFor(summaries, manga.id)
++              .visibleUnread(
++                settings.filterScanlatorList
++                    ?.where((e) => e.mangaId == manga.id)
++                    .firstOrNull
++                    ?.scanlators,
++              );
+         }
+       }
+       mangas = sortByUnreadCount(
+@@ -166,7 +164,7 @@ List<Manga> filteredLibraryManga(
+       final totalCounts = <int, int>{};
+       for (final manga in mangas) {
+         if (manga.id != null) {
+-          totalCounts[manga.id!] = manga.chapters.length;
++          totalCounts[manga.id!] = summaryFor(summaries, manga.id).total;
+         }
+       }
+       mangas.sort((a, b) {
+@@ -177,7 +175,7 @@ List<Manga> filteredLibraryManga(
+     } else if (sortType == 5) {
+       final lastUpload = {
+         for (final manga in mangas)
+-          manga.id: manga.chapters.lastOrNull?.dateUpload ?? "",
++          manga.id: summaryFor(summaries, manga.id).latestUpload,
+       };
+       mangas.sort(
+         (a, b) => (lastUpload[a.id] ?? "").compareTo(lastUpload[b.id] ?? ""),
+diff --git a/lib/modules/library/providers/library_summary_provider.dart b/lib/modules/library/providers/library_summary_provider.dart
+new file mode 100644
+index 0000000..1941ed9
+--- /dev/null
++++ b/lib/modules/library/providers/library_summary_provider.dart
+@@ -0,0 +1,57 @@
++import 'dart:async';
++
++import 'package:flutter_riverpod/flutter_riverpod.dart';
++import 'package:mangayomi/main.dart';
++import 'package:mangayomi/models/chapter.dart';
++import 'package:mangayomi/models/download.dart';
++import 'package:mangayomi/services/database_worker.dart';
++import 'package:mangayomi/services/library_chapter_summary.dart';
++
++final librarySummaryProvider = StreamProvider<Map<int, LibraryChapterSummary>>((
++  ref,
++) {
++  final controller = StreamController<Map<int, LibraryChapterSummary>>();
++  Timer? debounce;
++  bool running = false, dirty = false, disposed = false;
++  Future<void> refresh() async {
++    if (running) {
++      dirty = true;
++      return;
++    }
++    running = true;
++    try {
++      do {
++        dirty = false;
++        final result = await DatabaseWorker.instance
++            .run<Map<int, LibraryChapterSummary>>('summary');
++        if (!disposed) controller.add(result);
++      } while (dirty && !disposed);
++    } catch (error, stack) {
++      if (!disposed) controller.addError(error, stack);
++    } finally {
++      running = false;
++    }
++  }
++
++  void changed() {
++    debounce?.cancel();
++    debounce = Timer(const Duration(milliseconds: 250), refresh);
++  }
++
++  final chapters = isar.chapters.watchLazy().listen((_) => changed());
++  final downloads = isar.downloads.watchLazy().listen((_) => changed());
++  ref.onDispose(() {
++    disposed = true;
++    debounce?.cancel();
++    chapters.cancel();
++    downloads.cancel();
++    controller.close();
++  });
++  unawaited(refresh());
++  return controller.stream;
++});
++
++LibraryChapterSummary summaryFor(
++  Map<int, LibraryChapterSummary>? rows,
++  int? id,
++) => rows?[id] ?? const LibraryChapterSummary();
+diff --git a/lib/modules/library/widgets/library_body.dart b/lib/modules/library/widgets/library_body.dart
+index 844820c..76eb4c3 100644
+--- a/lib/modules/library/widgets/library_body.dart
++++ b/lib/modules/library/widgets/library_body.dart
+@@ -1,3 +1,4 @@
++import 'package:mangayomi/modules/library/providers/library_summary_provider.dart';
+ import 'package:flutter/material.dart';
+ import 'package:flutter_riverpod/flutter_riverpod.dart';
+ import 'package:mangayomi/models/manga.dart';
+@@ -12,7 +13,6 @@ import 'package:mangayomi/modules/widgets/error_text.dart';
+ import 'package:mangayomi/modules/widgets/progress_center.dart';
+ import 'package:mangayomi/providers/l10n_providers.dart';
+ import 'package:mangayomi/services/library_updater.dart';
+-import 'package:mangayomi/utils/extensions/manga_extensions.dart';
+ 
+ /// Displays the library body content for a given category (or uncategorized).
+ ///
+@@ -68,6 +68,13 @@ class LibraryBody extends ConsumerWidget {
+   @override
+   Widget build(BuildContext context, WidgetRef ref) {
+     final l10n = l10nLocalizations(context)!;
++    final summaryState = ref.watch(librarySummaryProvider);
++    final summaries = summaryState.asData?.value;
++    if (summaries == null) {
++      return summaryState.hasError
++          ? ErrorText(summaryState.error!)
++          : const ProgressCenter();
++    }
+     final sortType = ref
+         .watch(
+           sortLibraryMangaStateProvider(itemType: itemType, settings: settings),
+@@ -125,7 +132,12 @@ class LibraryBody extends ConsumerWidget {
+                   ? sortByUnreadCount(
+                       entries,
+                       unreadCountOf: (manga) =>
+-                          manga.unreadChaptersCount(settings),
++                          summaryFor(summaries, manga.id).visibleUnread(
++                            settings.filterScanlatorList
++                                ?.where((e) => e.mangaId == manga.id)
++                                .firstOrNull
++                                ?.scanlators,
++                          ),
+                       descending: true,
+                     )
+                   : entries.reversed.toList()
+diff --git a/lib/modules/library/widgets/library_entry_utils.dart b/lib/modules/library/widgets/library_entry_utils.dart
+index 95262f7..25e9e71 100644
+--- a/lib/modules/library/widgets/library_entry_utils.dart
++++ b/lib/modules/library/widgets/library_entry_utils.dart
+@@ -1,9 +1,10 @@
++import 'package:mangayomi/modules/library/providers/library_summary_provider.dart';
++
+ import 'dart:typed_data';
+ 
+ import 'package:flutter/material.dart';
+ import 'package:flutter_riverpod/flutter_riverpod.dart';
+ import 'package:mangayomi/models/settings.dart';
+-import 'package:mangayomi/modules/library/providers/library_filter_provider.dart';
+ import 'package:mangayomi/modules/library/providers/library_state_provider.dart';
+ import 'package:mangayomi/models/manga.dart';
+ import 'package:mangayomi/modules/manga/detail/providers/state_providers.dart';
+@@ -12,7 +13,6 @@ import 'package:mangayomi/utils/cached_network.dart';
+ import 'package:mangayomi/utils/constant.dart';
+ import 'package:mangayomi/utils/extensions/build_context_extensions.dart';
+ import 'package:mangayomi/utils/headers.dart';
+-import 'package:mangayomi/utils/extensions/manga_extensions.dart';
+ import 'package:mangayomi/providers/l10n_providers.dart';
+ 
+ /// Resolves the correct [ImageProvider] for a manga entry, preferring a custom
+@@ -137,20 +137,17 @@ class LibraryBadgeWidget extends ConsumerWidget {
+     final isLocalArchive = entry.isLocalArchive ?? false;
+     final hasLocal = showLocal && isLocalArchive;
+ 
+-    int downloadCount = 0;
+-    if (showDownloaded) {
+-      final downloadedIds =
+-          ref.watch(downloadedChapterIdsProvider).asData?.value ??
+-          const <int>{};
+-      for (final c in entry.chapters) {
+-        if (c.id != null && downloadedIds.contains(c.id)) {
+-          downloadCount++;
+-        }
+-      }
+-    }
+-
+-    // Scanlator-aware: the badge count respects the per-manga scanlator filter.
+-    final unreadCount = entry.unreadChaptersCount(settings);
++    final summary = summaryFor(
++      ref.watch(librarySummaryProvider).asData?.value,
++      entry.id,
++    );
++    final downloadCount = showDownloaded ? summary.downloaded : 0;
++    final unreadCount = summary.visibleUnread(
++      settings.filterScanlatorList
++          ?.where((e) => e.mangaId == entry.id)
++          .firstOrNull
++          ?.scanlators,
++    );
+ 
+     // If there is nothing to show (no local, no download, no unread), return empty
+     if (!hasLocal && downloadCount == 0 && unreadCount == 0) {
+diff --git a/lib/modules/manga/detail/providers/update_manga_detail_providers.dart b/lib/modules/manga/detail/providers/update_manga_detail_providers.dart
+index 74a7e15..c8b7857 100644
+--- a/lib/modules/manga/detail/providers/update_manga_detail_providers.dart
++++ b/lib/modules/manga/detail/providers/update_manga_detail_providers.dart
+@@ -25,12 +25,12 @@ Future<dynamic> updateMangaDetail(
+     final manga = mangaRepository.findById(mangaId!);
+     if (manga == null) return;
+ 
+-    manga.chapters.loadSync();
+-
++    // Opening an existing work only needs an indexed count, not every chapter.
+     if ((manga.isLocalArchive ?? false) ||
+-        (manga.chapters.isNotEmpty && isInit)) {
++        (isInit && await chapterRepository.countByMangaIdAsync(mangaId) > 0)) {
+       return;
+     }
++    await manga.chapters.load();
+     final source = getSource(
+       manga.lang!,
+       manga.source!,
+diff --git a/lib/providers/storage_provider.dart b/lib/providers/storage_provider.dart
+index abac1cb..a34eb7f 100644
+--- a/lib/providers/storage_provider.dart
++++ b/lib/providers/storage_provider.dart
+@@ -33,6 +33,26 @@ String? linuxDocumentsFallbackPath(Map<String, String> environment) {
+ }
+ 
+ class StorageProvider {
++  static const databaseSchemas = [
++    MangaSchema,
++    ChangedPartSchema,
++    ChapterSchema,
++    CategorySchema,
++    CustomButtonSchema,
++    UpdateSchema,
++    HistorySchema,
++    DownloadSchema,
++    SourceSchema,
++    SettingsSchema,
++    TrackPreferenceSchema,
++    TrackSchema,
++    SyncPreferenceSchema,
++    SourcePreferenceSchema,
++    SourcePreferenceStringValueSchema,
++    BackupPasswordFallbackSchema,
++    TrackerLibraryCacheSchema,
++  ];
++
+   static final StorageProvider _instance = StorageProvider._internal();
+   StorageProvider._internal();
+   factory StorageProvider() => _instance;
+@@ -320,25 +340,7 @@ class StorageProvider {
+     }
+ 
+     final isar = await Isar.open(
+-      [
+-        MangaSchema,
+-        ChangedPartSchema,
+-        ChapterSchema,
+-        CategorySchema,
+-        CustomButtonSchema,
+-        UpdateSchema,
+-        HistorySchema,
+-        DownloadSchema,
+-        SourceSchema,
+-        SettingsSchema,
+-        TrackPreferenceSchema,
+-        TrackSchema,
+-        SyncPreferenceSchema,
+-        SourcePreferenceSchema,
+-        SourcePreferenceStringValueSchema,
+-        BackupPasswordFallbackSchema,
+-        TrackerLibraryCacheSchema,
+-      ],
++      databaseSchemas,
+       directory: dir!.path,
+       name: "mangayomiDb",
+       inspector: inspector,
+diff --git a/lib/repositories/changed_part_repository.dart b/lib/repositories/changed_part_repository.dart
+index 988c0aa..492d0a8 100644
+--- a/lib/repositories/changed_part_repository.dart
++++ b/lib/repositories/changed_part_repository.dart
+@@ -121,6 +121,22 @@ class ChangedPartRepository {
+     }
+   }
+ 
++  /// A deletion made while a sync is running belongs to the NEXT upload.
++  Future<void> clearAcknowledged(List<ChangedPart> uploaded) =>
++      dbWriteQueue.run(
++        () => isar.writeTxn(() async {
++          for (final snapshot in uploaded) {
++            final current = await isar.changedParts.get(snapshot.id!);
++            if (current != null &&
++                current.clientDate == snapshot.clientDate &&
++                current.clientId == snapshot.clientId &&
++                current.data == snapshot.data) {
++              await isar.changedParts.delete(snapshot.id!);
++            }
++          }
++        }),
++      );
++
+   void clearAll(bool txn) {
+     if (txn) {
+       dbWriteQueue.run(
+diff --git a/lib/services/database_worker.dart b/lib/services/database_worker.dart
+new file mode 100644
+index 0000000..409f934
+--- /dev/null
++++ b/lib/services/database_worker.dart
+@@ -0,0 +1,157 @@
++import 'dart:async';
++import 'dart:isolate';
++
++import 'package:flutter/services.dart';
++import 'package:isar_community/isar.dart';
++import 'package:mangayomi/main.dart' as app;
++import 'package:mangayomi/models/chapter.dart';
++import 'package:mangayomi/models/download.dart';
++import 'package:mangayomi/providers/storage_provider.dart';
++import 'package:mangayomi/services/library_chapter_summary.dart';
++import 'package:mangayomi/services/sync/sync_change_collector.dart';
++import 'package:mangayomi/services/sync/sync_entity_applier.dart';
++import 'package:mangayomi/utils/client_id.dart';
++
++/// One serial database worker. Native Isar transactions arbitrate writes across
++/// isolates; no Flutter Ref, lazy Isar link, or UI object crosses this boundary.
++class DatabaseWorker {
++  static final instance = DatabaseWorker();
++  Future<SendPort>? _starting;
++  Isolate? _isolate;
++  final _pending = <int, Completer<Object?>>{};
++  int _nextId = 0;
++  Completer<void>? _exited;
++
++  Future<SendPort> _start() async {
++    _exited = Completer<void>();
++    final responses = ReceivePort();
++    final ready = Completer<SendPort>();
++    late StreamSubscription<dynamic> subscription;
++    subscription = responses.listen((message) {
++      if (message is SendPort) {
++        ready.complete(message);
++      } else if (message is List && message.length == 3) {
++        final completion = _pending.remove(message[0]);
++        if (message[1] == true) {
++          completion?.complete(message[2]);
++        } else {
++          completion?.completeError(StateError(message[2].toString()));
++        }
++      } else {
++        // Isolate error/exit: don't leave callers and progress bars hanging.
++        _starting = null;
++        final error = StateError('Database background worker stopped');
++        if (!ready.isCompleted) ready.completeError(error);
++        for (final pending in _pending.values) {
++          pending.completeError(error);
++        }
++        _pending.clear();
++        subscription.cancel();
++        responses.close();
++        _exited?.complete();
++      }
++    });
++    try {
++      _isolate = await Isolate.spawn(
++        _databaseEntry,
++        [
++          responses.sendPort,
++          app.isar.directory!,
++          RootIsolateToken.instance,
++          app.isar.name,
++        ],
++        onError: responses.sendPort,
++        onExit: responses.sendPort,
++        debugName: 'library-sync-database',
++      );
++      return await ready.future;
++    } catch (_) {
++      _starting = null;
++      await subscription.cancel();
++      responses.close();
++      rethrow;
++    }
++  }
++
++  Future<T> run<T>(String operation, [Object? argument]) async {
++    final port = await (_starting ??= _start());
++    final id = _nextId++;
++    final completion = Completer<Object?>();
++    _pending[id] = completion;
++    port.send([id, operation, argument]);
++    return await completion.future as T;
++  }
++
++  /// Used by database replacement/tests, never by ordinary screen navigation.
++  Future<void> close() async {
++    if (_starting == null) return;
++    await run<void>('close');
++    _isolate?.kill(priority: Isolate.immediate);
++    await _exited?.future;
++  }
++}
++
++Future<void> _databaseEntry(List<Object?> arguments) async {
++  final response = arguments[0] as SendPort;
++  final token = arguments[2] as RootIsolateToken?;
++  if (token != null) BackgroundIsolateBinaryMessenger.ensureInitialized(token);
++  app.isar = await Isar.open(
++    StorageProvider.databaseSchemas,
++    directory: arguments[1] as String,
++    name: arguments[3] as String,
++    inspector: false,
++  );
++  final requests = ReceivePort();
++  response.send(requests.sendPort);
++  await for (final message in requests) {
++    final request = message as List;
++    try {
++      final Object? result;
++      switch (request[1]) {
++        case 'summary':
++          final downloaded = app.isar.downloads
++              .filter()
++              .isDownloadEqualTo(true)
++              .idProperty()
++              .findAllSync()
++              .toSet();
++          final builder = LibrarySummaryBuilder();
++          // Only the worker deserializes the large chapter collection.
++          for (final chapter in app.isar.chapters.where().findAllSync()) {
++            builder.add(
++              mangaId: chapter.mangaId,
++              read: chapter.isRead ?? false,
++              bookmarked: chapter.isBookmarked ?? false,
++              downloaded: downloaded.contains(chapter.id),
++              scanlator: chapter.scanlator,
++              dateUpload: chapter.dateUpload,
++            );
++          }
++          result = builder.finish();
++        case 'collect':
++          result = ChangedRows.collectSnapshot(request[2] as int);
++        case 'collectAll':
++          result = ChangedRows.collectAll(forcedUpdatedAt: request[2] as int);
++        case 'apply':
++          result = await const SyncEntityApplier().apply(
++            request[2] as Map<String, dynamic>,
++          );
++        case 'barrier':
++          result = null;
++        case 'close':
++          await app.isar.close();
++          response.send([request[0], true, null]);
++          requests.close();
++          return;
++        case 'backfill':
++          await backfillClientIdsInWorker();
++          result = null;
++        default:
++          throw ArgumentError('Unknown database operation');
++      }
++      response.send([request[0], true, result]);
++    } catch (error) {
++      response.send([request[0], false, error.toString()]);
++    }
++  }
++}
+diff --git a/lib/services/library_chapter_summary.dart b/lib/services/library_chapter_summary.dart
+new file mode 100644
+index 0000000..7af48ae
+--- /dev/null
++++ b/lib/services/library_chapter_summary.dart
+@@ -0,0 +1,76 @@
++/// Small, immutable library view data. No lazy database links reach the UI.
++class LibraryChapterSummary {
++  final int total;
++  final int unread;
++  final int bookmarked;
++  final int downloaded;
++  final String latestUpload;
++  final Map<String?, int> unreadByScanlator;
++
++  const LibraryChapterSummary({
++    this.total = 0,
++    this.unread = 0,
++    this.bookmarked = 0,
++    this.downloaded = 0,
++    this.latestUpload = '',
++    this.unreadByScanlator = const {},
++  });
++
++  int visibleUnread(Iterable<String>? hiddenScanlators) {
++    if (hiddenScanlators == null) return unread;
++    return unread -
++        hiddenScanlators.toSet().fold<int>(
++          0,
++          (count, name) => count + (unreadByScanlator[name] ?? 0),
++        );
++  }
++}
++
++/// Built once in the database isolate, reused across categories and tiles.
++class LibrarySummaryBuilder {
++  final _rows = <int, _MutableSummary>{};
++
++  void add({
++    required int? mangaId,
++    required bool read,
++    required bool bookmarked,
++    required bool downloaded,
++    required String? scanlator,
++    required String? dateUpload,
++  }) {
++    if (mangaId == null) return;
++    final row = _rows.putIfAbsent(mangaId, _MutableSummary.new);
++    row.total++;
++    if (!read) {
++      row.unread++;
++      row.scanlators.update(scanlator, (count) => count + 1, ifAbsent: () => 1);
++    }
++    if (bookmarked) row.bookmarked++;
++    if (downloaded) row.downloaded++;
++    // Dates are numeric epoch strings on some sources and ISO strings on others.
++    final date = dateUpload ?? '';
++    final a = int.tryParse(date);
++    final b = int.tryParse(row.latestUpload);
++    if (a != null && b != null ? a > b : date.compareTo(row.latestUpload) > 0) {
++      row.latestUpload = date;
++    }
++  }
++
++  Map<int, LibraryChapterSummary> finish() => {
++    for (final entry in _rows.entries)
++      entry.key: LibraryChapterSummary(
++        total: entry.value.total,
++        unread: entry.value.unread,
++        bookmarked: entry.value.bookmarked,
++        downloaded: entry.value.downloaded,
++        latestUpload: entry.value.latestUpload,
++        unreadByScanlator: Map.unmodifiable(entry.value.scanlators),
++      ),
++  };
++}
++
++class _MutableSummary {
++  int total = 0, unread = 0, bookmarked = 0, downloaded = 0;
++  String latestUpload = '';
++  final scanlators = <String?, int>{};
++}
+diff --git a/lib/services/sync/sync_api_client.dart b/lib/services/sync/sync_api_client.dart
+index 5294496..963c9d9 100644
+--- a/lib/services/sync/sync_api_client.dart
++++ b/lib/services/sync/sync_api_client.dart
+@@ -1,3 +1,4 @@
++import 'dart:isolate';
+ // HTTP transport for the sync-server's `/api/sync/v1` protocol. See
+ // docs/sync_api.md in the sync-server repo for the wire contract this
+ // implements: one combined endpoint, incremental (only what changed since
+@@ -24,7 +25,10 @@ class SyncApiClient {
+   Future<bool> checkVersion(String server) async {
+     try {
+       final response = await _http
+-          .get(Uri.parse('$server/api/version'))
++          .get(
++            Uri.parse('$server/api/version'),
++            headers: {'Connection': 'close'},
++          )
+           .timeout(const Duration(seconds: 10));
+       if (response.statusCode != 200) return false;
+       final body = jsonDecode(response.body) as Map<String, dynamic>;
+@@ -40,16 +44,20 @@ class SyncApiClient {
+     String accessToken,
+     Map<String, dynamic> body,
+   ) async {
+-    final response = await _http.post(
+-      Uri.parse('$server/api/sync/v1'),
+-      headers: {
+-        'Content-Type': 'application/json',
+-        'Cookie': 'id=$accessToken',
+-      },
+-      body: jsonEncode(body),
+-    );
++    final response = await _http
++        .post(
++          Uri.parse('$server/api/sync/v1'),
++          headers: {
++            'Content-Type': 'application/json',
++            'Connection': 'close',
++            'Cookie': 'id=$accessToken',
++          },
++          body: await Isolate.run(() => jsonEncode(body)),
++        )
++        .timeout(const Duration(minutes: 2));
+     if (response.statusCode != 200) return null;
+-    return jsonDecode(response.body) as Map<String, dynamic>;
++    final responseBody = response.body;
++    return Isolate.run(() => jsonDecode(responseBody) as Map<String, dynamic>);
+   }
+ 
+   Map<String, String?>? decodeCursors(Object? raw) {
+diff --git a/lib/services/sync/sync_background_service.dart b/lib/services/sync/sync_background_service.dart
+new file mode 100644
+index 0000000..304f4a9
+--- /dev/null
++++ b/lib/services/sync/sync_background_service.dart
+@@ -0,0 +1,38 @@
++import 'dart:io';
++
++import 'package:flutter/services.dart';
++import 'package:mangayomi/l10n/generated/app_localizations.dart';
++import 'package:permission_handler/permission_handler.dart';
++
++/// Keeps the existing Flutter process eligible to finish a user-started sync
++/// when Android backgrounds the Activity. No account data goes to native code.
++class SyncBackgroundService {
++  static const _channel = MethodChannel('com.kodjodevf.mangayomi.sync');
++  static bool _askedNotifications = false;
++  static Future<void> start(
++    AppLocalizations? l10n, {
++    bool askNotifications = false,
++  }) async {
++    if (!Platform.isAndroid) return;
++    if (askNotifications && !_askedNotifications) {
++      _askedNotifications = true;
++      if (await Permission.notification.isDenied) {
++        await Permission.notification.request();
++      }
++    }
++    await _channel.invokeMethod<void>('start', {
++      'title': l10n?.sync_starting ?? 'Mangayomi sync',
++      'text': l10n?.sync_progress_indeterminate ?? 'Syncing in background',
++    });
++  }
++
++  static Future<void> stop() async {
++    if (!Platform.isAndroid) return;
++    // Cleanup must never mask a sync result or leave its progress active.
++    try {
++      await _channel.invokeMethod<void>('stop');
++    } on PlatformException {
++      /* Service already stopped. */
++    }
++  }
++}
+diff --git a/lib/services/sync/sync_change_collector.dart b/lib/services/sync/sync_change_collector.dart
+index 640e790..4170465 100644
+--- a/lib/services/sync/sync_change_collector.dart
++++ b/lib/services/sync/sync_change_collector.dart
+@@ -1,3 +1,5 @@
++import 'package:mangayomi/repositories/changed_part_repository.dart';
++
+ // Gathering local changes for an upload, and clearing them once a sync
+ // confirms they were applied. The mirror direction of SyncEntityApplier:
+ // local rows -> wire, instead of wire -> local rows.
+@@ -10,7 +12,6 @@ import 'package:mangayomi/models/chapter.dart';
+ import 'package:mangayomi/models/history.dart';
+ import 'package:mangayomi/models/manga.dart';
+ import 'package:mangayomi/models/settings.dart';
+-import 'package:mangayomi/models/sync_preference.dart';
+ import 'package:mangayomi/models/track.dart';
+ import 'package:mangayomi/models/update.dart';
+ import 'package:mangayomi/modules/more/settings/sync/providers/sync_providers.dart';
+@@ -37,6 +38,20 @@ const _deviceLocalSettingsKeys = {
+   'extensionServerPath',
+ };
+ 
++// Per-snapshot memoization avoids a manga lookup for every chapter/history row.
++final _mangaClientIds = <int, int?>{};
++final _chapterClientIds = <int, int?>{};
++int? _mangaClientId(int? id) => id == null
++    ? null
++    : _mangaClientIds.putIfAbsent(
++        id,
++        () => mangaRepository.findById(id)?.clientId,
++      );
++void _beginSnapshot() {
++  _mangaClientIds.clear();
++  _chapterClientIds.clear();
++}
++
+ class ChangedRows {
+   final List<Map<String, dynamic>> categories;
+   final List<Map<String, dynamic>> manga;
+@@ -46,7 +61,8 @@ class ChangedRows {
+   final List<Map<String, dynamic>> updates;
+   final Map<String, dynamic>? deleted;
+   final Map<String, dynamic>? settings;
+-  final List<ActionType> _deletionActionsToClear;
++  final List<ChangedPart> _deletionsToClear;
++  final int collectedAt;
+ 
+   ChangedRows._({
+     required this.categories,
+@@ -57,21 +73,23 @@ class ChangedRows {
+     required this.updates,
+     required this.deleted,
+     required this.settings,
+-    required this._deletionActionsToClear,
+-  });
++    required List<ChangedPart> deletionActionsToClear,
++    required this.collectedAt,
++  }) : _deletionsToClear = deletionActionsToClear;
+ 
+   /// Normal incremental sync: rows changed since `since`, every entity,
+   /// plus pending local deletions.
+-  factory ChangedRows.collect(SyncPreference prefs, Synching notifier) {
+-    final since = prefs.since ?? 0;
++  factory ChangedRows.collectSnapshot(int since) {
++    _beginSnapshot();
++    final collectedAt = DateTime.now().millisecondsSinceEpoch;
+ 
+     final deleted = <String, List<int>>{};
+-    final deletionActions = <ActionType>[];
++    final deletionActions = <ChangedPart>[];
+     void collectDeleted(String key, ActionType action) {
+-      final parts = notifier.getChangedParts([action]);
++      final parts = changedPartRepository.getByActions([action]);
+       final ids = parts.map((p) => p.clientId).nonNulls.toSet().toList();
+       if (ids.isNotEmpty) deleted[key] = ids;
+-      deletionActions.add(action);
++      deletionActions.addAll(parts);
+     }
+ 
+     collectDeleted('categories', ActionType.removeCategory);
+@@ -120,6 +138,7 @@ class ChangedRows {
+       deleted: deleted.isEmpty ? null : deleted,
+       settings: settingsWire,
+       deletionActionsToClear: deletionActions,
++      collectedAt: collectedAt,
+     );
+   }
+ 
+@@ -127,6 +146,7 @@ class ChangedRows {
+   /// so it wins regardless of what the server holds. No deletions - see the
+   /// comment on SyncServer._forceUpload for why.
+   factory ChangedRows.collectAll({required int forcedUpdatedAt}) {
++    _beginSnapshot();
+     final settingsWire = _settingsToWire(
+       settingsRepository.current,
+       forcedUpdatedAt: forcedUpdatedAt,
+@@ -161,6 +181,7 @@ class ChangedRows {
+       deleted: null,
+       settings: settingsWire,
+       deletionActionsToClear: const [],
++      collectedAt: forcedUpdatedAt,
+     );
+   }
+ 
+@@ -212,8 +233,7 @@ class ChangedRows {
+   }
+ 
+   Future<void> clearUploaded(Synching notifier) async {
+-    if (_deletionActionsToClear.isEmpty) return;
+-    await notifier.clearChangedParts(_deletionActionsToClear, true);
++    await changedPartRepository.clearAcknowledged(_deletionsToClear);
+   }
+ }
+ 
+@@ -262,9 +282,7 @@ Map<String, dynamic>? _mangaToWire(Manga m, {int? forcedUpdatedAt}) {
+ }
+ 
+ Map<String, dynamic>? _chapterToWire(Chapter c, {int? forcedUpdatedAt}) {
+-  final mangaClientId = c.mangaId == null
+-      ? null
+-      : mangaRepository.findById(c.mangaId!)?.clientId;
++  final mangaClientId = _mangaClientId(c.mangaId);
+   if (c.clientId == null || mangaClientId == null) return null;
+   return {
+     'clientId': c.clientId,
+@@ -286,9 +304,7 @@ Map<String, dynamic>? _chapterToWire(Chapter c, {int? forcedUpdatedAt}) {
+ }
+ 
+ Map<String, dynamic>? _trackToWire(Track t, {int? forcedUpdatedAt}) {
+-  final mangaClientId = t.mangaId == null
+-      ? null
+-      : mangaRepository.findById(t.mangaId!)?.clientId;
++  final mangaClientId = _mangaClientId(t.mangaId);
+   if (t.clientId == null || mangaClientId == null) return null;
+   return {
+     'clientId': t.clientId,
+@@ -310,13 +326,10 @@ Map<String, dynamic>? _trackToWire(Track t, {int? forcedUpdatedAt}) {
+ }
+ 
+ Map<String, dynamic>? _historyToWire(History h, {int? forcedUpdatedAt}) {
+-  final mangaClientId = h.mangaId == null
+-      ? null
+-      : mangaRepository.findById(h.mangaId!)?.clientId;
++  final mangaClientId = _mangaClientId(h.mangaId);
+   final chapterClientId = h.chapterId == null
+       ? null
+-      : chapterRepository.getByClientId(h.chapterId!)?.clientId ??
+-            _chapterClientIdByLocalId(h.chapterId!);
++      : _chapterClientIdByLocalId(h.chapterId!);
+   if (h.clientId == null || mangaClientId == null || chapterClientId == null) {
+     return null;
+   }
+@@ -332,9 +345,7 @@ Map<String, dynamic>? _historyToWire(History h, {int? forcedUpdatedAt}) {
+ }
+ 
+ Map<String, dynamic>? _updateToWire(Update u, {int? forcedUpdatedAt}) {
+-  final mangaClientId = u.mangaId == null
+-      ? null
+-      : mangaRepository.findById(u.mangaId!)?.clientId;
++  final mangaClientId = _mangaClientId(u.mangaId);
+   if (u.clientId == null || mangaClientId == null) return null;
+   return {
+     'clientId': u.clientId,
+@@ -345,11 +356,11 @@ Map<String, dynamic>? _updateToWire(Update u, {int? forcedUpdatedAt}) {
+   };
+ }
+ 
+-// getByClientId also falls back to matching on the local id (see the
+-// repositories), so a plain local-id lookup is the same query by another
+-// name - kept as its own function just for a clearer call site above.
+-int? _chapterClientIdByLocalId(int localId) =>
+-    chapterRepository.getByClientId(localId)?.clientId;
++// A history's chapterId is a LOCAL primary key, never a remote clientId.
++int? _chapterClientIdByLocalId(int localId) => _chapterClientIds.putIfAbsent(
++  localId,
++  () => chapterRepository.findByIdSync(localId)?.clientId,
++);
+ 
+ Map<String, dynamic> _settingsToWire(
+   Settings settings, {
+diff --git a/lib/services/sync/sync_entity_applier.dart b/lib/services/sync/sync_entity_applier.dart
+index 3332557..62c17e0 100644
+--- a/lib/services/sync/sync_entity_applier.dart
++++ b/lib/services/sync/sync_entity_applier.dart
+@@ -30,64 +30,67 @@ import 'package:mangayomi/services/sync/sync_wire_types.dart';
+ class SyncEntityApplier {
+   const SyncEntityApplier();
+ 
+-  // Isar requires every write - even a single put() - to run inside an
+-  // explicit transaction; it does not open one on its own the way some other
+-  // embedded databases do. Kept fully synchronous (writeTxnSync + putSync/
+-  // deleteSync throughout, no await anywhere in the callback) rather than
+-  // async writeTxn: a sync transaction is one uninterrupted call with no
+-  // event-loop turn in the middle, so there's no window for it to overlap
+-  // with anything else. One page's whole apply is one transaction, not one
+-  // per row, so a page of a few thousand rows doesn't cost a few thousand
+-  // separate commits. Routed through dbWriteQueue like every other write
+-  // path in the app, so it still queues behind other writes instead of
+-  // colliding with them.
+-  ///
+-  /// Returns true if incoming settings were actually written (i.e. they
+-  /// were newer than the local copy), so the caller can invalidate whatever
+-  /// depends on them.
++  /// Runs in the database isolate. Short transactions let reader writes acquire
++  /// Isar's native lock between batches. A failed page is safe to replay:
++  /// upserts compare updatedAt and the sync checkpoint advances only at the end.
+   Future<bool> apply(Map<String, dynamic> response) async {
+     var settingsChanged = false;
+-    await dbWriteQueue.run(() {
+-      isar.writeTxnSync(() {
+-        final remaps = _MangaChapterRemaps(
+-          manga: (response['mangaClientIdRemap'] as Map?)?.map(
+-            (k, v) => MapEntry(int.parse(k as String), v as int),
+-          ),
+-          chapter: (response['chapterClientIdRemap'] as Map?)?.map(
+-            (k, v) => MapEntry(int.parse(k as String), v as int),
+-          ),
+-        );
+-        if (remaps.manga != null) _applyMangaRemap(remaps.manga!);
+-        if (remaps.chapter != null) _applyChapterRemap(remaps.chapter!);
+-
+-        for (final row in (response['categories'] as List? ?? [])) {
+-          _applyCategory(row as Map<String, dynamic>);
+-        }
+-        for (final row in (response['manga'] as List? ?? [])) {
+-          _applyManga(row as Map<String, dynamic>);
+-        }
+-        for (final row in (response['chapters'] as List? ?? [])) {
+-          _applyChapter(row as Map<String, dynamic>);
+-        }
+-        for (final row in (response['tracks'] as List? ?? [])) {
+-          _applyTrack(row as Map<String, dynamic>);
+-        }
+-        for (final row in (response['histories'] as List? ?? [])) {
+-          _applyHistory(row as Map<String, dynamic>);
+-        }
+-        for (final row in (response['updates'] as List? ?? [])) {
+-          _applyUpdate(row as Map<String, dynamic>);
+-        }
+-        if (response['settings'] != null) {
+-          settingsChanged = _applySettings(
+-            response['settings'] as Map<String, dynamic>,
+-          );
+-        }
++    Future<void> transaction(void Function() work) =>
++        dbWriteQueue.run(() => isar.writeTxnSync(work));
++    Future<void> rows(
++      String key,
++      void Function(Map<String, dynamic>) apply,
++    ) async {
++      final list = response[key] as List? ?? const [];
++      for (var start = 0; start < list.length; start += 100) {
++        final end = (start + 100).clamp(0, list.length);
++        await transaction(() {
++          for (var i = start; i < end; i++) {
++            apply(list[i] as Map<String, dynamic>);
++          }
++        });
++        await Future<void>.delayed(Duration.zero);
++      }
++    }
+ 
+-        final tombstones = response['tombstones'] as Map<String, dynamic>?;
+-        if (tombstones != null) _applyTombstones(tombstones);
++    for (final key in ['mangaClientIdRemap', 'chapterClientIdRemap']) {
++      final entries = (response[key] as Map?)?.entries.toList() ?? const [];
++      for (var start = 0; start < entries.length; start += 100) {
++        final remap = <int, int>{
++          for (final entry in entries.skip(start).take(100))
++            int.parse(entry.key as String): entry.value as int,
++        };
++        await transaction(
++          () => key == 'mangaClientIdRemap'
++              ? _applyMangaRemap(remap)
++              : _applyChapterRemap(remap),
++        );
++      }
++    }
++    await rows('categories', _applyCategory);
++    await rows('manga', _applyManga);
++    await rows('chapters', _applyChapter);
++    await rows('tracks', _applyTrack);
++    await rows('histories', _applyHistory);
++    await rows('updates', _applyUpdate);
++    if (response['settings'] != null) {
++      await transaction(() {
++        settingsChanged = _applySettings(
++          response['settings'] as Map<String, dynamic>,
++        );
+       });
+-    });
++    }
++    final tombstones = response['tombstones'] as Map? ?? const {};
++    for (final entry in tombstones.entries) {
++      final ids = entry.value as List;
++      for (var start = 0; start < ids.length; start += 100) {
++        await transaction(
++          () => _applyTombstones({
++            entry.key as String: ids.skip(start).take(100).toList(),
++          }),
++        );
++      }
++    }
+     return settingsChanged;
+   }
+ 
+@@ -390,12 +393,6 @@ class SyncEntityApplier {
+   }
+ }
+ 
+-class _MangaChapterRemaps {
+-  final Map<int, int>? manga;
+-  final Map<int, int>? chapter;
+-  _MangaChapterRemaps({this.manga, this.chapter});
+-}
+-
+ Settings _preserveDeviceLocalSettings(Settings incoming, Settings current) {
+   return incoming
+     ..id = current.id
+diff --git a/lib/services/sync_server.dart b/lib/services/sync_server.dart
+index fa8822d..1fcfae7 100644
+--- a/lib/services/sync_server.dart
++++ b/lib/services/sync_server.dart
+@@ -1,3 +1,6 @@
++import 'package:mangayomi/services/database_worker.dart';
++import 'package:mangayomi/services/sync/sync_background_service.dart';
++
+ // Riverpod-facing orchestration for the sync-server's `/api/sync/v1`
+ // protocol. The wire transport lives in SyncApiClient, applying a pulled
+ // response to local storage lives in SyncEntityApplier, and collecting local
+@@ -25,7 +28,6 @@ import 'package:mangayomi/providers/l10n_providers.dart';
+ import 'package:mangayomi/services/http/m_client.dart';
+ import 'package:mangayomi/services/sync/sync_api_client.dart';
+ import 'package:mangayomi/services/sync/sync_change_collector.dart';
+-import 'package:mangayomi/services/sync/sync_entity_applier.dart';
+ import 'package:mangayomi/utils/client_id.dart';
+ import 'package:mangayomi/utils/platform_utils.dart';
+ 
+@@ -45,8 +47,9 @@ const _desktopOAuthCallbackPort = 48765;
+ 
+ @riverpod
+ class SyncServer extends _$SyncServer {
++  bool _allowRestore = false;
++  String _serverAtStart = '', _tokenAtStart = '';
+   final http = MClient.init(reqcopyWith: {'useDartHttpClient': true});
+-  final _entityApplier = const SyncEntityApplier();
+   late final _apiClient = SyncApiClient(http);
+ 
+   @override
+@@ -155,6 +158,7 @@ class SyncServer extends _$SyncServer {
+     bool bypassRestoreGuard = false,
+   }) async {
+     if (!ref.mounted) return false;
++    if (ref.read(syncProgressProvider(syncId: syncId)).active) return false;
+     // A restore in progress owns the sync server state until its own
+     // post-restore upload runs (that call passes bypassRestoreGuard: true).
+     // Anything else - the periodic timer or a manual trigger - must wait,
+@@ -166,11 +170,15 @@ class SyncServer extends _$SyncServer {
+       return false;
+     }
+     if (!silent && l10n != null) {
+-      botToast(l10n.sync_starting, second: 500);
++      botToast(l10n.sync_starting, second: 2);
+     }
+     final progress = ref.read(syncProgressProvider(syncId: syncId).notifier);
++    _allowRestore = bypassRestoreGuard;
++    _serverAtStart = _getServer();
++    _tokenAtStart = _getAccessToken();
+     progress.begin();
+     try {
++      await SyncBackgroundService.start(l10n, askNotifications: !silent);
+       if (!await _apiClient.checkVersion(_getServer())) {
+         if (!silent && l10n != null) {
+           botToast(l10n.sync_failed, second: 5);
+@@ -210,6 +218,7 @@ class SyncServer extends _$SyncServer {
+       }
+       return false;
+     } finally {
++      await SyncBackgroundService.stop();
+       progress.finish();
+     }
+   }
+@@ -220,12 +229,15 @@ class SyncServer extends _$SyncServer {
+   // until every entity has fully caught up, then saves the new `since`.
+   // ------------------------------------------------------------------
+ 
+-  Future<bool> _incrementalSync(Synching notifier) {
++  Future<bool> _incrementalSync(Synching notifier) async {
+     final prefs = ref.read(synchingProvider(syncId: syncId));
+     return _syncLoop(
+       notifier,
+       since: prefs.since ?? 0,
+-      changed: ChangedRows.collect(prefs, notifier),
++      changed: await DatabaseWorker.instance.run<ChangedRows>(
++        'collect',
++        prefs.since ?? 0,
++      ),
+     );
+   }
+ 
+@@ -237,6 +249,7 @@ class SyncServer extends _$SyncServer {
+     required int since,
+     ChangedRows? changed,
+   }) async {
++    final syncStartedAt = DateTime.now().millisecondsSinceEpoch;
+     final chunks = changed?.chunked(_maxRowsPerEntity) ?? const [];
+     final progress = ref.read(syncProgressProvider(syncId: syncId).notifier);
+     progress.addTotal(chunks.length);
+@@ -246,7 +259,7 @@ class SyncServer extends _$SyncServer {
+     var chunkIndex = 0;
+ 
+     while (true) {
+-      if (!ref.mounted) return false;
++      if (!_canContinue()) return false;
+       final hasChunk = chunkIndex < chunks.length;
+       final body = <String, dynamic>{
+         'since': since,
+@@ -257,7 +270,7 @@ class SyncServer extends _$SyncServer {
+       if (hasChunk) chunkIndex += 1;
+ 
+       final response = await _postSync(body);
+-      if (response == null) return false;
++      if (response == null || !_canContinue()) return false;
+       if (hasChunk) progress.addDone(1);
+       _trackDownloadProgress(progress, response);
+ 
+@@ -269,7 +282,10 @@ class SyncServer extends _$SyncServer {
+       if (chunkIndex >= chunks.length && !hasMore) {
+         final syncedAt = response['syncedAt'] as int?;
+         if (syncedAt != null) {
+-          notifier.setSince(syncedAt);
++          // Edits made while uploading must still be eligible next time.
++          notifier.setSince(
++            min(syncedAt, changed?.collectedAt ?? syncStartedAt),
++          );
+           notifier.setLastSync(DateTime.now().millisecondsSinceEpoch);
+           await changed?.clearUploaded(notifier);
+         }
+@@ -278,6 +294,12 @@ class SyncServer extends _$SyncServer {
+     }
+   }
+ 
++  bool _canContinue() =>
++      ref.mounted &&
++      (_allowRestore || !ref.read(restoreSyncGuardProvider)) &&
++      _getServer() == _serverAtStart &&
++      _getAccessToken() == _tokenAtStart;
++
+   // Adds this response's contribution to the progress bar using docs/sync_api.md's totalCounts and per-page row counts.
+   void _trackDownloadProgress(
+     SyncProgress progress,
+@@ -314,13 +336,16 @@ class SyncServer extends _$SyncServer {
+   // traded for not being a one-click way to destroy real data by accident.
+   // ------------------------------------------------------------------
+ 
+-  Future<bool> _forceUpload(Synching notifier) {
++  Future<bool> _forceUpload(Synching notifier) async {
+     final prefs = ref.read(synchingProvider(syncId: syncId));
+     final now = DateTime.now().millisecondsSinceEpoch;
+     return _syncLoop(
+       notifier,
+       since: prefs.since ?? 0,
+-      changed: ChangedRows.collectAll(forcedUpdatedAt: now),
++      changed: await DatabaseWorker.instance.run<ChangedRows>(
++        'collectAll',
++        now,
++      ),
+     );
+   }
+ 
+@@ -361,7 +386,10 @@ class SyncServer extends _$SyncServer {
+   // ------------------------------------------------------------------
+ 
+   Future<void> _applyPulledEntities(Map<String, dynamic> response) async {
+-    final settingsChanged = await _entityApplier.apply(response);
++    final settingsChanged = await DatabaseWorker.instance.run<bool>(
++      'apply',
++      response,
++    );
+     if (settingsChanged) _invalidateSettingsDerivedProviders();
+   }
+ 
+diff --git a/lib/utils/client_id.dart b/lib/utils/client_id.dart
+index 6b863a0..9eaf085 100644
+--- a/lib/utils/client_id.dart
++++ b/lib/utils/client_id.dart
+@@ -1,3 +1,5 @@
++import 'package:mangayomi/services/database_worker.dart';
++
+ import 'dart:math';
+ 
+ import 'package:isar_community/isar.dart';
+@@ -8,12 +10,7 @@ import 'package:mangayomi/models/history.dart';
+ import 'package:mangayomi/models/manga.dart';
+ import 'package:mangayomi/models/track.dart';
+ import 'package:mangayomi/models/update.dart';
+-import 'package:mangayomi/repositories/category_repository.dart';
+-import 'package:mangayomi/repositories/chapter_repository.dart';
+ import 'package:mangayomi/repositories/db_write_queue.dart';
+-import 'package:mangayomi/repositories/history_repository.dart';
+-import 'package:mangayomi/repositories/manga_repository.dart';
+-import 'package:mangayomi/repositories/update_repository.dart';
+ 
+ /// Generates a `clientId`: a value made once when a synced row is created,
+ /// then only ever compared, never regenerated for that row again (see
+@@ -50,54 +47,78 @@ int generateClientId() {
+ /// before a sync's upload is built (covers a row made earlier in the same
+ /// session, which startup's sweep couldn't have seen yet).
+ ///
+-/// The reads happen outside any transaction (Isar allows that freely); the
+-/// writes are wrapped in one `isar.writeTxnSync()` - Isar requires every
+-/// write, even a single `put()`, to run inside an explicit transaction, and
+-/// it does not open one of its own. Kept fully synchronous (no `await`
+-/// anywhere inside the transaction) rather than the async `writeTxn` form:
+-/// a sync transaction is one uninterrupted call with no event-loop turn in
+-/// the middle, so there is no window for it to overlap with anything else.
+-/// Routed through `dbWriteQueue` like every other write in the app, since
+-/// this can run unawaited at startup (see main.dart) alongside an ordinary
+-/// save or a sync - the shared queue serializes those instead of letting
+-/// them collide.
+-Future<void> backfillMissingClientIds() async {
+-  final categories = isar.categorys.filter().clientIdIsNull().findAllSync();
+-  final mangas = isar.mangas.filter().clientIdIsNull().findAllSync();
+-  final chapters = isar.chapters.filter().clientIdIsNull().findAllSync();
+-  final tracks = isar.tracks.filter().clientIdIsNull().findAllSync();
+-  final histories = isar.historys.filter().clientIdIsNull().findAllSync();
+-  final updates = isar.updates.filter().clientIdIsNull().findAllSync();
++/// The startup and sync sweeps both run on the database worker. Native
++/// transactions are bounded to avoid stalling reader writes in other isolates.
++Future<void> backfillMissingClientIds() =>
++    DatabaseWorker.instance.run<void>('backfill');
+ 
+-  if (categories.isEmpty &&
+-      mangas.isEmpty &&
+-      chapters.isEmpty &&
+-      tracks.isEmpty &&
+-      histories.isEmpty &&
+-      updates.isEmpty) {
+-    return;
++/// Re-read inside each transaction so a user's concurrent edit is never
++/// replaced by an old snapshot gathered before the transaction started.
++Future<void> backfillClientIdsInWorker() async {
++  Future<void> fill<T>(
++    IsarCollection<T> collection,
++    List<T> missing,
++    int? Function(T) idOf,
++    int? Function(T) clientIdOf,
++    void Function(T, int) assign,
++  ) async {
++    for (var start = 0; start < missing.length; start += 100) {
++      await dbWriteQueue.run(
++        () => isar.writeTxnSync(() {
++          for (final snapshot in missing.skip(start).take(100)) {
++            final id = idOf(snapshot);
++            if (id == null) continue;
++            final current = collection.getSync(id);
++            if (current == null || clientIdOf(current) != null) continue;
++            assign(current, generateClientId());
++            collection.putSync(current);
++          }
++        }),
++      );
++      await Future<void>.delayed(Duration.zero);
++    }
+   }
+ 
+-  await dbWriteQueue.run(() {
+-    isar.writeTxnSync(() {
+-      for (final row in categories) {
+-        categoryRepository.putSync(row..clientId = generateClientId());
+-      }
+-      for (final row in mangas) {
+-        mangaRepository.putSync(row..clientId = generateClientId());
+-      }
+-      for (final row in chapters) {
+-        chapterRepository.putSync(row..clientId = generateClientId());
+-      }
+-      for (final row in tracks) {
+-        isar.tracks.putSync(row..clientId = generateClientId());
+-      }
+-      for (final row in histories) {
+-        historyRepository.putSync(row..clientId = generateClientId());
+-      }
+-      for (final row in updates) {
+-        updateRepository.putSync(row..clientId = generateClientId());
+-      }
+-    });
+-  });
++  await fill(
++    isar.categorys,
++    isar.categorys.filter().clientIdIsNull().findAllSync(),
++    (r) => r.id,
++    (r) => r.clientId,
++    (r, id) => r.clientId = id,
++  );
++  await fill(
++    isar.mangas,
++    isar.mangas.filter().clientIdIsNull().findAllSync(),
++    (r) => r.id,
++    (r) => r.clientId,
++    (r, id) => r.clientId = id,
++  );
++  await fill(
++    isar.chapters,
++    isar.chapters.filter().clientIdIsNull().findAllSync(),
++    (r) => r.id,
++    (r) => r.clientId,
++    (r, id) => r.clientId = id,
++  );
++  await fill(
++    isar.tracks,
++    isar.tracks.filter().clientIdIsNull().findAllSync(),
++    (r) => r.id,
++    (r) => r.clientId,
++    (r, id) => r.clientId = id,
++  );
++  await fill(
++    isar.historys,
++    isar.historys.filter().clientIdIsNull().findAllSync(),
++    (r) => r.id,
++    (r) => r.clientId,
++    (r, id) => r.clientId = id,
++  );
++  await fill(
++    isar.updates,
++    isar.updates.filter().clientIdIsNull().findAllSync(),
++    (r) => r.id,
++    (r) => r.clientId,
++    (r, id) => r.clientId = id,
++  );
+ }
+diff --git a/test/services/database_worker_test.dart b/test/services/database_worker_test.dart
+new file mode 100644
+index 0000000..a2eef4b
+--- /dev/null
++++ b/test/services/database_worker_test.dart
+@@ -0,0 +1,182 @@
++import 'dart:async';
++import 'dart:io';
++
++import 'package:flutter_test/flutter_test.dart';
++import 'package:isar_community/isar.dart';
++import 'package:mangayomi/main.dart' as app;
++import 'package:mangayomi/models/changed.dart';
++import 'package:mangayomi/models/chapter.dart';
++import 'package:mangayomi/models/manga.dart';
++import 'package:mangayomi/models/settings.dart';
++import 'package:mangayomi/providers/storage_provider.dart';
++import 'package:mangayomi/repositories/changed_part_repository.dart';
++import 'package:mangayomi/services/database_worker.dart';
++import 'package:mangayomi/services/library_chapter_summary.dart';
++import 'package:mangayomi/services/sync/sync_change_collector.dart';
++
++void main() {
++  TestWidgetsFlutterBinding.ensureInitialized();
++  late Directory directory;
++  setUpAll(() async {
++    final overrides = HttpOverrides.current;
++    HttpOverrides.global = null;
++    try {
++      await Isar.initializeIsarCore(download: true);
++    } finally {
++      HttpOverrides.global = overrides;
++    }
++  });
++  setUp(() async {
++    directory = await Directory.systemTemp.createTemp('background_library');
++    app.isar = await Isar.open(
++      StorageProvider.databaseSchemas,
++      directory: directory.path,
++      name: 'test_${directory.path.hashCode}',
++    );
++    await app.isar.writeTxn(() => app.isar.settings.put(Settings()..id = 227));
++  });
++  tearDown(() async {
++    await DatabaseWorker.instance.close();
++    await app.isar.close(deleteFromDisk: true);
++    await directory.delete(recursive: true);
++  });
++
++  Manga book(int id) =>
++      Manga(
++          source: 'test',
++          author: '',
++          artist: '',
++          genre: [],
++          imageUrl: '',
++          lang: 'zh',
++          link: '/$id',
++          name: 'Test $id',
++          status: Status.ongoing,
++          description: '',
++          sourceId: 1,
++        )
++        ..id = id
++        ..clientId = id + 100000
++        ..favorite = true;
++
++  test('real database isolate reads 65000 chapters while UI timers advance', () async {
++    final books = List.generate(1473, (i) => book(i + 1));
++    final chapters = List.generate(
++      65000,
++      (i) => Chapter(
++        id: i + 1,
++        clientId: i + 200000,
++        mangaId: (i % books.length) + 1,
++        name: 'Chapter $i',
++        url: '/chapter/$i',
++        isRead: i % 3 == 0,
++        scanlator: i % 2 == 0 ? 'A' : 'B',
++      )..manga.value = books[i % books.length],
++    );
++    await app.isar.writeTxn(() async {
++      await app.isar.mangas.putAll(books);
++      await app.isar.chapters.putAll(chapters);
++      for (final chapter in chapters) {
++        await chapter.manga.save();
++      }
++    });
++    // Start the worker before measuring, so startup alone cannot pass the test.
++    await DatabaseWorker.instance.run<void>('barrier');
++    var beats = 0;
++    final delays = <int>[];
++    final watch = Stopwatch()..start();
++    var last = 0;
++    final timer = Timer.periodic(const Duration(milliseconds: 5), (_) {
++      final now = watch.elapsedMilliseconds;
++      delays.add(now - last);
++      last = now;
++      beats++;
++    });
++    final rows = await DatabaseWorker.instance
++        .run<Map<int, LibraryChapterSummary>>('summary');
++    final changed = await DatabaseWorker.instance.run<ChangedRows>(
++      'collect',
++      0,
++    );
++    timer.cancel();
++    watch.stop();
++    expect(rows.length, 1473);
++    expect(rows.values.fold<int>(0, (s, row) => s + row.total), 65000);
++    expect(changed.chapters.length, 65000);
++    expect(changed.chunked(5000).length, 13);
++    expect(beats, greaterThan(2));
++    // A generous CI bound still rejects multi-second main-isolate stalls.
++    expect(delays.reduce((a, b) => a > b ? a : b), lessThan(1000));
++    // ignore: avoid_print
++    print(
++      'BACKGROUND_LIBRARY_BENCHMARK rows=65000 titles=1473 elapsed_ms=${watch.elapsedMilliseconds} ui_ticks=$beats max_gap_ms=${delays.reduce((a, b) => a > b ? a : b)}',
++    );
++  }, timeout: const Timeout(Duration(minutes: 3)));
++
++  test(
++    'worker commits are visible and newer reader edits survive replay',
++    () async {
++      await app.isar.writeTxn(() => app.isar.mangas.put(book(1)));
++      final payload = <String, dynamic>{
++        'chapters': [
++          {
++            'clientId': 88,
++            'mangaClientId': 100001,
++            'name': 'one',
++            'url': '/one',
++            'updatedAt': 10,
++            'isRead': false,
++          },
++        ],
++      };
++      await DatabaseWorker.instance.run<bool>('apply', payload);
++      var chapter = await app.isar.chapters
++          .filter()
++          .clientIdEqualTo(88)
++          .findFirst();
++      expect(chapter, isNotNull);
++      await app.isar.writeTxn(
++        () => app.isar.chapters.put(
++          chapter!
++            ..isRead = true
++            ..updatedAt = 20,
++        ),
++      );
++      await DatabaseWorker.instance.run<bool>('apply', payload);
++      chapter = await app.isar.chapters
++          .filter()
++          .clientIdEqualTo(88)
++          .findFirst();
++      expect(chapter!.isRead, true);
++      expect(await app.isar.chapters.count(), 1);
++    },
++  );
++
++  test(
++    'acknowledgement preserves a deletion edited during the upload',
++    () async {
++      final sent = ChangedPart(
++        actionType: ActionType.removeChapter,
++        clientId: 123,
++        isarId: 7,
++        data: 'old',
++        clientDate: 10,
++      );
++      await app.isar.writeTxn(() => app.isar.changedParts.put(sent));
++      final snapshot = (await app.isar.changedParts.get(sent.id!))!;
++      await app.isar.writeTxn(
++        () => app.isar.changedParts.put(
++          sent
++            ..data = 'new'
++            ..clientDate = 11,
++        ),
++      );
++      await changedPartRepository.clearAcknowledged([snapshot]);
++      expect(await app.isar.changedParts.count(), 1);
++      await changedPartRepository.clearAcknowledged([
++        (await app.isar.changedParts.get(sent.id!))!,
++      ]);
++      expect(await app.isar.changedParts.count(), 0);
++    },
++  );
++}
+diff --git a/test/services/library_chapter_summary_test.dart b/test/services/library_chapter_summary_test.dart
+new file mode 100644
+index 0000000..b0d124c
+--- /dev/null
++++ b/test/services/library_chapter_summary_test.dart
+@@ -0,0 +1,69 @@
++import 'package:flutter_test/flutter_test.dart';
++import 'package:mangayomi/services/library_chapter_summary.dart';
++
++void main() {
++  test('counts, hidden scanlators, nullable flags and numeric dates', () {
++    final builder = LibrarySummaryBuilder();
++    void add(int? mangaId, bool read, String? scanlator, String date) =>
++        builder.add(
++          mangaId: mangaId,
++          read: read,
++          scanlator: scanlator,
++          dateUpload: date,
++          downloaded: true,
++          bookmarked: !read,
++        );
++    add(7, false, 'A', '9');
++    add(7, false, 'B', '10');
++    add(7, true, 'A', '2');
++    add(7, false, null, '');
++    add(null, false, '', '999');
++    final result = builder.finish();
++    expect(result.keys, [7]);
++    expect(result[7]!.total, 4);
++    expect(result[7]!.unread, 3);
++    expect(result[7]!.bookmarked, 3);
++    expect(result[7]!.downloaded, 4);
++    expect(result[7]!.visibleUnread(['A', 'A', 'missing']), 2);
++    expect(result[7]!.visibleUnread(['A', 'B']), 1);
++    expect(result[7]!.latestUpload, '10');
++  });
++
++  test('65000 chapters agree with independently counted library rows', () {
++    final builder = LibrarySummaryBuilder();
++    final expected = <int, List<int>>{};
++    for (var i = 0; i < 65000; i++) {
++      final manga = i % 1473;
++      final read = i % 3 == 0;
++      final bookmarked = i % 7 == 0;
++      final downloaded = i % 11 == 0;
++      final scanlator = i % 2 == 0 ? 'hidden' : 'visible';
++      builder.add(
++        mangaId: manga,
++        read: read,
++        bookmarked: bookmarked,
++        downloaded: downloaded,
++        scanlator: scanlator,
++        dateUpload: '$i',
++      );
++      final counts = expected.putIfAbsent(manga, () => [0, 0, 0, 0, 0]);
++      counts[0]++;
++      if (!read) counts[1]++;
++      if (bookmarked) counts[2]++;
++      if (downloaded) counts[3]++;
++      if (!read && scanlator == 'visible') counts[4]++;
++    }
++    final summaries = builder.finish();
++    expect(summaries.length, 1473);
++    for (final entry in expected.entries) {
++      final summary = summaries[entry.key]!;
++      expect([
++        summary.total,
++        summary.unread,
++        summary.bookmarked,
++        summary.downloaded,
++        summary.visibleUnread(['hidden']),
++      ], entry.value);
++    }
++  });
++}
+diff --git a/test/services/sync_background_transport_test.dart b/test/services/sync_background_transport_test.dart
+new file mode 100644
+index 0000000..904ba74
+--- /dev/null
++++ b/test/services/sync_background_transport_test.dart
+@@ -0,0 +1,38 @@
++import 'dart:convert';
++
++import 'package:flutter_test/flutter_test.dart';
++import 'package:http/http.dart' as http;
++import 'package:http/testing.dart';
++import 'package:mangayomi/services/sync/sync_api_client.dart';
++
++void main() {
++  test(
++    'large off-isolate JSON preserves the wire protocol and headers',
++    () async {
++      final rows = List.generate(
++        5000,
++        (i) => {'clientId': i, 'name': '第 $i 章', 'isRead': i.isEven},
++      );
++      final client = SyncApiClient(
++        MockClient((request) async {
++          expect(request.url.path, '/api/sync/v1');
++          expect(request.headers['cookie'], 'id=test-token');
++          expect(request.headers['connection'], 'close');
++          expect(jsonDecode(request.body)['chapters'], rows);
++          return http.Response(
++            jsonEncode({'chapters': rows, 'syncedAt': 10}),
++            200,
++            headers: {'content-type': 'application/json; charset=utf-8'},
++          );
++        }),
++      );
++      final response = await client.postSync(
++        'http://localhost:3000',
++        'test-token',
++        {'since': 0, 'chapters': rows},
++      );
++      expect(response!['chapters'], rows);
++      expect(response['syncedAt'], 10);
++    },
++  );
++}
