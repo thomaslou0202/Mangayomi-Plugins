@@ -35,8 +35,11 @@ Mangabz 的使用方式、備份相容格式與驗證範圍見 [Mangabz 說明](
 | SF輕小說（測試版） | 0.1.0 | 書庫分類、繁簡中文搜尋、分卷目錄、免費章節正文；VIP 保留標示 |
 | 無限小說8book（測試版） | 0.1.0 | 熱門排行、日輕等分類、最新更新、搜尋、分卷目錄、動態正文 |
 | 石頭小說（測試版） | 0.1.0 | 書庫分類、搜尋、完整目錄、正文、章內分頁、特殊字型文字還原 |
+| 起點中文網（測試版） | 0.1.0 | 官方手機站熱門榜、繁簡搜尋與分頁、完整分卷目錄、免費正文；付費章節標示 VIP |
 
 最低版本設為 Mangayomi 0.9.9。新增來源使用固定 ID，來源清單及更新網址由本儲存庫產生。
+
+起點的安裝、免費章節範圍與驗證說明見 [起點中文網說明](docs/qidian.md)。
 
 ## 動畫來源
 
@@ -135,12 +138,13 @@ javascript/novel/src/zh/czbooks.js
 javascript/novel/src/zh/sfacg.js
 javascript/novel/src/zh/eightbook.js
 javascript/novel/src/zh/twbook.js
+javascript/novel/src/zh/qidian.js
 javascript/anime/src/zh/anime1.js
 ```
 
 需要 Node.js 22 或更新版本。產生與檢查索引無額外套件；執行解析器測試時，先用 `npm ci --ignore-scripts` 安裝開發依賴。安裝到 Mangayomi 的來源仍是單一 JavaScript 檔，不需要 npm。
 
-SF、8book、石頭小說的程式碼維護在 `templates/`，共用程式放在 `templates/native-novel-common.js`；發佈時產生成三個可獨立執行的來源。請修改模板，避免直接修改隨後會被覆蓋的產出檔案。文庫8、小說狂人、漫畫人及 Anime1 直接維護來源檔。
+SF、8book、石頭小說、起點的程式碼維護在 `templates/`，共用程式放在 `templates/native-novel-common.js`；發佈時產生四個可獨立執行的來源。請修改模板，避免直接修改隨後會被覆蓋的產出檔案。文庫8、小說狂人、漫畫人及 Anime1 直接維護來源檔。
 
 1. 修改來源，並增加該檔案 `mangayomiSources` 中的 `version`；保留原本的 `id`。
 2. 在儲存庫資料夾執行 `npm run build`，重新產生 `index.json`、`novel_index.json`、`anime_index.json`、`repo.json` 與 `checksums.json`。

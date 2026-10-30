@@ -108,5 +108,27 @@
     "additionalParams": "",
     "sourceCodeLanguage": 1,
     "notes": "支援書庫、分類、搜尋、完整目錄、正文與網站特殊字型文字還原。網站驗證請在來源 WebView 手動完成。"
+  },
+  {
+    "name": "起點中文網（測試版）",
+    "id": 1827634459,
+    "baseUrl": "https://m.qidian.com",
+    "lang": "zh",
+    "typeSource": "single",
+    "iconUrl": "https://m.qidian.com/favicon.ico",
+    "dateFormat": "",
+    "dateFormatLocale": "",
+    "isNsfw": false,
+    "hasCloudflare": true,
+    "sourceCodeUrl": "https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/javascript/novel/src/zh/qidian.js",
+    "apiUrl": "",
+    "version": "0.1.0",
+    "isManga": false,
+    "itemType": 2,
+    "isFullData": false,
+    "appMinVerReq": "0.9.9",
+    "additionalParams": "",
+    "sourceCodeLanguage": 1,
+    "notes": "官方手機站、熱門榜、繁簡搜尋、完整分卷目錄及免費正文。付費章節請使用官方網站或 App。"
   }
 ]

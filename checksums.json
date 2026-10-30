@@ -30,6 +30,10 @@
       "sha256": "77df0401a489af53e3fde75aafe01c470e377a152a0119995cc2fe1b1289237e"
     },
     {
+      "path": "javascript/novel/src/zh/qidian.js",
+      "sha256": "eb12fe628f91168c2248028d971b5776d9f464f48462097bd7436f727064f14d"
+    },
+    {
       "path": "javascript/novel/src/zh/sfacg.js",
       "sha256": "327338a816b7a46dec89255b20546d45101bb7502f8c465d34632e1337cd55bd"
     },
@@ -43,7 +47,7 @@
     },
     {
       "path": "novel_index.json",
-      "sha256": "5bf5cc6d9cf812486c64dc01e7f38bcc14db360e9b6aac69ea64e57d7f25882b"
+      "sha256": "604d446b328be018a25568769ae1cc6bb6baef991f1e836baf7b13c89af6abde"
     },
     {
       "path": "repo.json",
