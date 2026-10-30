@@ -6,11 +6,13 @@
 
 [Android 手機／平板 APK](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/latest/download/Mangayomi-android.apk) · [Windows ZIP](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/latest/download/Mangayomi-windows.zip) · [最新正式 Release](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/latest) · [完整 App 原始碼](https://github.com/thomaslou0202/Mangayomi-Plugins/tree/app-source)
 
-目前正式版 **0.9.10+133**。保留小說正文插圖、完整繁體中文介面、漫畫來源舊資料相容、書庫效能與背景同步。手機與平板使用同一個 APK，最低 Android 7.0，沿用先前插圖／效能版的套件名稱與簽章，可直接覆蓋更新。
+目前正式版 **0.9.10+134**。保留小說正文插圖、完整繁體中文介面、漫畫來源舊資料相容、書庫效能與背景同步。手機與平板使用同一個 APK，最低 Android 7.0，沿用先前插圖／效能版的套件名稱與簽章，可直接覆蓋更新。
 
-作品詳情頁在「相關作品」右側新增「評論」，用 App 內建網頁開啟來源網站的留言／評論區，並嘗試自動定位。支援稍後載入的留言元件；手動捲動後會停止延遲定位。若網站沒有可辨識區塊，仍可在完整網頁手動查看。
+134 版修正起點等作品載入目錄時，非同步任務提早釋放造成的 Ref 錯誤，並處理離開頁面、重新載入與關閉程式後的過期回應。
 
-**0.9.10+132 已安裝者可直接在程式內檢查更新**；更舊的測試版需先手動升級一次。「更多 → 關於 → 檢查更新」與啟動時的更新檢查，會讀取本倉庫的正式 GitHub Releases。Windows 更新按鈕會開啟本倉庫的下載頁，Android 可下載 APK 並由系統確認安裝。包含修訂號比較，可辨識 `0.9.10+132 → 0.9.10+133`。
+作品詳情頁在「相關作品」右側提供「評論」，用 App 內建網頁開啟來源網站的留言／評論區，並嘗試自動定位。支援稍後載入的留言元件；手動捲動後會停止延遲定位。若網站沒有可辨識區塊，仍可在完整網頁手動查看。
+
+**0.9.10+132 已安裝者可直接在程式內檢查更新**；更舊的測試版需先手動升級一次。「更多 → 關於 → 檢查更新」與啟動時的更新檢查，會讀取本倉庫的正式 GitHub Releases。Windows 更新按鈕會開啟本倉庫的下載頁，Android 可下載 APK 並由系統確認安裝。包含修訂號比較，可辨識 `0.9.10+133 → 0.9.10+134`。
 
 本機固定使用 `D:\Mangayomi\Windows\mangayomi.exe` 與 `D:\Mangayomi\Android\Mangayomi.apk`，不再建立各版安裝資料夾。歷史安裝檔保留在 [GitHub Releases](https://github.com/thomaslou0202/Mangayomi-Plugins/releases)，各正式版 tag 同時提供完整 App 原始碼與校驗碼。
 
