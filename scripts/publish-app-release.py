@@ -49,11 +49,16 @@ try:
 except urllib.error.HTTPError as error:
     if error.code != 404:
         raise
+    # GitHub's tag lookup can return 404 for an unpublished draft, even to its
+    # owner. List drafts before creating so interrupted uploads are resumable.
+    releases = request(BASE + '/releases?per_page=100')
+    release = next((r for r in releases if r['tag_name'] == CONFIG['tag']), None)
+if release is None:
     release = request(BASE + '/releases', 'POST', json.dumps({
         'tag_name': CONFIG['tag'], 'target_commitish': CONFIG['source'],
         'name': 'Mangayomi 繁體中文插圖版 ' + CONFIG['version'] + '+' + str(CONFIG['build']),
         'body': notes.decode('utf-8'), 'draft': True, 'prerelease': False,
-        'make_latest': 'true',
+        'make_latest': 'false',
     }).encode())
 
 for name, data, content_type in files:
