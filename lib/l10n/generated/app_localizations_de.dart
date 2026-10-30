@@ -1913,6 +1913,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Downloads sind nur über WLAN verfügbar';
 
   @override
+  String get comments => 'Comments';
+
+  @override
   String get recommendations => 'Empfehlungen';
 
   @override

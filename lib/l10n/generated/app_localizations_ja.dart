@@ -1866,6 +1866,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get downloads_are_limited_to_wifi => 'ダウンロードはWi-Fiに制限されています';
 
   @override
+  String get comments => 'Comments';
+
+  @override
   String get recommendations => 'おすすめ';
 
   @override

@@ -1846,6 +1846,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get downloads_are_limited_to_wifi => '下载仅限于WiFi';
 
   @override
+  String get comments => '评论';
+
+  @override
   String get recommendations => '推荐';
 
   @override
@@ -5436,6 +5439,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get downloads_are_limited_to_wifi => '下載僅限於WiFi';
+
+  @override
+  String get comments => '評論';
 
   @override
   String get recommendations => '推薦';

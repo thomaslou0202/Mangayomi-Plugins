@@ -1,3 +1,6 @@
+import 'package:mangayomi/modules/manga/detail/widgets/detail_action_strip.dart';
+import 'package:mangayomi/modules/webview/comments.dart';
+import 'package:mangayomi/repositories/source_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -153,7 +156,10 @@ class _MangaInfoHeaderState extends ConsumerState<MangaInfoHeader> {
                           ),
                   ),
                   const SizedBox(height: 15),
-                  _DetailActions(manga: widget.manga),
+                  MangaDetailActions(
+                    manga: widget.manga,
+                    isLocalArchive: widget.isLocalArchive,
+                  ),
                   const SizedBox(height: 15),
                   if (!context.isTablet)
                     Column(
@@ -689,19 +695,6 @@ class DetailGenreChip extends StatelessWidget {
   }
 }
 
-/// One action on the detail page.
-class _DetailAction {
-  const _DetailAction({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-}
-
 /// The things you can do with a title from its detail page, as one control.
 ///
 /// These used to be up to three full-width buttons stacked down the page, each
@@ -713,19 +706,56 @@ class _DetailAction {
 /// desktop window and left an orphan on the second line of a phone. Segments
 /// divide the width they are given, which means the strip looks deliberate at
 /// any width and with two, three or four actions in it.
-class _DetailActions extends ConsumerWidget {
-  const _DetailActions({required this.manga});
+class MangaDetailActions extends ConsumerWidget {
+  const MangaDetailActions({
+    super.key,
+    required this.manga,
+    required this.isLocalArchive,
+  });
 
   final Manga manga;
+  final bool isLocalArchive;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = l10nLocalizations(context)!;
 
+    final absoluteUrl = resolveCommentsPageUrl(
+      link: manga.link,
+      isLocalArchive: isLocalArchive,
+    );
+    final source = absoluteUrl != null || isLocalArchive
+        ? null
+        : (manga.sourceId == null
+                  ? null
+                  : sourceRepository.getById(manga.sourceId!)) ??
+              getSource(manga.lang ?? '', manga.source ?? '', manga.sourceId);
+    final commentsUrl =
+        absoluteUrl ??
+        resolveCommentsPageUrl(
+          link: manga.link,
+          baseUrl: source?.baseUrl,
+          isLocalArchive: isLocalArchive,
+        );
+    final comments = DetailAction(
+      icon: Icons.chat_bubble_outline,
+      label: l10n.comments,
+      onPressed: commentsUrl == null
+          ? null
+          : () => context.push(
+              '/mangawebview',
+              extra: {
+                'url': commentsUrl,
+                'title': '${manga.name ?? ''} · ${l10n.comments}',
+                'focusComments': true,
+              },
+            ),
+    );
+
     // Everything this title is related to, including the one thing that
     // cannot be reached any other way from in here: its adaptation in the
     // other medium.
-    final related = _DetailAction(
+    final related = DetailAction(
       icon: Icons.account_tree_outlined,
       label: l10n.related_titles,
       onPressed: () =>
@@ -735,7 +765,11 @@ class _DetailActions extends ConsumerWidget {
     if (manga.itemType != ItemType.anime) {
       final media = MediaLookupContext.fromManga(manga);
       final recommendations = _recommendationsAction(context, ref, media);
-      return _strip(context, [recommendations, related]);
+      return _strip(context, [
+        recommendations,
+        related,
+        if (!isLocalArchive) comments,
+      ]);
     }
 
     // Sequels needs a MyAnimeList or AniList track to look anything up, so it
@@ -756,7 +790,7 @@ class _DetailActions extends ConsumerWidget {
         }
         final media = MediaLookupContext.fromManga(manga, tracks: tracks);
         final recommendations = _recommendationsAction(context, ref, media);
-        final watchOrder = _DetailAction(
+        final watchOrder = DetailAction(
           icon: Icons.format_list_numbered_outlined,
           label: l10n.watch_order,
           onPressed: () =>
@@ -766,9 +800,10 @@ class _DetailActions extends ConsumerWidget {
         return _strip(context, [
           recommendations,
           related,
+          if (!isLocalArchive) comments,
           watchOrder,
           if (sequelTrack != null)
-            _DetailAction(
+            DetailAction(
               icon: Icons.playlist_play_outlined,
               label: l10n.sequels,
               onPressed: () =>
@@ -779,12 +814,12 @@ class _DetailActions extends ConsumerWidget {
     );
   }
 
-  _DetailAction _recommendationsAction(
+  DetailAction _recommendationsAction(
     BuildContext context,
     WidgetRef ref,
     MediaLookupContext media,
   ) {
-    return _DetailAction(
+    return DetailAction(
       icon: Icons.auto_awesome_outlined,
       label: context.l10n.recommendations,
       onPressed: () => context.push(
@@ -794,71 +829,6 @@ class _DetailActions extends ConsumerWidget {
     );
   }
 
-  Widget _strip(BuildContext context, List<_DetailAction> actions) {
-    // Tinted rather than the neutral outline, so the border belongs to the
-    // accent the segments are drawn in. Kept faint: it frames the strip, it
-    // is not another thing to look at.
-    final outline = context.primaryColor.withValues(alpha: 0.35);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: outline),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        // So a segment's ink and its focus highlight stay inside the border.
-        clipBehavior: Clip.antiAlias,
-        // Every segment as tall as the tallest, which is what keeps the
-        // dividers full height when one label wraps to two lines.
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (var i = 0; i < actions.length; i++) ...[
-                if (i > 0)
-                  VerticalDivider(width: 1, thickness: 1, color: outline),
-                Expanded(child: _segment(context, actions[i])),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Icon above label rather than beside it. These labels are localised and
-  /// some translations are long; stacked, a long one takes a second line
-  /// instead of pushing the icon out or clipping.
-  Widget _segment(BuildContext context, _DetailAction action) {
-    // The accent, so the strip reads as something to press and follows
-    // whichever colour the user picked rather than sitting in body-text grey.
-    final accent = context.primaryColor;
-
-    return InkWell(
-      onTap: action.onPressed,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(action.icon, size: 20, color: accent),
-            const SizedBox(height: 5),
-            Text(
-              action.label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: accent,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _strip(BuildContext context, List<DetailAction> actions) =>
+      DetailActionStrip(actions: actions);
 }

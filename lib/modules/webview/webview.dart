@@ -1,3 +1,5 @@
+import 'package:mangayomi/modules/webview/comments.dart';
+
 import 'dart:async';
 import 'dart:io';
 
@@ -21,7 +23,13 @@ import 'package:mangayomi/utils/share.dart';
 class MangaWebView extends ConsumerStatefulWidget {
   final String url;
   final String title;
-  const MangaWebView({super.key, required this.url, required this.title});
+  final bool focusComments;
+  const MangaWebView({
+    super.key,
+    required this.url,
+    required this.title,
+    this.focusComments = false,
+  });
 
   @override
   ConsumerState<MangaWebView> createState() => _MangaWebViewState();
@@ -109,6 +117,11 @@ class _MangaWebViewState extends ConsumerState<MangaWebView> {
     }
     if (Platform.isLinux) {
       _desktopWebview = await WebviewWindow.create();
+      if (widget.focusComments) {
+        _desktopWebview!.addScriptToExecuteOnDocumentCreated(
+          commentsFocusScript(widget.url),
+        );
+      }
 
       _cookieTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
         try {
@@ -136,6 +149,7 @@ class _MangaWebViewState extends ConsumerState<MangaWebView> {
     } else {
       browser = MyInAppBrowser(
         context: context,
+        onPageLoaded: _focusComments,
         controller: (controller) {
           _webViewController = controller;
         },
@@ -175,6 +189,17 @@ class _MangaWebViewState extends ConsumerState<MangaWebView> {
           ),
         ),
       );
+    }
+  }
+
+  Future<void> _focusComments(InAppWebViewController controller) async {
+    if (!widget.focusComments || !mounted) return;
+    try {
+      await controller.evaluateJavascript(
+        source: commentsFocusScript(widget.url),
+      );
+    } catch (_) {
+      // A navigating/closed page can reject JavaScript; keep the website usable.
     }
   }
 
@@ -255,7 +280,9 @@ class _MangaWebViewState extends ConsumerState<MangaWebView> {
                           IconButton(
                             icon: Icon(
                               Icons.arrow_back,
-                              color: _canGoback ? null : Theme.of(context).disabledColor,
+                              color: _canGoback
+                                  ? null
+                                  : Theme.of(context).disabledColor,
                             ),
                             onPressed: _canGoback
                                 ? () {
@@ -266,7 +293,9 @@ class _MangaWebViewState extends ConsumerState<MangaWebView> {
                           IconButton(
                             icon: Icon(
                               Icons.arrow_forward,
-                              color: _canGoForward ? null : Theme.of(context).disabledColor,
+                              color: _canGoForward
+                                  ? null
+                                  : Theme.of(context).disabledColor,
                             ),
                             onPressed: _canGoForward
                                 ? () {
@@ -367,6 +396,7 @@ class _MangaWebViewState extends ConsumerState<MangaWebView> {
                                   return NavigationActionPolicy.ALLOW;
                                 },
                             onLoadStop: (controller, url) async {
+                              await _focusComments(controller);
                               if (mounted) {
                                 setState(() {
                                   _url = url.toString();
@@ -425,11 +455,13 @@ class MyInAppBrowser extends InAppBrowser {
   void Function(InAppWebViewController) controller;
   void Function(int) onProgress;
   void Function() onExitCallback;
+  final Future<void> Function(InAppWebViewController)? onPageLoaded;
   MyInAppBrowser({
     required this.context,
     required this.controller,
     required this.onProgress,
     required this.onExitCallback,
+    this.onPageLoaded,
   }) : super(webViewEnvironment: webViewEnvironment);
 
   @override
@@ -456,6 +488,7 @@ class MyInAppBrowser extends InAppBrowser {
           ) ??
           "";
       await MClient.setCookie(url.toString(), ua, webViewController);
+      await onPageLoaded?.call(webViewController!);
     }
   }
 

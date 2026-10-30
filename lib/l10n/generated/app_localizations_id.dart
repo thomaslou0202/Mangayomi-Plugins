@@ -1902,6 +1902,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Unduhan dibatasi hanya untuk Wi-Fi';
 
   @override
+  String get comments => 'Comments';
+
+  @override
   String get recommendations => 'Rekomendasi';
 
   @override

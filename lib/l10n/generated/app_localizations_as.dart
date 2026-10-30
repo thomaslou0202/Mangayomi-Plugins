@@ -1897,6 +1897,9 @@ class AppLocalizationsAs extends AppLocalizations {
   String get downloads_are_limited_to_wifi => 'ডাউনলোডসমূহ কেৱল Wi-Fiলৈ সীমিত';
 
   @override
+  String get comments => 'Comments';
+
+  @override
   String get recommendations => 'পৰামৰ্শসমূহ';
 
   @override

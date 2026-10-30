@@ -230,7 +230,11 @@ class RouterNotifier extends ChangeNotifier {
     _genericRoute(name: "downloadQueue", child: const DownloadQueueScreen()),
     _genericRoute<Map<String, dynamic>>(
       name: "mangawebview",
-      builder: (data) => MangaWebView(url: data["url"]!, title: data['title']!),
+      builder: (data) => MangaWebView(
+        url: data["url"]!,
+        title: data['title']!,
+        focusComments: data['focusComments'] == true,
+      ),
     ),
     _genericRoute<(bool, int)>(
       name: "categories",

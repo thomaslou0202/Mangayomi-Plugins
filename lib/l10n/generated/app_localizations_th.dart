@@ -1897,6 +1897,9 @@ class AppLocalizationsTh extends AppLocalizations {
       'การดาวน์โหลดจำกัดเฉพาะ Wi-Fi เท่านั้น';
 
   @override
+  String get comments => 'Comments';
+
+  @override
   String get recommendations => 'แนะนำ';
 
   @override

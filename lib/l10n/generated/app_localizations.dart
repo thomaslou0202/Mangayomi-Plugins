@@ -3500,6 +3500,12 @@ abstract class AppLocalizations {
   /// **'Downloads are limited to Wi-Fi only'**
   String get downloads_are_limited_to_wifi;
 
+  /// No description provided for @comments.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get comments;
+
   /// No description provided for @recommendations.
   ///
   /// In en, this message translates to:

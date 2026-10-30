@@ -729,6 +729,7 @@
   "include_sensitive_settings": "包含敏感設定（例如追蹤服務的登入權杖）",
   "create": "建立",
   "downloads_are_limited_to_wifi": "下載僅限於WiFi",
+  "comments": "評論",
   "recommendations": "推薦",
   "recommendations_similar": "相似",
   "recommendations_weights": "推薦權重",

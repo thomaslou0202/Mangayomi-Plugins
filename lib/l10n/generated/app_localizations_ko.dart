@@ -1861,6 +1861,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get downloads_are_limited_to_wifi => '다운로드가 Wi-Fi 환경으로 제한되어 있습니다';
 
   @override
+  String get comments => 'Comments';
+
+  @override
   String get recommendations => '추천';
 
   @override

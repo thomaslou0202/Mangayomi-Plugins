@@ -1906,6 +1906,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'İndirmeler yalnızca Wi-Fi ile sınırlıdır';
 
   @override
+  String get comments => 'Comments';
+
+  @override
   String get recommendations => 'Öneriler';
 
   @override

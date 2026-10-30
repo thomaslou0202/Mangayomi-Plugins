@@ -1910,6 +1910,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get downloads_are_limited_to_wifi => 'التنزيلات مقتصرة على Wi-Fi فقط';
 
   @override
+  String get comments => 'Comments';
+
+  @override
   String get recommendations => 'التوصيات';
 
   @override

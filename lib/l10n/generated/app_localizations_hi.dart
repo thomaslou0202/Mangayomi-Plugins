@@ -1900,6 +1900,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get downloads_are_limited_to_wifi => 'डाउनलोड केवल Wi-Fi तक सीमित हैं';
 
   @override
+  String get comments => 'Comments';
+
+  @override
   String get recommendations => 'सिफ़ारिशें';
 
   @override

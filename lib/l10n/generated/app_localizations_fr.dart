@@ -1920,6 +1920,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les téléchargements sont limités au Wi-Fi uniquement';
 
   @override
+  String get comments => 'Comments';
+
+  @override
   String get recommendations => 'Recommandations';
 
   @override

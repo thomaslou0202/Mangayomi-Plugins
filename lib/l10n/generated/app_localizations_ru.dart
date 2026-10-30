@@ -1924,6 +1924,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Загрузки ограничены только Wi-Fi';
 
   @override
+  String get comments => 'Comments';
+
+  @override
   String get recommendations => 'Рекомендации';
 
   @override
