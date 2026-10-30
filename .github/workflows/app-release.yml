@@ -85,6 +85,9 @@ jobs:
       - name: Test comment buttons and website navigation
         working-directory: app
         run: flutter test --no-pub test/modules/manga/detail/comments_test.dart test/modules/manga/detail/detail_action_strip_test.dart test/modules/manga/detail/comments_navigation_test.dart
+      - name: Test detail loading lifetime and stale responses
+        working-directory: app
+        run: flutter test --no-pub --concurrency=1 test/modules/manga/detail/update_manga_detail_lifecycle_test.dart
       - name: Test owner update channel and numeric build revisions
         working-directory: app
         run: flutter test --no-pub test/modules/about/app_release_test.dart
@@ -195,6 +198,9 @@ jobs:
       - name: Test comment buttons and website navigation
         working-directory: app
         run: flutter test --no-pub test/modules/manga/detail/comments_test.dart test/modules/manga/detail/detail_action_strip_test.dart test/modules/manga/detail/comments_navigation_test.dart
+      - name: Test detail loading lifetime and stale responses
+        working-directory: app
+        run: flutter test --no-pub --concurrency=1 test/modules/manga/detail/update_manga_detail_lifecycle_test.dart
       - name: Test owner update channel and numeric build revisions
         working-directory: app
         run: flutter test --no-pub test/modules/about/app_release_test.dart
