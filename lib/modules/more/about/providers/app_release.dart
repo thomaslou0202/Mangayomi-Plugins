@@ -58,6 +58,14 @@ bool isNewerAppRelease(
   return current != null && release != null && release.compareTo(current) > 0;
 }
 
+/// A fixed GitHub asset name must not reuse a previous version's cached APK.
+String appReleaseApkFileName(String version) {
+  if (AppReleaseVersion.parse(version) == null) {
+    throw const FormatException('Invalid app release version');
+  }
+  return 'Mangayomi-${version.replaceFirst(RegExp(r"^[vV]"), "")}-android.apk';
+}
+
 /// Only complete, stable releases from our distribution repository qualify.
 (String, String, String, List<dynamic>)? parseAppRelease(
   Map<String, dynamic> release,

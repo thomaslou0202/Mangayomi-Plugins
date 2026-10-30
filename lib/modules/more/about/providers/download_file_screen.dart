@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:mangayomi/modules/more/about/providers/app_release.dart';
 import 'package:mangayomi/providers/l10n_providers.dart';
 import 'package:mangayomi/utils/platform_utils.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -432,7 +433,7 @@ class _DownloadFileScreenState extends ConsumerState<DownloadFileScreen> {
     Directory? dir = Directory('/storage/emulated/0/Download');
     if (!await dir.exists()) dir = await getExternalStorageDirectory();
     final file = File(
-      '${dir!.path}/${url.split("/").lastOrNull ?? "Mangayomi.apk"}',
+      '${dir!.path}/${appReleaseApkFileName(widget.updateAvailable.$1)}',
     );
 
     // If a file already exists, verify its integrity by comparing its size

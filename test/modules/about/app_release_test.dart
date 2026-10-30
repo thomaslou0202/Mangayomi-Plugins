@@ -19,6 +19,17 @@ Map<String, dynamic> release({String tag = 'v0.9.10+132'}) => {
 };
 
 void main() {
+  test('APK cache file changes with every release revision', () {
+    expect(
+      appReleaseApkFileName('0.9.10+132'),
+      'Mangayomi-0.9.10+132-android.apk',
+    );
+    expect(
+      appReleaseApkFileName('0.9.10+133'),
+      isNot(appReleaseApkFileName('0.9.10+132')),
+    );
+    expect(() => appReleaseApkFileName('../invalid'), throwsFormatException);
+  });
   test('custom distribution uses the owner repository', () {
     expect(
       appReleaseApiUrl,
