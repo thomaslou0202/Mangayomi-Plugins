@@ -26,6 +26,7 @@ class _MangaReaderDetailState extends ConsumerState<MangaReaderDetail> {
   Future<void> _init() async {
     // Wait for the widget tree to settle before loading detail
     await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
     await ref.read(
       updateMangaDetailProvider(mangaId: widget.mangaId, isInit: true).future,
     );
@@ -48,8 +49,7 @@ class _MangaReaderDetailState extends ConsumerState<MangaReaderDetail> {
           if (manga == null) {
             return const ProgressCenter();
           }
-          final hasSourceInfo =
-              manga.lang != null && manga.source != null;
+          final hasSourceInfo = manga.lang != null && manga.source != null;
           return StreamBuilder<List<Source>>(
             initialData: hasSourceInfo
                 ? sourceRepository.getActiveByItemTypeLangName(

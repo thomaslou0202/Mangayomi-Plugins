@@ -21,8 +21,13 @@ Future<dynamic> updateMangaDetail(
   required bool isInit,
   bool showToast = true,
 }) async {
+  // Detail pages start this with read(...future), which does not subscribe.
+  // Keep this one operation alive through async DB and source work, then
+  // release it so later refreshes do not reuse an already completed request.
+  final operation = ref.keepAlive();
   try {
-    final manga = mangaRepository.findById(mangaId!);
+    if (mangaId == null) return;
+    final manga = mangaRepository.findById(mangaId);
     if (manga == null) return;
 
     // Opening an existing work only needs an indexed count, not every chapter.
@@ -30,7 +35,9 @@ Future<dynamic> updateMangaDetail(
         (isInit && await chapterRepository.countByMangaIdAsync(mangaId) > 0)) {
       return;
     }
+    if (!ref.mounted) return;
     await manga.chapters.load();
+    if (!ref.mounted) return;
     final source = getSource(
       manga.lang!,
       manga.source!,
@@ -39,9 +46,11 @@ Future<dynamic> updateMangaDetail(
     );
     if (source == null) return;
 
-    final getManga = await ref.read(
+    // A watched dependency stays alive while this operation awaits its result.
+    final getManga = await ref.watch(
       getDetailProvider(url: manga.link!, source: source).future,
     );
+    if (!ref.mounted) return;
 
     final genre =
         getManga.genre
@@ -79,6 +88,10 @@ Future<dynamic> updateMangaDetail(
     final chaps = getManga.chapters;
 
     await mangaRepository.writeTransactionAsync(() async {
+      // The write queue may have waited for another operation. Do not begin
+      // a stale write after invalidation or container teardown; once begun,
+      // finish the transaction atomically without accessing the provider.
+      if (!ref.mounted) return;
       final savedMangaId = await mangaRepository.putAsync(manga);
 
       if (chaps == null || chaps.isEmpty) return;
@@ -278,10 +291,13 @@ Future<dynamic> updateMangaDetail(
       }
     });
   } catch (e, s) {
+    if (!ref.mounted) return;
     if (showToast) {
       toastError(e, stack: s, source: 'updateMangaDetail');
     } else {
       rethrow;
     }
+  } finally {
+    operation.close();
   }
 }
