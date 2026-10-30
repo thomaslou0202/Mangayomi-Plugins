@@ -20,15 +20,15 @@
 | 同步伺服器 | `D:\Mangayomi\sync` |
 | 私有備份 | `D:\Mangayomi\Backup` |
 
-原先各個 `illustrations-*`、`android-*` 版本資料夾與重複的 downloads 安裝檔已整理。128～131 版的 Windows／Android 安裝檔保留在各自的 GitHub Release，需要回退時可重新下載。
+原先各個 `illustrations-*`、`android-*` 版本資料夾與重複的 downloads 安裝檔已整理。128～132 版的 Windows／Android 安裝檔保留在各自的 GitHub Release，需要回退時可重新下載。
 
 程式資料夾與書庫分開。整理不移動或清除既有書庫與同步伺服器資料，也不把私人備份、帳號或簽章私鑰放入公開 Git。
 
 ## 發布下一版
 
-1. 在 `app-source` 分支修改 App，將 `pubspec.yaml` 的版號與修訂號遞增，例如 `0.9.10+133`。每次正式版都使用更大的修訂號，Android 才能直接覆蓋更新。
+1. 在 `app-source` 分支修改 App，將 `pubspec.yaml` 的版號與修訂號遞增，例如 `0.9.10+134`。每次正式版都使用更大的修訂號，Android 才能直接覆蓋更新。
 2. 提交並推送 App 原始碼到本倉庫的 `app-source` 分支，記下完整 commit。
-3. 在 `main` 更新 `app-release.json` 的 `source`、`version`、`build`、`tag`，並更新 `release-support/RELEASE-NOTES.md`。tag 使用 `v0.9.10+133` 這樣的格式。
+3. 在 `main` 更新 `app-release.json` 的 `source`、`version`、`build`、`tag`，並更新 `release-support/RELEASE-NOTES.md`。tag 使用 `v0.9.10+134` 這樣的格式。
 4. 推送 `main`，`Release custom Mangayomi` 會自動執行。也可從 Actions 頁面手動啟動同一流程。
 5. 兩平台通過分析、測試、建置，Android 完成簽章及手機／平板／背景同步測試後，才會公開正式 Release 並標記為 Latest。中途失敗不會推出半套的更新。
 
@@ -36,4 +36,4 @@ Release 的 tag 指向實際建置的 App commit，所以頁面的 Source code a
 
 Android 沿用 `com.kodjodevf.mangayomi.illustrations` 與既有簽章，直接更新舊插圖／效能版。簽章只從既有 GitHub Actions Secrets 讀取，流程會比對公開憑證，確認沒有誤用其他簽章。
 
-版本比較包含修訂號，能辨識 `0.9.10+132 → 0.9.10+133`，會略過草稿、測試版與未完成的安裝檔。APK 在 App 內下載時也使用含修訂號的檔名，避免重用舊版快取。
+版本比較包含修訂號，能辨識 `0.9.10+132 → 0.9.10+134`，會略過草稿、測試版與未完成的安裝檔。APK 在 App 內下載時也使用含修訂號的檔名，避免重用舊版快取。
