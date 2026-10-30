@@ -2,15 +2,17 @@
 
 提供 Mangayomi 原生 JavaScript 漫畫、小說及動畫來源，依照 [Mangayomi 套件庫](https://github.com/kodjodevf/mangayomi-extensions)的原生索引格式整理。三種類型各自使用獨立的清單網址。
 
-## 繁體中文插圖版下載（漫畫來源白畫面修正）
+## 繁體中文正式版下載
 
-[Android 手機／平板 APK（0.9.9+131）](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/source-list-fix-v0.9.9-131/Mangayomi-0.9.9-source-fix-android.apk) · [Windows ZIP](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/download/source-list-fix-v0.9.9-131/Mangayomi-0.9.9-source-fix-windows.zip) · [發行說明與安裝方式](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/tag/source-list-fix-v0.9.9-131)
+[Android 手機／平板 APK](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/latest/download/Mangayomi-android.apk) · [Windows ZIP](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/latest/download/Mangayomi-windows.zip) · [最新正式 Release](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/latest) · [完整 App 原始碼](https://github.com/thomaslou0202/Mangayomi-Plugins/tree/app-source)
 
-修正舊套件／備份缺少「最近使用」等欄位，導致啟用漫畫來源後整個列表變成灰白畫面的問題。保留來源程式、ID、已有偏好與啟用／停用設定，更新後可重新啟用先前停用的漫畫來源。[完整修正說明](docs/source-list-fix-app.md)。
+目前正式版 **0.9.10+132**。保留小說正文插圖、完整繁體中文介面、漫畫來源舊資料相容、書庫效能與背景同步。手機與平板使用同一個 APK，最低 Android 7.0，沿用先前插圖／效能版的套件名稱與簽章，可直接覆蓋更新。
 
-保留小說正文插圖、完整繁體中文介面、書庫效能與背景同步。手機、平板使用同一個 APK，最低 Android 7.0，可直接更新上一版插圖／效能版。Windows 請關閉舊版，解壓到獨立資料夾後執行 `mangayomi.exe`，沿用原書庫與設定。下載不需要登入 GitHub。
+**第一次請先手動更新此正式版**；之後「更多 → 關於 → 檢查更新」與啟動時的更新檢查，會讀取本倉庫的正式 GitHub Releases。Windows 更新按鈕會開啟本倉庫的下載頁，Android 可下載 APK 並由系統確認安裝。包含修訂號比較，可辨識 `0.9.10+132 → 0.9.10+133`。
 
-介面語言位於「更多 → 設定 → 外觀 → 介面語言 → 繁體中文（台灣）」。[背景同步說明](docs/performance-app.md) · [繁體中文說明](docs/traditional-chinese-app.md)。
+本機固定使用 `D:\Mangayomi\Windows\mangayomi.exe` 與 `D:\Mangayomi\Android\Mangayomi.apk`，不再建立各版安裝資料夾。歷史安裝檔保留在 [GitHub Releases](https://github.com/thomaslou0202/Mangayomi-Plugins/releases)，各正式版 tag 同時提供完整 App 原始碼與校驗碼。
+
+[安裝與後續發布方式](docs/app-releases.md) · [背景同步說明](docs/performance-app.md) · [繁體中文說明](docs/traditional-chinese-app.md) · [漫畫來源修正說明](docs/source-list-fix-app.md)。
 
 ## 漫畫來源
 
