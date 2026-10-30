@@ -87,6 +87,15 @@ Future<(BuildContext, WidgetRef)> _pumpShell(WidgetTester tester) async {
       ),
     ),
   );
+  addTearDown(() async {
+    // Restore creates a real five-second toast timer inside runAsync. Mount
+    // its disposal hooks, then close it while BotToast's host still exists.
+    // Otherwise the timer can fire after the test has unmounted that host.
+    await tester.pumpAndSettle();
+    BotToast.cleanAll();
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(const SizedBox());
+  });
   return (ctx, widgetRef);
 }
 
