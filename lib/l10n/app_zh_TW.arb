@@ -1,0 +1,1649 @@
+{
+  "@@locale": "zh_TW",
+  "library": "書庫",
+  "updates": "更新",
+  "history": "歷史紀錄",
+  "browse": "瀏覽",
+  "more": "更多",
+  "open_random_entry": "隨機開啟作品",
+  "import": "匯入",
+  "filter": "篩選",
+  "ignore_filters": "忽略\n篩選",
+  "downloaded": "已下載",
+  "unread": "未讀",
+  "unwatched": "未觀看",
+  "started": "已開始閱讀",
+  "bookmarked": "已加書籤",
+  "sort": "排序",
+  "alphabetically": "按名稱",
+  "last_read": "上次閱讀時間",
+  "last_watched": "上次觀看",
+  "last_update_check": "上次檢查更新時間",
+  "last_entry_delete_warning": "{count, plural, =1{即將從書庫移除此{mediaType}唯一的{entryType}。} other{即將從書庫移除此{mediaType}的全部 {count} 個{entryTypePlural}。}}\n此{mediaType}也會一併從書庫移除。\n\n檔案本身不會被刪除。",
+  "@last_entry_delete_warning": {
+    "description": "Warning when deleting all entries (chapters/episodes) of a manga/anime.",
+    "placeholders": {
+      "count": {},
+      "entryType": {},
+      "entryTypePlural": {},
+      "mediaType": {}
+    }
+  },
+  "chapter": "章節",
+  "episode": "集數",
+  "unread_count": "未讀章節數",
+  "unwatched_count": "未觀看集數",
+  "latest_chapter": "最新章節",
+  "latest_episode": "最新一集",
+  "date_added": "加入日期",
+  "display": "顯示",
+  "display_mode": "顯示模式",
+  "compact_grid": "緊密格狀",
+  "compression_level": "壓縮等級",
+  "compression_info": "壓縮率越高，備份檔案越小，但需要更多 CPU 運算。預設值：{level}",
+  "comfortable_grid": "寬鬆格狀",
+  "cover_only_grid": "僅顯示封面",
+  "list": "清單",
+  "badges": "徽章",
+  "downloaded_chapters": "已下載章節",
+  "downloaded_episodes": "下載的劇集",
+  "language": "語言",
+  "local_source": "本機來源",
+  "tabs": "分頁",
+  "show_category_tabs": "顯示分類標籤",
+  "show_numbers_of_items": "顯示作品數量",
+  "other": "其他",
+  "show_continue_reading_buttons": "顯示繼續閱讀按鈕",
+  "show_continue_watching_buttons": "顯示繼續觀看按鈕",
+  "empty_library": "書庫尚無作品",
+  "search": "搜尋…",
+  "no_recent_updates": "最近沒有更新",
+  "remove_everything": "全部移除",
+  "remove_everything_msg": "確定要清除所有歷史紀錄嗎？",
+  "remove_all_update_msg": "你確定嗎？所有更新將被清除",
+  "ok": "確定",
+  "cancel": "取消",
+  "remove": "移除",
+  "remove_history_msg": "這將移除此章節的閱讀日期。你確定嗎？",
+  "last_used": "最後使用",
+  "pinned": "已釘選",
+  "sources": "來源",
+  "install": "安裝",
+  "update": "更新",
+  "latest": "最新",
+  "extensions": "擴充套件",
+  "migrate": "遷移",
+  "mass_migration_title": "批次遷移",
+  "mass_migration_preview_items": "預覽作品",
+  "mass_migration_destination_source": "目標來源",
+  "mass_migration_no_library_items": "書庫中沒有可供批次遷移的作品。",
+  "mass_migration_no_destination_sources": "沒有可用的已安裝目標來源。",
+  "mass_migration_installed": "已安裝",
+  "mass_migration_items_ready_for_review": "{count, plural, other{有 {count} 個項目可供確認}}",
+  "@mass_migration_items_ready_for_review": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_item_count": "{count, plural, other{{count} 個項目}}",
+  "@mass_migration_item_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_select_destination_source": "選擇目標來源",
+  "mass_migration_finding_matches": "正在 {source}（{language}）尋找相符作品",
+  "@mass_migration_finding_matches": {
+    "placeholders": {
+      "source": {},
+      "language": {}
+    }
+  },
+  "mass_migration_processing_item": "正在處理第 {current} / {total} 個項目",
+  "@mass_migration_processing_item": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_waiting_next_item": "等待 2 秒後處理下一個項目…",
+  "mass_migration_waiting_next_migration": "等待 2 秒後進行下一項遷移…",
+  "mass_migration_matched_so_far": "目前找到相符項目：{count}",
+  "@mass_migration_matched_so_far": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_no_match_count": "找不到相符項目：{count}",
+  "@mass_migration_no_match_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_review_matches": "確認 {source} 的比對結果",
+  "@mass_migration_review_matches": {
+    "placeholders": {
+      "source": {}
+    }
+  },
+  "mass_migration_found_matches": "找到相符項目：{count}",
+  "@mass_migration_found_matches": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_no_matches": "找不到相符項目：{count}",
+  "@mass_migration_no_matches": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_selected_to_migrate": "選定遷移: {count}",
+  "@mass_migration_selected_to_migrate": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_finish_review": "完成確認",
+  "mass_migration_migrate_selected": "遷移選定項目 ({count})",
+  "@mass_migration_migrate_selected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_migrating_selected": "正在將選定項目遷移至 {source}",
+  "@mass_migration_migrating_selected": {
+    "placeholders": {
+      "source": {}
+    }
+  },
+  "mass_migration_no_items_selected": "未選定任何遷移項目。",
+  "mass_migration_migrating_item": "正在遷移第 {current} / {total} 個項目",
+  "@mass_migration_migrating_item": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_complete": "批次遷移完成",
+  "mass_migration_complete_success_message": "所有選定項目均已處理成功。",
+  "mass_migration_complete_partial_message": "遷移結束，但部分項目仍需手動處理。",
+  "mass_migration_route_summary": "{source} → {destination}",
+  "@mass_migration_route_summary": {
+    "placeholders": {
+      "source": {},
+      "destination": {}
+    }
+  },
+  "mass_migration_processed": "已處理",
+  "mass_migration_matched": "已找到相符項目",
+  "mass_migration_migrated": "已遷移",
+  "mass_migration_skipped": "已跳過",
+  "mass_migration_failed": "失敗",
+  "mass_migration_failed_items": "失敗項目",
+  "mass_migration_exit": "退出批次遷移",
+  "mass_migration_no_destination_match": "找不到相符的目標作品",
+  "mass_migration_query": "查詢條件: {query}",
+  "@mass_migration_query": {
+    "placeholders": {
+      "query": {}
+    }
+  },
+  "mass_migration_skip": "跳過",
+  "mass_migration_loading": "正在載入...",
+  "mass_migration_choose_another_result": "選擇其他結果",
+  "mass_migration_source_chapters": "原章節",
+  "mass_migration_destination_chapters": "目標章節",
+  "mass_migration_chapter_count": "{count, plural, =1{1個章節} other{{count}個章節}}",
+  "@mass_migration_chapter_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_source_chapter_count": "{count, plural, =1{1個原章節} other{{count}個原章節}}",
+  "@mass_migration_source_chapter_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_destination_chapter_count": "{count, plural, =1{1個目標章節} other{{count}個目標章節}}",
+  "@mass_migration_destination_chapter_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_no_chapters_found": "未找到章節。",
+  "mass_migration_and_more_chapters": "以及更多 {count} 個...",
+  "@mass_migration_and_more_chapters": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mass_migration_unknown_title": "未知標題",
+  "mass_migration_unknown_match": "未知的比對結果",
+  "mass_migration_unknown_source": "未知來源",
+  "mass_migration_unknown_chapter": "未知章節",
+  "migrate_confirm": "遷移到另一個來源",
+  "clean_database": "清理資料庫",
+  "cleaned_database": "資料庫已清理！已移除 {x} 條目",
+  "clean_database_desc": "移除所有未加入書庫的項目。",
+  "incognito_mode": "隱身模式",
+  "incognito_mode_description": "暫停閱讀歷史紀錄",
+  "downloaded_only": "僅已下載",
+  "downloaded_only_description": "只顯示書庫中已下載的作品",
+  "download_queue": "下載佇列",
+  "categories": "分類",
+  "statistics": "統計",
+  "settings": "設定",
+  "about": "關於",
+  "help": "說明",
+  "no_downloads": "無下載",
+  "edit_categories": "編輯分類",
+  "edit_categories_description": "你還沒有分類。點選加號按鈕建立一個來組織你的書庫",
+  "add": "新增",
+  "add_category": "新增分類",
+  "name": "名稱",
+  "label_value": "{label}：{value}",
+  "@label_value": {
+    "placeholders": {
+      "label": {},
+      "value": {}
+    }
+  },
+  "url": "URL",
+  "category_name_required": "*必填",
+  "add_category_error_exist": "此名稱的分類已存在！",
+  "delete_category": "刪除分類",
+  "delete_category_msg": "你希望刪除分類 {name} 嗎？",
+  "rename_category": "重新命名分類",
+  "general": "一般",
+  "general_subtitle": "介面語言",
+  "app_language": "介面語言",
+  "default_subtitle_language": "預設字幕語言",
+  "appearance": "外觀",
+  "appearance_subtitle": "主題，日期和時間格式",
+  "theme": "主題",
+  "dark_mode": "深色模式",
+  "follow_system_theme": "跟隨系統主題",
+  "on": "開啟",
+  "off": "關閉",
+  "pure_black_dark_mode": "純黑深色模式",
+  "timestamp": "日期與時間",
+  "relative_timestamp": "相對時間",
+  "relative_timestamp_short": "短（今天，昨天）",
+  "relative_timestamp_long": "較長格式（例如：幾天前）",
+  "date_format": "日期格式",
+  "reader": "閱讀器",
+  "refresh": "重新整理",
+  "reader_subtitle": "閱讀模式、顯示與導覽",
+  "default_reading_mode": "預設閱讀模式",
+  "reading_mode_vertical": "垂直",
+  "reading_mode_horizontal": "水平",
+  "reading_mode_left_to_right": "從左到右",
+  "reading_mode_right_to_left": "從右到左",
+  "reading_mode_vertical_continuous": "垂直連續",
+  "reading_mode_webtoon": "網路漫畫",
+  "double_tap_animation_speed": "雙擊動畫速度",
+  "normal": "正常",
+  "fast": "快",
+  "no_animation": "無動畫",
+  "animate_page_transitions": "翻頁動畫",
+  "crop_borders": "裁剪邊框",
+  "downloads": "下載",
+  "downloads_subtitle": "下載設定",
+  "download_location": "下載位置",
+  "custom_location": "自訂位置",
+  "only_on_wifi": "僅限 Wi-Fi",
+  "save_as_cbz_archive": "儲存為CBZ檔案",
+  "delete_download_after_reading": "完成閱讀後刪除下載內容",
+  "concurrent_downloads": "同時下載數量",
+  "browse_subtitle": "來源，全域搜尋",
+  "only_include_pinned_sources": "只包含已釘選的來源",
+  "nsfw_sources": "NSFW（18+）來源",
+  "nsfw_sources_show": "在來源和擴充套件列表中顯示",
+  "nsfw_sources_info": "這不會阻止非官方或可能被錯誤標記的擴充套件在應用內顯示NSFW（18+）內容",
+  "version": "版本",
+  "beta_version": "測試版 ({version})",
+  "@beta_version": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "check_for_update": "檢查更新",
+  "logs_on": "啟用紀錄",
+  "share_app_logs": "分享應用紀錄",
+  "no_app_logs": "沒有可用的 log.txt 檔案！",
+  "failed": "失敗！",
+  "n_days_ago": "{days}天前",
+  "today": "今天",
+  "yesterday": "昨天",
+  "a_week_ago": "一週前",
+  "next_week": "下週",
+  "add_to_library": "新增到書庫",
+  "completed": "已完成",
+  "ongoing": "進行中",
+  "on_hiatus": "暫停",
+  "canceled": "已取消",
+  "publishing_finished": "已完結",
+  "unknown": "未知",
+  "empty_placeholder": "空",
+  "error": "錯誤",
+  "error_with_message": "錯誤：{error}",
+  "@error_with_message": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "no_pages_available": "錯誤：無可用頁面",
+  "set_categories": "設定分類",
+  "edit": "編輯",
+  "in_library": "已加入書庫",
+  "filter_scanlator_groups": "篩選翻譯組",
+  "reset": "重設",
+  "by_source": "按來源",
+  "by_chapter_number": "按章節號",
+  "by_episode_number": "按集數",
+  "by_upload_date": "按上傳日期",
+  "source_title": "來源標題",
+  "create_extension": "建立擴充套件",
+  "developer_mode": "開發者模式",
+  "developer_mode_subtitle": "顯示擴充套件開發者工具（建立擴充套件、編輯程式碼）",
+  "choose_extension_language": "選擇擴充套件語言",
+  "lang": "語言",
+  "base_url": "基礎 URL",
+  "api_url_optional": "API URL（可選）",
+  "icon_url": "圖示 URL",
+  "source_icon_url": "來源圖示網址",
+  "notes": "備註",
+  "extension_name_example": "例如：myAnime",
+  "language_code_example": "例如：zh",
+  "base_url_example": "例如：https://example.com",
+  "api_url_example": "例如：https://api.example.com",
+  "extension_notes_example": "例如：此擴充套件需要登入",
+  "type": "類型",
+  "target": "目標",
+  "source_type_single": "單一",
+  "source_type_multi": "多來源",
+  "source_type_torrent": "種子 (Torrent)",
+  "source_language_dart": "Dart",
+  "source_language_javascript": "JavaScript",
+  "source_language_lnreader_compiled_js": "LNReader 編譯 JS",
+  "source_created_successfully": "來源建立成功",
+  "source_already_exists": "來源已存在",
+  "error_when_creating_source": "建立來源時出錯",
+  "cookies_deleted": "Cookie 已刪除！",
+  "delete_all_cookies": "刪除所有 Cookie",
+  "chapter_number": "章節號",
+  "episode_number": "集數",
+  "share": "分享",
+  "n_chapters": "{n}章",
+  "missing_chapters": "缺少 {count} 個章節",
+  "no_description": "無描述",
+  "resume": "繼續",
+  "read": "閱讀",
+  "watch": "觀看",
+  "popular": "熱門",
+  "open_in_browser": "在瀏覽器中開啟",
+  "clear_cookie": "清除Cookie",
+  "show_page_number": "顯示頁碼",
+  "from_library": "來自書庫",
+  "downloaded_chapter": "已下載章節",
+  "page": "頁面 {page}",
+  "global_search": "全域搜尋",
+  "color_blend_level": "顏色混合級別",
+  "current": "目前 {char}",
+  "finished": "完成 {char}",
+  "next": "下一個 {char}",
+  "previous": "上一個 {char}",
+  "no_more_chapter": "沒有更多章節",
+  "no_result": "沒有結果",
+  "send": "傳送",
+  "delete": "刪除",
+  "start_downloading": "立即開始下載",
+  "retry": "重試",
+  "add_chapters": "新增章節",
+  "delete_chapters": "刪除章節？",
+  "default0": "預設",
+  "total_chapters": "總章節數",
+  "total_episodes": "總集數",
+  "import_local_file": "匯入本機檔案",
+  "import_files": "檔案",
+  "split_epub_chapters": "分章節匯入",
+  "split_epub_chapters_description": "將 EPUB 的每個章節分別匯入",
+  "nothing_read_recently": "最近未閱讀",
+  "status": "狀態",
+  "not_started": "未開始",
+  "score": "評分",
+  "start_date": "開始日期",
+  "finish_date": "完成日期",
+  "reading": "閱讀",
+  "on_hold": "擱置",
+  "dropped": "已放棄",
+  "plan_to_read": "計劃閱讀",
+  "re_reading": "重讀",
+  "chapters": "章節",
+  "add_tracker": "新增追蹤",
+  "one_tracker": "1個追蹤器",
+  "n_tracker": "{n}個追蹤器",
+  "tracking": "追蹤",
+  "syncing": "同步",
+  "sync_logged": "登入成功",
+  "syncing_subtitle": "透過自行架設的伺服器，在多個裝置間同步閱讀與觀看進度。詳情請參閱 Discord 社群。",
+  "last_sync": "上次同步時間：",
+  "sync_login_browser": "使用瀏覽器登入",
+  "sync_server": "同步伺服器網址",
+  "sync_starting": "開始同步...",
+  "sync_finished": "同步完成",
+  "sync_failed": "同步失敗",
+  "sync_restore_in_progress": "正在還原備份，暫不進行同步",
+  "sync_progress_percent": "正在同步… {percent}%",
+  "@sync_progress_percent": {
+    "placeholders": {
+      "percent": {}
+    }
+  },
+  "sync_progress_indeterminate": "正在同步…",
+  "sync_button_sync": "同步進度",
+  "sync_button_upload": "僅上傳",
+  "sync_button_upload_info": "以本機資料完整取代伺服器上的資料。",
+  "sync_button_download": "僅下載",
+  "sync_button_download_info": "以伺服器上的資料完整取代本機資料。",
+  "sync_status_not_configured": "未連線",
+  "sync_status_checking": "正在檢查連線...",
+  "sync_status_connected": "已連線",
+  "sync_status_unauthorized": "登入授權已失效，請重新登入",
+  "sync_status_unreachable": "無法連線到伺服器",
+  "sync_section_general": "通用",
+  "sync_on": "啟用同步",
+  "sync_auto": "自動同步",
+  "sync_auto_warning": "自動同步目前是實驗性功能！",
+  "sync_auto_off": "關閉",
+  "sync_auto_5_minutes": "每5分鐘",
+  "sync_auto_10_minutes": "每10分鐘",
+  "sync_auto_30_minutes": "每30分鐘",
+  "sync_auto_1_hour": "每1小時",
+  "sync_auto_3_hours": "每3小時",
+  "sync_auto_6_hours": "每6小時",
+  "sync_auto_12_hours": "每12小時",
+  "server_error": "伺服器錯誤！",
+  "dialog_confirm": "確認",
+  "description": "描述",
+  "reorder_navigation": "自訂導覽",
+  "reorder_navigation_description": "根據需要重新排序和切換每個導覽。",
+  "floating_navigation_bar": "浮動導覽列",
+  "floating_navigation_bar_description": "以浮動膠囊式導覽列取代貼齊邊緣的標準導覽列。",
+  "full_screen_player": "全螢幕播放",
+  "full_screen_player_info": "播放影片時自動切換成全螢幕。",
+  "episode_progress": "進度：{n}",
+  "n_episodes": "{n}集",
+  "@n_episodes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "missing_episodes": "缺少 {count} 集",
+  "manga_sources": "漫畫來源",
+  "anime_sources": "動畫來源",
+  "novel_sources": "小說來源",
+  "anime_extensions": "動畫擴充套件",
+  "manga_extensions": "漫畫擴充套件",
+  "novel_extensions": "小說擴充套件",
+  "extension_settings": "擴充套件設定",
+  "anime": "動畫",
+  "manga": "漫畫",
+  "novel": "小說",
+  "library_no_category_exist": "你還沒有任何分類",
+  "watching": "觀看中",
+  "plan_to_watch": "計劃觀看",
+  "re_watching": "重看",
+  "episodes": "集",
+  "download": "下載",
+  "new_update_available": "有新更新可用",
+  "app_version": "應用版本：v{v}",
+  "searching_for_updates": "正在搜尋更新...",
+  "no_new_updates_available": "沒有新的更新可用",
+  "uninstall": "解除安裝",
+  "uninstall_extension": "解除安裝 {ext} 擴充套件？",
+  "double_tap_search_hint": "雙擊以搜尋全部 {type}",
+  "show_nav_double_tap_tooltip": "顯示雙擊搜尋提示",
+  "show_nav_double_tap_tooltip_subtitle": "在漫畫、動畫及小說導覽列顯示提示，說明連點兩下可開啟全域搜尋。",
+  "already_in_library": "\"{title}\" 已透過 {source} 新增到您的書庫中。",
+  "add_anyway": "仍然新增",
+  "langauage": "語言",
+  "extension_detail": "擴充套件詳情",
+  "scale_type": "縮放類型",
+  "scale_type_fit_screen": "適合螢幕",
+  "scale_type_stretch": "拉伸",
+  "scale_type_fit_width": "適合寬度",
+  "scale_type_fit_height": "適合高度",
+  "scale_type_original_size": "原始大小",
+  "scale_type_smart_fit": "智慧適配",
+  "page_preload_amount": "頁面預載入量",
+  "page_preload_amount_subtitle": "閱讀時預載入的頁面數量。更高的值將導致更順暢的閱讀體驗，但會增加快取和網路使用。",
+  "image_loading_error": "無法載入此圖片",
+  "add_episodes": "新增集數",
+  "video_quality": "畫質",
+  "video_subtitle": "字幕",
+  "check_for_extension_updates": "檢查擴充套件更新",
+  "auto_extensions_updates": "自動擴充套件更新",
+  "auto_extensions_updates_subtitle": "當有新版本可用時，將自動更新擴充套件。",
+  "check_for_app_updates": "啟動時檢查 App 更新",
+  "reading_mode": "閱讀模式",
+  "custom_filter": "自訂篩選",
+  "background_color": "背景顏色",
+  "white": "白色",
+  "black": "黑色",
+  "grey": "灰色",
+  "automaic": "自動",
+  "preferred_domain": "偏好的網域",
+  "load_more": "載入更多",
+  "cancel_all_for_this_series": "取消此作品的全部下載",
+  "login": "登入",
+  "login_into": "登入到 {tracker}",
+  "email_adress": "電子郵件地址",
+  "password": "密碼",
+  "log_out_from": "從 {tracker} 登出？",
+  "log_out": "登出",
+  "update_pending": "更新待定",
+  "update_all": "更新全部",
+  "backup_and_restore": "備份與還原",
+  "create_backup": "建立備份",
+  "create_backup_dialog_title": "你想要備份什麼？",
+  "create_backup_subtitle": "可用於還原目前書庫",
+  "restore_backup": "還原備份",
+  "encrypt_backups": "加密備份",
+  "encrypt_backups_info": "使用 AES 加密和密碼保護備份檔案",
+  "no_secure_storage": "未找到安全儲存",
+  "no_keyring_warning": "目前系統沒有金鑰環服務，無法安全儲存密碼。\n\n是否以明文形式儲存在本機資料庫中？",
+  "enter_backup_password": "輸入備份密碼",
+  "incorrect_password_try_again": "密碼錯誤，請重試。",
+  "set_backup_password": "設定備份密碼",
+  "confirm_password": "確認密碼",
+  "passwords_do_not_match": "兩次輸入的密碼不一致",
+  "password_required_to_restore": "需要密碼才能還原此備份。",
+  "restore_backup_subtitle": "從備份檔案還原書庫",
+  "automatic_backups": "自動備份",
+  "backup_frequency": "備份頻率",
+  "backup_location": "備份位置",
+  "backup_options": "備份選項",
+  "backup_options_dialog_title": "你想要備份什麼？",
+  "backup_options_subtitle": "包含在備份檔案中的資訊",
+  "backup_and_restore_warning_info": "你應該在其他地方儲存備份副本",
+  "library_entries": "書庫條目",
+  "chapters_and_episode": "章節和集數",
+  "every_6_hours": "每6小時",
+  "every_12_hours": "每12小時",
+  "daily": "每日",
+  "every_2_days": "每2天",
+  "weekly": "每週",
+  "restore_backup_warning_title": "還原備份將覆蓋所有現有資料。\n\n繼續還原？",
+  "restore_sync_question_title": "是否同步此次還原？",
+  "restore_sync_question_message": "此裝置已連線到同步伺服器。是否立即將還原的資料上傳？",
+  "restore_sync_question_confirm": "是，進行同步",
+  "restore_sync_question_deny": "否，停用同步",
+  "sync_disabled_after_restore": "同步已停用。您可以在“設定”中重新開啟。",
+  "restore_sync_disabled_question_title": "同步目前已停用",
+  "restore_sync_disabled_question_message": "同步已關閉。是否重新開啟並將還原的資料上傳到伺服器？",
+  "restore_sync_question_reenable": "是，重新開啟並同步",
+  "restore_sync_question_keep_disabled": "保持停用",
+  "restore_sync_uploading": "正在同步還原的資料到伺服器…",
+  "restore_sync_upload_success": "還原的資料已同步到伺服器",
+  "services": "服務",
+  "tracking_warning_info": "單向同步以更新跟蹤服務中的章節進度。從它們的跟蹤按鈕為個別條目設定跟蹤。",
+  "use_page_tap_zones": "使用頁面點選區域",
+  "manage_trackers": "管理跟蹤器",
+  "restore": "還原",
+  "backups": "備份",
+  "by_scanlator": "按翻譯者",
+  "by_name": "按名稱",
+  "installed": "已安裝",
+  "auto_scroll": "自動捲動",
+  "video_audio": "音訊",
+  "video_audio_info": "首選語言、音調校正、音訊通道",
+  "player": "播放器",
+  "markEpisodeAsSeenSetting": "將集數標記為已觀看的時機",
+  "mark_duplicate_chapters_read": "將重複的章節號標記為已讀",
+  "default_skip_intro_length": "預設略過片頭的秒數",
+  "default_playback_speed_length": "預設播放速度",
+  "updateProgressAfterReading": "閱讀後更新進度",
+  "no_sources_installed": "未安裝任何來源！",
+  "show_extensions": "顯示擴充套件",
+  "default_skip_forward_skip_length": "預設快轉秒數",
+  "aniskip_requires_info": "請先將動畫連結至 MyAnimeList 或 AniList，才能使用 AniSkip。",
+  "enable_aniskip": "啟用AniSkip",
+  "enable_auto_skip": "啟用自動跳過",
+  "aniskip_button_timeout": "略過按鈕顯示時間",
+  "skip_opening": "跳過片頭",
+  "skip_ending": "跳過片尾",
+  "fullscreen": "全螢幕",
+  "update_library": "更新書庫",
+  "updating_library": "正在更新書庫（{cur}／{max}），失敗：{failed}",
+  "next_chapter": "下一章",
+  "next_5_chapters": "下5章",
+  "next_10_chapters": "下10章",
+  "next_25_chapters": "下25章",
+  "all_chapters": "所有章節",
+  "next_episode": "下一集",
+  "next_5_episodes": "接下來的 5 集",
+  "next_10_episodes": "接下來的 10 集",
+  "next_25_episodes": "接下來的 25 集",
+  "all_episodes": "所有劇集",
+  "cover_saved": "封面已儲存",
+  "set_as_cover": "設定為封面",
+  "use_this_as_cover_art": "使用此作為封面？",
+  "save": "儲存",
+  "picture_saved": "圖片已儲存",
+  "cover_updated": "封面已更新",
+  "include_subtitles": "包含字幕",
+  "blend_mode_default": "預設",
+  "blend_mode_multiply": "正片疊底",
+  "blend_mode_screen": "濾色",
+  "blend_mode_overlay": "疊加",
+  "blend_mode_colorDodge": "顏色減淡",
+  "blend_mode_lighten": "變亮",
+  "blend_mode_colorBurn": "顏色加深",
+  "blend_mode_darken": "變暗",
+  "blend_mode_difference": "差異",
+  "blend_mode_saturation": "飽和度",
+  "blend_mode_softLight": "柔光",
+  "blend_mode_plus": "加",
+  "blend_mode_exclusion": "排除",
+  "custom_color_filter": "自訂顏色濾鏡",
+  "color_filter_blend_mode": "顏色濾鏡混合模式",
+  "enable_all": "啟用全部",
+  "disable_all": "停用全部",
+  "font": "字型",
+  "color": "顏色",
+  "font_size": "字型大小",
+  "text": "文字",
+  "border": "邊框",
+  "background": "背景",
+  "no_subtite_warning_message": "由於此影片中沒有字幕軌道，因此無效。",
+  "grid_size": "網格大小",
+  "n_per_row": "每列 {n} 個",
+  "horizontal_continious": "水平連續",
+  "edit_code": "編輯程式碼",
+  "use_libass": "啟用 libass",
+  "use_libass_info": "使用基於 libass 的字幕繪製作為本機後端。",
+  "libass_not_disable_message": "在播放器設定中停用 `use libass` 以便自訂字幕。",
+  "override_ass_subtitles": "覆蓋 ASS 字幕樣式",
+  "override_ass_subtitles_info": "將自訂樣式應用到 ASS/SSA 字幕",
+  "torrent_stream": "Torrent 串流",
+  "add_torrent": "新增種子",
+  "enter_torrent_hint_text": "輸入磁力連結或種子檔案 URL",
+  "torrent_url": "種子 URL",
+  "or": "或",
+  "advanced": "進階",
+  "advanced_info": "mpv 設定",
+  "use_native_http_client": "使用本機 HTTP 客戶端",
+  "use_native_http_client_info": "它自動支援平臺特性，如 VPN，支援更多 HTTP 特性，如 HTTP/3 和自訂重新導向處理",
+  "n_hour_ago": "{hour}小時前",
+  "n_hours_ago": "{hours}小時前",
+  "n_minute_ago": "{minute}分鐘前",
+  "n_minutes_ago": "{minutes}分鐘前",
+  "n_day_ago": "{day}天前",
+  "now": "現在",
+  "library_last_updated": "書庫最近更新時間：{lastUpdated}",
+  "data_and_storage": "資料與儲存",
+  "download_location_info": "用於章節下載",
+  "storage": "儲存",
+  "clear_chapter_and_episode_cache": "清除章節和劇集快取",
+  "cache_cleared": "快取已清除",
+  "clear_chapter_or_episode_cache_on_app_launch": "啟動應用時清除章節/劇集快取",
+  "app_settings": "App 設定",
+  "sources_settings": "來源設定",
+  "include_sensitive_settings": "包含敏感設定（例如追蹤服務的登入權杖）",
+  "create": "建立",
+  "downloads_are_limited_to_wifi": "下載僅限於WiFi",
+  "recommendations": "推薦",
+  "recommendations_similar": "相似",
+  "recommendations_weights": "推薦權重",
+  "recommendations_weights_genre": "作品類型相似度",
+  "recommendations_weights_setting": "故事背景相似度",
+  "recommendations_weights_synopsis": "劇情相似度",
+  "recommendations_weights_theme": "主題相似度",
+  "manga_extensions_repo": "漫畫擴充套件庫",
+  "anime_extensions_repo": "動畫擴充套件庫",
+  "novel_extensions_repo": "小說擴充套件庫",
+  "custom_dns": "自訂 DNS（留空使用系統 DNS）",
+  "android_proxy_server": "Android 代理伺服器（M-Extension-Server）",
+  "get_m_extension_server": "獲取 M-Extension-Server",
+  "get_sync_server": "在此獲取同步伺服器",
+  "undefined": "未定義",
+  "empty_extensions_repo": "擴充套件庫為空",
+  "add_extensions_repo": "新增擴充套件庫",
+  "remove_extensions_repo": "移除擴充套件庫",
+  "manage_manga_repo_urls": "管理漫畫套件庫網址",
+  "manage_anime_repo_urls": "管理動畫套件庫網址",
+  "manage_novel_repo_urls": "管理小說套件庫網址",
+  "url_cannot_be_empty": "網址不能留空",
+  "url_must_end_with_dot_json_or_dot_pb": "網址必須以 .json 結尾",
+  "repo_url": "套件庫網址",
+  "invalid_url_format": "網址格式不正確",
+  "clear_all_sources": "清除所有來源",
+  "clear_all_sources_msg": "你確定嗎？所有來源將被清除",
+  "sources_cleared": "來源已清除",
+  "repo_added": "已加入套件庫",
+  "repo_already_exists": "此套件庫已存在！",
+  "add_repo": "新增套件庫",
+  "add_repo_sources_to_add": "將加入下列擴充套件清單：",
+  "add_repo_warning": "這些套件庫提供的擴充套件會在 App 內執行。請只加入你信任的套件庫。",
+  "genre_search_library": "按分類搜尋書庫",
+  "genre_search_source": "按分類搜尋來源",
+  "source_not_added": "來源未新增",
+  "load_own_subtitles": "載入自訂字幕",
+  "search_subtitles": "線上搜尋字幕...",
+  "extension_notes": "備註：{notes}",
+  "unsupported_repo": "不支援此套件庫格式。請至 Discord 社群查詢支援資訊。",
+  "end_of_chapter": "章節結束",
+  "chapter_completed": "章節完成",
+  "continue_to_next_chapter": "繼續捲動閱讀下一章",
+  "no_next_chapter": "沒有下一章",
+  "you_have_finished_reading": "您已讀完",
+  "return_to_the_list_of_chapters": "返回章節列表",
+  "hwdec": "硬體解碼器",
+  "enable_hardware_accel": "硬體加速",
+  "enable_hardware_accel_info": "如果遇到錯誤或崩潰，請開啟/關閉",
+  "track_library_navigate": "轉到現有本機條目",
+  "track_library_add": "新增到本機庫",
+  "track_library_add_confirm": "將跟蹤項目新增到本機庫",
+  "track_library_not_logged": "請登入相應的跟蹤器以使用此功能！",
+  "track_library_switch": "切換到另一個跟蹤器",
+  "go_back": "返回",
+  "merge_library_nav_mobile": "在行動裝置上合併書庫分頁",
+  "enable_discord_rpc": "啟用 Discord RPC",
+  "hide_discord_rpc_incognito": "隱身模式下隱藏 Discord RPC",
+  "rpc_show_reading_watching_progress": "在 Discord 中顯示目前章節（需要重啟）",
+  "rpc_show_title": "在 Discord 中顯示目前標題",
+  "rpc_show_cover_image": "在 Discord 中顯示目前封面圖片",
+  "enable_mpv": "啟用 mpv 著色器/指令碼",
+  "mpv_info": "支援 mpv/scripts/ 下的 .js 指令碼",
+  "mpv_redownload": "重新下載 mpv 設定檔案",
+  "mpv_redownload_info": "用新設定檔案替換舊設定檔案！",
+  "mpv_download": "需要 MPV 設定檔案！\n現在下載？",
+  "custom_buttons": "自訂按鈕",
+  "custom_buttons_info": "使用自訂按鈕執行 lua 程式碼",
+  "custom_buttons_edit": "編輯自訂按鈕",
+  "custom_buttons_add": "新增自訂按鈕",
+  "custom_buttons_added": "已新增自訂按鈕！",
+  "custom_buttons_delete": "刪除自訂按鈕",
+  "custom_buttons_text": "按鈕文字",
+  "custom_buttons_text_req": "按鈕文字必填",
+  "custom_buttons_js_code": "lua 程式碼",
+  "custom_buttons_js_code_req": "lua 程式碼必填",
+  "custom_buttons_js_code_long": "lua 程式碼（長按時）",
+  "custom_buttons_startup": "lua 程式碼（啟動時）",
+  "custom_buttons_add_warning": "此按鈕會在影片播放器中執行下方的 Lua 程式碼，能存取檔案及執行程式。請確認你信任此連結的來源後再加入。",
+  "n_days": "{n} 天",
+  "decoder": "解碼器",
+  "decoder_info": "硬體解碼、像素格式及色帶修正",
+  "enable_gpu_next": "啟用 gpu-next（僅限 Android）",
+  "enable_gpu_next_info": "新的影片繪製引擎",
+  "debanding": "去色帶",
+  "use_yuv420p": "使用 YUV420P 像素格式",
+  "use_yuv420p_info": "可以修復某些影片編解碼器上的黑畫面，也可以以品質為代價提高效能",
+  "audio_preferred_languages": "首選語言",
+  "audio_preferred_languages_info": "在具有多個音訊流的影片上預設選擇的音訊語言，2/3 字母語言程式碼（例如：zh、en、ja）。多個值可以用逗號分隔。",
+  "enable_audio_pitch_correction": "啟用音訊音調校正",
+  "enable_audio_pitch_correction_info": "防止音訊在較快速度時變高音，在較慢速度時變低音",
+  "audio_channels": "音訊通道",
+  "volume_boost_cap": "音量增強上限",
+  "internal_player": "內部播放器",
+  "internal_player_info": "進度、控制、方向",
+  "subtitle_delay_text": "字幕延遲",
+  "subtitle_delay": "延遲（毫秒）",
+  "subtitle_speed": "速度",
+  "tracks": "軌道",
+  "playback_speed": "播放速度",
+  "shaders": "著色器",
+  "video_fit": "畫面適配",
+  "calendar": "日曆",
+  "calendar_no_data": "暫無資料。",
+  "calendar_info": "日曆會根據過往上傳時間預估下一章的日期，實際更新時間可能不同。",
+  "in_n_day": "{days} 天后",
+  "in_n_days": "{days} 天后",
+  "clear_library": "清空書庫",
+  "clear_library_desc": "選擇清除所有漫畫、動畫和/或小說條目",
+  "clear_library_input": "輸入 'manga'、'anime' 和/或 'novel'（用逗號分隔）以刪除所有相關條目",
+  "watch_order": "觀看順序",
+  "watch_order_role_current": "目前",
+  "@watch_order_role_current": {
+    "description": "Role label for the title currently being viewed in a watch order."
+  },
+  "watch_order_role_previous": "上一部",
+  "@watch_order_role_previous": {
+    "description": "Role label for an earlier title in a watch order."
+  },
+  "watch_order_role_next": "下一部",
+  "@watch_order_role_next": {
+    "description": "Role label for a later title in a watch order."
+  },
+  "watch_order_source_release_order": "發行順序",
+  "@watch_order_source_release_order": {
+    "description": "Source label for a watch order based on release dates."
+  },
+  "watch_order_source_community_list": "{name}（由 {author} 建立）",
+  "@watch_order_source_community_list": {
+    "description": "Source label for a community-created Trakt list.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "author": {
+        "type": "String"
+      }
+    }
+  },
+  "watch_order_source_official_collection": "Trakt 官方合輯：{name}",
+  "@watch_order_source_official_collection": {
+    "description": "Source label for an official Trakt collection.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "watch_order_source_trakt_collection": "Trakt 合輯：{name}",
+  "@watch_order_source_trakt_collection": {
+    "description": "Source label for a Trakt collection when it is not marked as official.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "watch_order_source_seasons": "《{title}》的各季",
+  "@watch_order_source_seasons": {
+    "description": "Fallback source label when the watch order contains a show's seasons.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "watch_order_select_source": "觀看順序來源",
+  "@watch_order_select_source": {
+    "description": "Label for choosing among available watch-order sources."
+  },
+  "watch_order_season": "第 {number} 季",
+  "@watch_order_season": {
+    "description": "Season metadata shown in a watch order.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "watch_order_episode": "第 {number} 集",
+  "@watch_order_episode": {
+    "description": "Episode metadata shown in a watch order.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "sequels": "續集",
+  "recommendations_similarity": "相似度：",
+  "recommendation_rating_accessibility": "評分 {rating}",
+  "@recommendation_rating_accessibility": {
+    "description": "Accessible label for a recommendation rating in the provider's display format.",
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      }
+    }
+  },
+  "local_folder_structure": "本機資料夾結構",
+  "local_folder": "本機資料夾",
+  "add_local_folder": "新增本機資料夾",
+  "rescan_local_folder": "立即重新掃描所有本機資料夾",
+  "default_download_destination": "預設下載位置",
+  "ask_download_destination": "每次下載前詢問位置",
+  "ask_download_destination_desc": "每次開始下載時選擇本機資料夾。",
+  "select_download_destination": "選擇下載位置",
+  "clear_local_library": "清空本機書庫",
+  "clear_local_library_desc": "從書庫中移除本機資料夾和壓縮包條目。",
+  "clear_local_library_msg": "這將從書庫中移除本機條目，不會刪除磁碟上的檔案。",
+  "custom": "自訂",
+  "no_local_folder_available_for_downloads": "沒有可用於下載的本機資料夾",
+  "failed_to_create_cbz": "建立 CBZ 失敗：{error}",
+  "@failed_to_create_cbz": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "error_reading_cover_image": "讀取封面出錯：{error}",
+  "@error_reading_cover_image": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "error_reading_metadata": "讀取中繼資料時發生錯誤：{error}",
+  "@error_reading_metadata": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "error_saving_chapter_episode_to_library": "儲存到書庫時出錯：{error}",
+  "@error_saving_chapter_episode_to_library": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "error_reading_chapter_cover_image": "讀取章節封面出錯：{error}",
+  "@error_reading_chapter_cover_image": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "error_reading_archive_cover_image": "讀取壓縮檔封面出錯：{error}",
+  "@error_reading_archive_cover_image": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "error_getting_local_library": "獲取本機書庫時出錯：{error}",
+  "@error_getting_local_library": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "export_metadata": "匯出中繼資料",
+  "exported": "已匯出",
+  "failed_to_export_metadata": "無法匯出中繼資料：{error}",
+  "@failed_to_export_metadata": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "unrecognized_chapter_numbers": "有 {count} 個章節無法自動編號，可能在閱讀器中缺失或順序錯亂。",
+  "@unrecognized_chapter_numbers": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "cloudflare_resolution_webview_server_start_failed": "無法啟動 Cloudflare 驗證用的內建網頁服務。",
+  "tracker_token_expired": "{tracker} 權杖已過期",
+  "@tracker_token_expired": {
+    "placeholders": {
+      "tracker": {}
+    }
+  },
+  "video_list_empty": "影片列表為空",
+  "playback_speed_multiplier": "{value}x",
+  "@playback_speed_multiplier": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "could_not_launch_url": "無法開啟 {url}",
+  "@could_not_launch_url": {
+    "placeholders": {
+      "url": {}
+    }
+  },
+  "text_size": "文字大小：",
+  "text_align": "文字對齊",
+  "line_height": "行高",
+  "show_scroll_percentage": "顯示捲動百分比",
+  "remove_extra_paragraph_spacing": "刪除額外的段落間距",
+  "select_label_color": "選擇 {label} 顏色",
+  "default_user_agent": "預設使用者代理",
+  "forceLandscapeMode": "強制橫向模式",
+  "forceLandscapeModeSubtitle": "強制播放器使用橫向顯示。",
+  "dns_over_https": "DNS-over-HTTPS (DoH)",
+  "dns_provider": "DNS服務供應商",
+  "tracked": "已追蹤",
+  "auth_unlock_msg": "驗證以解鎖Mangayomi",
+  "app_locked": "Mangayomi已鎖定",
+  "auth_to_continue": "驗證以繼續",
+  "authenticating": "正在驗證...",
+  "lock": "鎖定",
+  "unlock": "解鎖",
+  "security": "安全",
+  "auth_to_change_security_setting": "驗證以更改安全設定",
+  "app_lock": "App 鎖定",
+  "require_biometric_or_device_credential": "需要生物識別或裝置憑證才能開啟應用",
+  "biometric_or_device_credential_not_available": "此裝置上沒有生物識別",
+  "app_lock_description": "啟用後，每次開啟 App 或從背景返回時，都需要驗證身分。",
+  "keep_screen_on": "保持螢幕開啟",
+  "webtoon_side_padding": "長條漫畫的左右留白",
+  "show_page_gaps": "顯示頁面間隙",
+  "invert_colors": "反轉顏色",
+  "grayscale": "灰階",
+  "brightness": "亮度",
+  "contrast": "對比度",
+  "saturation": "飽和度",
+  "navigation_layout": "導覽佈局",
+  "nav_layout_default": "預設",
+  "nav_layout_l_shaped": "L形",
+  "nav_layout_kindle": "Kindle",
+  "nav_layout_edge": "邊緣",
+  "nav_layout_right_and_left": "右和左",
+  "nav_layout_disabled": "已停用",
+  "color_enhancements": "色彩增強",
+  "total": "總計",
+  "mean_per_title": "每部作品平均",
+  "completion_rate": "完成率",
+  "watching_time": "觀看時間",
+  "reading_time": "閱讀時間",
+  "average_chapters_per_title": "每部作品平均章節數",
+  "read_percentage": "閱讀百分比",
+  "entries": "條目",
+  "android_proxy_server_mihon": "Android 代理伺服器（Mihon）",
+  "android_proxy_server_mihon_description": "下載並設定使用 Mihon 擴充套件所需的代理伺服器。",
+  "mihon_proxy_server": "Mihon 代理伺服器",
+  "extension_server_intro_with_jre": "使用 Mihon 擴充套件前，請先下載包含 JRE 與伺服器 JAR 的代理伺服器套裝。",
+  "extension_server_intro_ios": "使用 Mihon 擴充套件前，請先下載伺服器 JAR。iOS 不需要另外下載 JRE。",
+  "checking_files": "正在檢查檔案",
+  "files_installed": "檔案已安裝",
+  "files_missing": "檔案缺失",
+  "update_files": "更新檔案",
+  "up_to_date": "已是最新",
+  "choose_location": "選擇路徑",
+  "import_existing_jar": "匯入現有 JAR",
+  "detect_files_in_selected_folder": "在選定資料夾中檢測檔案",
+  "preparing_download": "正在準備下載...",
+  "app_install_location": "應用安裝路徑",
+  "install_location": "安裝位置",
+  "jre_executable": "JRE 可執行檔案",
+  "extension_server_jar": "擴充套件伺服器 JAR",
+  "installed_version": "目前版本",
+  "latest_version": "最新版本",
+  "m_extension_server_description": "當您需要獨立的 Android 裝置代理時，請使用 M-Extension-Server。在此設定代理地址，並從 GitHub 下載 APK。",
+  "set_proxy_address": "設定代理地址",
+  "no_newer_proxy_server_release_available": "沒有可用的新代理伺服器版本。",
+  "could_not_check_proxy_server_updates": "無法檢查代理伺服器更新。",
+  "no_extension_server_bundle_available_for_this_platform": "目前平臺沒有可用的擴充套件伺服器包。",
+  "failed_to_download_bundle": "下載包失敗 ({statusCode})。",
+  "@failed_to_download_bundle": {
+    "placeholders": {
+      "statusCode": {}
+    }
+  },
+  "downloaded_bundle_missing_expected_files": "下載的項目不包含預期檔案。",
+  "extension_server_files_ready": "擴充套件伺服器檔案已就緒。",
+  "ios_extension_server_import_hint": "在 iOS 上，伺服器安裝在應用沙盒內。請使用“匯入現有 JAR”來匯入已下載的檔案。",
+  "select_extension_server_folder": "選擇擴充套件伺服器資料夾",
+  "selected_folder_does_not_exist": "選定資料夾不存在。",
+  "no_extension_server_files_found_in_selected_folder": "在選定資料夾中未找到擴充套件伺服器檔案。",
+  "extension_server_files_linked": "擴充套件伺服器檔案已連結。",
+  "select_extension_server_jar": "選擇擴充套件伺服器 JAR",
+  "selected_file_could_not_be_accessed": "選定檔案無法存取。",
+  "extension_server_jar_imported": "擴充套件伺服器 JAR 已匯入。",
+  "could_not_launch_apk_bridge_page": "無法啟動 M-Extension-Server 頁面。",
+  "proxy_server_ip_hint": "伺服器 IP（例如 10.0.0.5 或 https://example.com）",
+  "not_configured": "尚未設定",
+  "zero_interpreter": "Zero 直譯器",
+  "zero_interpreter_description": "自動或手動控制 Zero 直譯器服務。",
+  "start_server_on_launch": "啟動時開啟服務",
+  "runtime_status": "執行狀態",
+  "running": "執行中",
+  "stopped": "已停止",
+  "start": "啟動",
+  "stop": "停止",
+  "webview": "內建網頁",
+  "tts": "文字轉語音",
+  "tts_speed": "速度",
+  "tts_pitch": "音調",
+  "tts_language": "語言",
+  "tts_voice": "語音",
+  "tts_stop": "停止",
+  "tts_play": "播放",
+  "tts_pause": "暫停",
+  "tts_previous": "上一段",
+  "tts_next": "下一段",
+  "tts_paragraph_progress": "第{current}段，共{total}段",
+  "@tts_paragraph_progress": {
+    "placeholders": {
+      "current": {},
+      "total": {}
+    }
+  },
+  "tts_settings": "朗讀設定",
+  "tts_default": "預設",
+  "webtoon_disable_zoom_out": "Webtoon停用縮小",
+  "webtoon_double_tap_zoom_enabled": "Webtoon雙擊縮放",
+  "navigate_to_pan": "導覽前移動已放大影象",
+  "navigate_to_pan_subtitle": "翻頁前先移動放大的影象",
+  "split_wide_pages": "拆分雙頁",
+  "dual_page_invert": "反轉拆分的半頁",
+  "dual_page_rotate_to_fit": "旋轉以適應",
+  "dual_page_rotate_to_fit_invert": "反轉旋轉方向",
+  "double_page_single_first_page": "首頁單頁顯示",
+  "double_page_single_first_page_subtitle": "在雙頁模式下單頁顯示第一頁（封面）",
+  "double_page_auto": "自動雙頁",
+  "double_page_auto_subtitle": "橫向時自動切換到雙頁模式",
+  "landscape_zoom": "橫向自動縮放",
+  "zoom_start_position": "縮放起始位置",
+  "zoom_start_left": "左",
+  "zoom_start_right": "右",
+  "zoom_start_center": "中",
+  "automatic_background": "自動背景",
+  "tapping_inversion": "點選反轉",
+  "tapping_inversion_none": "無",
+  "tapping_inversion_horizontal": "水平",
+  "tapping_inversion_vertical": "垂直",
+  "tapping_inversion_both": "兩者",
+  "flash_on_page_change": "翻頁時閃爍",
+  "flash_on_page_change_subtitle": "AMOLED 防燒屏輔助",
+  "flash_color": "閃爍顏色",
+  "flash_color_black": "黑色",
+  "flash_color_white": "白色",
+  "flash_color_white_black": "白與黑",
+  "flash_interval": "閃爍間隔：{n}頁",
+  "@flash_interval": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "flash_duration": "閃爍持續時間：{n}毫秒",
+  "@flash_duration": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "show_navigation_overlay_on_start": "啟動時顯示導覽浮層",
+  "reader_hide_threshold": "隱藏閱讀器介面的閾值",
+  "reader_hide_threshold_highest": "最高 (5 px)",
+  "reader_hide_threshold_high": "高 (13 px)",
+  "reader_hide_threshold_low": "低 (31 px)",
+  "reader_hide_threshold_lowest": "最低 (47 px)",
+  "error_no_pages_available": "錯誤：無可用頁面",
+  "app_ui_scale": "介面縮放",
+  "app_ui_scale_subtitle": "根據你的螢幕和觀看距離，使介面更大或更小。",
+  "allow_concurrent_downloads": "允許同時下載",
+  "allow_concurrent_downloads_subtitle": "同時從不同來源下載。單個來源仍然一次下載一個章節，因此不會過載。關閉後，可在任何地方一次下載一個。",
+  "download_delay": "下載延遲",
+  "download_delay_subtitle": "在章節下載之間加入隨機等待時間，以降低來源網站的負擔。",
+  "save_search": "儲存搜尋",
+  "saved_searches": "已儲存的搜尋",
+  "enter_search_to_save_first": "先輸入搜尋進行儲存",
+  "no_saved_searches": "此來源還沒有儲存的搜尋。\n執行搜尋，然後選擇\"儲存搜尋\"。",
+  "source": "來源",
+  "something_went_wrong": "出錯了",
+  "startup_failed": "Mangayomi 無法完成啟動",
+  "sources_with_no_results": "{count, plural, other{有 {count} 個來源沒有搜尋結果}}",
+  "@sources_with_no_results": {
+    "description": "Header of the collapsed group in global search holding every source that failed or found nothing.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "import_mode_title": "如何匯入此備份？",
+  "import_mode_message": "選擇將此備份合併到目前書庫，還是完全替換目前書庫。",
+  "import_mode_keep_existing": "合併",
+  "import_mode_keep_existing_subtitle": "新增新條目並更新匹配條目。不會刪除現有內容。",
+  "import_mode_replace": "取代",
+  "import_mode_replace_subtitle": "清空目前書庫並完全替換為備份內容。",
+  "replace_summary_title": "準備替換書庫",
+  "replace_summary_message": "這將刪除目前的所有條目（{currentCount} 項），並替換為備份中的 {backupCount} 項。",
+  "@replace_summary_message": {
+    "placeholders": {
+      "currentCount": {},
+      "backupCount": {}
+    }
+  },
+  "replace_summary_confirm": "取代",
+  "replace_result_message": "已將書庫替換為備份中的 {count} 個條目。",
+  "@replace_result_message": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "category_conflict_title": "發現已有分類",
+  "category_conflict_message": "備份中包含書庫中已存在的分類。",
+  "category_conflict_keep": "保留 — 合併到已有分類",
+  "category_conflict_delete": "刪除 — 歸為未分類",
+  "source_conflict_title": "未找到來源",
+  "source_conflict_message": "備份中的部分來源未安裝相應擴充套件。",
+  "source_conflict_keep": "保留原名",
+  "import_summary_title": "準備匯入",
+  "import_summary_message": "將匯入 {newSeries} 個新條目，更新 {updatedSeries} 個已有條目，並新增 {newChapters} 個章節。",
+  "@import_summary_message": {
+    "placeholders": {
+      "newSeries": {},
+      "updatedSeries": {},
+      "newChapters": {}
+    }
+  },
+  "import_summary_confirm": "匯入",
+  "import_result_message": "已匯入 {newSeries} 個新條目，更新 {updatedSeries} 個條目，新增 {newChapters} 個章節。",
+  "@import_result_message": {
+    "placeholders": {
+      "newSeries": {},
+      "updatedSeries": {},
+      "newChapters": {}
+    }
+  },
+  "roll_back": "復原",
+  "roll_back_confirm_message": "將書庫還原至本次變更前的安全快照。",
+  "roll_back_done": "已還原至變更前的快照。",
+  "restoring_backup": "正在還原書庫…",
+  "roll_back_last_change": "復原上次變更",
+  "roll_back_last_change_subtitle": "快照時間：{date} — {description}",
+  "@roll_back_last_change_subtitle": {
+    "placeholders": {
+      "date": {},
+      "description": {}
+    }
+  },
+  "roll_back_available_count": "可復原最近 {count} 次變更",
+  "@roll_back_available_count": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "delete_source_title": "刪除來源及其漫畫",
+  "delete_source_subtitle": "從書庫中刪除指定來源的所有內容（含章節、下載和歷史紀錄）。",
+  "delete_source_pick_title": "選擇要刪除的來源",
+  "delete_source_empty": "書庫中沒有找到來源。",
+  "delete_source_confirm_title": "刪除 {sourceName}？",
+  "@delete_source_confirm_title": {
+    "placeholders": {
+      "sourceName": {}
+    }
+  },
+  "delete_source_confirm_message": "將永久刪除 {mangaCount} 部漫畫、{chapterCount} 個章節、{historyCount} 筆歷史紀錄及 {updateCount} 筆更新紀錄，並保留追蹤連結。完成後只能透過復原功能還原。",
+  "@delete_source_confirm_message": {
+    "placeholders": {
+      "mangaCount": {},
+      "chapterCount": {},
+      "historyCount": {},
+      "updateCount": {}
+    }
+  },
+  "delete_source_also_remove_extension": "同時解除安裝對應擴充套件",
+  "delete_source_keep_history": "保留閱讀歷史紀錄",
+  "delete_source_keep_downloads": "保留下載記錄",
+  "delete_source_button": "刪除",
+  "delete_source_result_message": "已從 {sourceName} 中刪除 {mangaCount} 部漫畫。",
+  "@delete_source_result_message": {
+    "placeholders": {
+      "mangaCount": {},
+      "sourceName": {}
+    }
+  },
+  "merge_manga_title": "合併重複漫畫",
+  "merge_manga_subtitle": "查詢同來源下標題相同的漫畫並進行合併。",
+  "merge_manga_none_found": "未找到重複漫畫。",
+  "merge_manga_pick_title": "可能重複的漫畫",
+  "merge_manga_choose_primary_title": "要合併到哪一部漫畫？",
+  "merge_manga_choose_primary_message": "其他條目的章節、歷史紀錄和追蹤將合併到所選項中。",
+  "merge_manga_chapters_subtitle": "{count, plural, other{{count} 章節}}",
+  "@merge_manga_chapters_subtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "merge_manga_button": "合併",
+  "merge_manga_result_message": "已將 {count} 部重複漫畫合併到 {mangaName}。",
+  "@merge_manga_result_message": {
+    "placeholders": {
+      "count": {},
+      "mangaName": {}
+    }
+  },
+  "merge_preview_title": "確認合併",
+  "merge_manga_preview_message": "其他作品共有 {totalChapters} 個章節，其中 {duplicateChapters} 個重複章節會保留已有閱讀進度的版本，另新增 {keptChapters} 個章節，並移除 {duplicateTracks} 個重複的追蹤連結。",
+  "@merge_manga_preview_message": {
+    "placeholders": {
+      "totalChapters": {},
+      "duplicateChapters": {},
+      "keptChapters": {},
+      "duplicateTracks": {}
+    }
+  },
+  "memory_overlay": "顯示記憶體佔用",
+  "memory_overlay_subtitle": "即時顯示應用佔用的記憶體。可在捲動書庫或閱讀章節時即時觀察裝置上的記憶體變化。",
+  "beta": "測試版",
+  "error_reports": "錯誤報告",
+  "error_reports_subtitle": "應用捕獲的錯誤及回報入口",
+  "error_reports_empty": "執行正常，無錯誤記錄。",
+  "error_reports_likely_cause": "可能原因",
+  "error_reports_report": "在 GitHub 上回報",
+  "error_reports_banner": "Mangayomi 遇到了一個錯誤",
+  "error_reports_banner_action": "檢視",
+  "error_reports_copy": "複製",
+  "error_reports_copied": "已複製到剪貼簿",
+  "error_reports_clear": "清除",
+  "error_reports_extension_failure": "此錯誤來自來源擴充套件。請向該套件庫的維護者回報，並附上套件名稱與發生問題的作品資訊。",
+  "error_reports_already_reported": "已報告",
+  "error_reports_expected_failure": "這通常與來源網站或網路有關，例如連結失效、伺服器停止服務或連線中斷。如果同一來源在其他地方正常，卻在這裡持續出錯，請回報問題。",
+  "share_unavailable_copied": "此平臺不支援分享，已複製到剪貼簿。",
+  "onboarding_title": "歡迎使用 Mangayomi",
+  "onboarding_libraries_body": "選擇您要閱讀和觀看的內容類型。",
+  "onboarding_nav_title": "您的書庫",
+  "onboarding_nav_body": "可以為每種類型設定獨立標籤頁，或合併在一個“書庫”標籤頁中。",
+  "onboarding_nav_split": "獨立標籤頁",
+  "onboarding_nav_merged": "統一書庫標籤頁",
+  "onboarding_nav_inside": "點選“書庫”可在各類型間切換",
+  "onboarding_next": "下一步",
+  "onboarding_restore": "還原備份",
+  "onboarding_or_local": "或使用現有本機檔案",
+  "onboarding_local_folder": "新增資料夾",
+  "onboarding_local_existing": "已設定 {count} 個資料夾",
+  "@onboarding_local_existing": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "onboarding_local_any_type": "支援漫畫、動畫及輕小說。",
+  "onboarding_local_scanning": "正在掃描資料夾",
+  "onboarding_local_found": "找到 {count} 個作品",
+  "@onboarding_local_found": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "onboarding_local_remove": "移除該資料夾",
+  "onboarding_local_in_downloads": "這是應用的下載資料夾。",
+  "onboarding_local_empty": "找不到內容，請選擇上一層資料夾。",
+  "onboarding_repo_failed": "無法讀取該套件庫。",
+  "onboarding_repo_title": "新增來源",
+  "onboarding_body": "加入套件庫後，即可瀏覽與安裝來源擴充套件。",
+  "onboarding_add": "新增套件庫",
+  "onboarding_skip": "暫時跳過",
+  "onboarding_continue": "繼續",
+  "onboarding_later": "您可以稍後在“設定 > 瀏覽”中新增。",
+  "onboarding_replay": "顯示歡迎介面",
+  "onboarding_replay_subtitle": "重新開啟首次執行的引導設定介面。",
+  "missing_source_check_title": "檢查缺失來源",
+  "missing_source_check_subtitle": "找出尚未安裝對應來源套件的書庫作品。",
+  "missing_source_check_none_found": "書庫中所有條目的來源均已安裝。",
+  "missing_source_check_result_title": "{count, plural, other{缺少 {count} 個來源}}",
+  "@missing_source_check_result_title": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "global_search_no_sources": "未安裝任何 {itemType} 來源。",
+  "@global_search_no_sources": {
+    "placeholders": {
+      "itemType": {
+        "type": "String"
+      }
+    }
+  },
+  "global_search_no_sources_hint": "請在“瀏覽”中新增套件庫並安裝相應的擴充套件。",
+  "global_search_only_pinned": "您有 {count, plural, other{{count} 個來源}}，但僅會搜尋已固定的來源。",
+  "@global_search_only_pinned": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "global_search_only_pinned_hint": "請固定某個來源，或在瀏覽設定中關閉“僅包含固定的來源”。",
+  "global_search_all_nsfw": "該分類下的所有來源均被標記為 NSFW 並已被隱藏。",
+  "global_search_all_nsfw_hint": "請在瀏覽設定中開啟 NSFW 來源後再進行搜尋。",
+  "missing_source_check_result_message": "這些條目關聯的來源未安裝。點選可進行遷移或安裝對應擴充套件。",
+  "related_titles": "相關作品",
+  "related_none": "未找到該作品的相關作品。",
+  "relation_adaptation": "改編",
+  "relation_sequel": "續作",
+  "relation_prequel": "前傳",
+  "relation_parent": "原作/主線",
+  "relation_side_story": "外傳",
+  "relation_spin_off": "衍生作",
+  "relation_alternative": "平行/替代版本",
+  "auto_library_update": "書庫自動更新",
+  "auto_library_update_subtitle": "啟動 App 時，依設定的間隔檢查書庫作品的最新章節。",
+  "auto_library_update_never": "從不",
+  "auto_library_update_12_hours": "每 12 小時",
+  "auto_library_update_daily": "每天",
+  "auto_library_update_2_days": "每 2 天",
+  "auto_library_update_weekly": "每週",
+  "auto_library_update_wifi_only": "僅限 Wi-Fi",
+  "auto_library_update_wifi_only_subtitle": "使用行動數據時略過排定的更新。",
+  "padding": "頁面留白",
+  "page_mode": "翻頁模式",
+  "single_page": "單頁",
+  "double_page": "雙頁",
+  "speed": "速度",
+  "theme_dark": "深色",
+  "theme_light": "淺色",
+  "theme_black": "純黑",
+  "theme_sepia": "復古",
+  "decrease": "減少",
+  "increase": "增加",
+  "chapter_swipe_actions": "章節滑動操作",
+  "chapter_swipe_start": "向右滑動",
+  "chapter_swipe_end": "向左滑動",
+  "chapter_swipe_toggle_bookmark": "切換書籤",
+  "chapter_swipe_toggle_read": "切換已讀狀態",
+  "chapter_swipe_download": "下載",
+  "chapter_swipe_disabled": "已停用",
+  "update_errors": "更新錯誤",
+  "no_update_errors": "沒有更新錯誤",
+  "clear_all": "全部清除",
+  "dismiss": "關閉",
+  "previous_episode": "上一集",
+  "clear_logs": "清除紀錄",
+  "bold": "粗體",
+  "italic": "斜體",
+  "color_yellow": "黃色",
+  "color_cyan": "青色",
+  "color_green": "綠色",
+  "color_orange": "橘色",
+  "continue_watching": "繼續觀看",
+  "search_your_anime": "搜尋你的動畫",
+  "category": "分類",
+  "hidden_categories": "已隱藏的分類",
+  "new_category": "新增分類",
+  "local": "本機",
+  "tv_home_rows": "首頁列",
+  "genre_rows": "依類型顯示的列",
+  "share_backup_file": "分享 Mangayomi 備份檔案",
+  "close": "關閉",
+  "migrate_source": "遷移來源",
+  "cloudflare_bypass_proxy": "Cloudflare 驗證代理伺服器",
+  "custom_doh_url": "自訂 DoH 網址",
+  "custom_doh_url_helper": "必須是使用 HTTPS、回傳 JSON 格式的 DoH 端點",
+  "anime_only_tv_layout": "電視介面僅顯示動畫",
+  "anime_only_beta": "僅動畫（測試版）",
+  "tv_home_beta": "電視首頁（測試版）",
+  "tv_player_beta": "電視播放器（測試版）",
+  "execute_action": "執行",
+  "adult_content": "成人內容（18+）",
+  "source_updated_successfully": "來源已更新",
+  "all_items": "全部",
+  "no_hidden_categories": "沒有已隱藏的分類",
+  "category_hidden_hint": "已隱藏「{name}」。在「全部」上長按確認鍵可取消隱藏。",
+  "@category_hidden_hint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tv_empty_anime_library": "動畫書庫尚無作品",
+  "tv_empty_anime_hint": "到「瀏覽」加入動畫，即可顯示於首頁。",
+  "tv_home_layout_description": "以分列方式顯示繼續觀看、最新集數及分類。",
+  "anime_only_layout_description": "隱藏漫畫與小說書庫（電視介面預設啟用）。",
+  "anime_only_browse_description": "隱藏 App 中的漫畫與小說內容，關閉即可顯示全部。",
+  "tv_player_layout_description": "開啟時使用電視播放器，關閉時使用原本的桌面播放器。",
+  "cloudflare_proxy_helper": "FlareSolverr／Byparr 端點，留空即可停用。",
+  "resolve_challenge": "完成驗證",
+  "resolve_cloudflare_challenge": "完成 Cloudflare 驗證",
+  "details": "詳細資訊",
+  "skip_seconds": "{seconds} 秒",
+  "@skip_seconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "subtitle_rating": "評分：",
+  "subtitle_votes": "投票數：",
+  "subtitle_date": "日期：",
+  "backup_created": "備份已建立！",
+  "backup_failed": "備份失敗：{error}",
+  "@backup_failed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backup_restored": "備份已還原！",
+  "backup_unsupported": "不支援或無法辨識此備份檔案。",
+  "restore_sync_upload_failed": "備份已還原，但上傳至同步伺服器失敗：{error}。伺服器仍保留上次成功同步的資料。",
+  "@restore_sync_upload_failed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "source_delete_failed": "無法刪除來源：{error}",
+  "@source_delete_failed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "manga_merge_failed": "無法合併漫畫：{error}",
+  "@manga_merge_failed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "download_failed": "下載失敗：{error}",
+  "@download_failed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "download_queue_failed": "無法啟動下載佇列：{error}",
+  "@download_queue_failed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cover_too_large": "封面超過 5 MB（{size} MB），已略過此封面。",
+  "@cover_too_large": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "library_update_failed": "有 {count} 部作品更新失敗",
+  "@library_update_failed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "memory_waiting_sample": "記憶體：等待取樣",
+  "memory_rss": "使用量 {value}・峰值 {peak}",
+  "@memory_rss": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "peak": {
+        "type": "String"
+      }
+    }
+  },
+  "memory_image_cache": "圖片快取 {value}／{maximum}・峰值 {peak}",
+  "@memory_image_cache": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "maximum": {
+        "type": "String"
+      },
+      "peak": {
+        "type": "String"
+      }
+    }
+  },
+  "memory_cached_items": "圖片數 {count}／{maximum}・使用中 {live}・峰值 {peak}",
+  "@memory_cached_items": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "maximum": {
+        "type": "int"
+      },
+      "live": {
+        "type": "int"
+      },
+      "peak": {
+        "type": "int"
+      }
+    }
+  },
+  "memory_cache_pressure": "{samples} 次取樣中，快取已滿佔 {percentage}%",
+  "@memory_cache_pressure": {
+    "placeholders": {
+      "percentage": {
+        "type": "String"
+      },
+      "samples": {
+        "type": "int"
+      }
+    }
+  },
+  "memory_reset_hint": "在設定中關閉後重新開啟，即可重設",
+  "hide_action": "隱藏"
+}
