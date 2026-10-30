@@ -7,7 +7,7 @@ Map<String, dynamic> release({String tag = 'v0.9.10+132'}) => {
   'prerelease': false,
   'html_url': '$appReleaseRepositoryUrl/releases/tag/$tag',
   'body': '繁體中文正式版',
-  'assets': [
+  'assets': <dynamic>[
     for (final suffix in ['android.apk', 'windows.zip'])
       {
         'state': 'uploaded',
