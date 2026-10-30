@@ -69,6 +69,22 @@ jobs:
         run: |
           $targets = Get-Content ../patches/release-support/analysis-files.txt
           dart analyze @targets
+      - name: Set up Node for source comment DOM tests
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: patches/package-lock.json
+      - name: Test source website comment location
+        working-directory: patches
+        shell: bash
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          dart ../app/tool/export_comments_script.dart comments-focus.js
+          node --test release-support/comments-locator.test.cjs
+      - name: Test comment buttons and website navigation
+        working-directory: app
+        run: flutter test --no-pub test/modules/manga/detail/comments_test.dart test/modules/manga/detail/detail_action_strip_test.dart test/modules/manga/detail/comments_navigation_test.dart
       - name: Test owner update channel and numeric build revisions
         working-directory: app
         run: flutter test --no-pub test/modules/about/app_release_test.dart
@@ -163,6 +179,22 @@ jobs:
       - name: Analyze custom app changes
         working-directory: app
         run: dart analyze $(cat ../patches/release-support/analysis-files.txt)
+      - name: Set up Node for source comment DOM tests
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: patches/package-lock.json
+      - name: Test source website comment location
+        working-directory: patches
+        shell: bash
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          dart ../app/tool/export_comments_script.dart comments-focus.js
+          node --test release-support/comments-locator.test.cjs
+      - name: Test comment buttons and website navigation
+        working-directory: app
+        run: flutter test --no-pub test/modules/manga/detail/comments_test.dart test/modules/manga/detail/detail_action_strip_test.dart test/modules/manga/detail/comments_navigation_test.dart
       - name: Test owner update channel and numeric build revisions
         working-directory: app
         run: flutter test --no-pub test/modules/about/app_release_test.dart

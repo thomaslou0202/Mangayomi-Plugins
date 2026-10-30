@@ -6,3 +6,4 @@ node_modules/
 Thumbs.db
 .DS_Store
 __pycache__/
+/comments-focus.js
