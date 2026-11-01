@@ -78,14 +78,14 @@
     "hasCloudflare": true,
     "sourceCodeUrl": "https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/javascript/novel/src/zh/eightbook.js",
     "apiUrl": "",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "isManga": false,
     "itemType": 2,
     "isFullData": false,
     "appMinVerReq": "0.9.9",
     "additionalParams": "",
     "sourceCodeLanguage": 1,
-    "notes": "支援排行、分類、更新、搜尋、分卷目錄與動態正文。正文使用網站指定的閱讀網域。"
+    "notes": "支援排行、分類、更新、搜尋、分卷目錄與完整正文。優先取得站方公開章節內容，避免手機廣告轉址。"
   },
   {
     "name": "石頭小說（測試版）",

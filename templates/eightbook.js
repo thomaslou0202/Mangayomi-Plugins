@@ -2,8 +2,8 @@
 const mangayomiSources = [{
     name: "無限小說8book（測試版）", id: 1827634454, lang: "zh", baseUrl: "https://www.8book.com", apiUrl: "",
     iconUrl: "https://www.8book.com/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.0", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/eightbook.js",
-    hasCloudflare: true, isNsfw: false, notes: "支援排行、分類、更新、搜尋、分卷目錄與動態正文。正文使用網站指定的閱讀網域。"
+    sourceCodeLanguage: 1, version: "0.1.1", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/eightbook.js",
+    hasCloudflare: true, isNsfw: false, notes: "支援排行、分類、更新、搜尋、分卷目錄與完整正文。優先取得站方公開章節內容，避免手機廣告轉址。"
 }];
 const N_SITE = {name: "無限小說", code: "8B", base: "https://www.8book.com", hosts: ["www.8book.com", "8book.com"], images: ["www.8book.com", "8book.com"]};
 /*__COMMON__*/
@@ -15,8 +15,103 @@ function ebChapter(base, value, bookId) {
     const match = /^https:\/\/[a-z0-9.-]+(?::443)?\/read\/(\d+)\/?\?(\d+)(?:[&#].*)?$/i.exec(url);
     return match && (!bookId || bookId === match[1]) ? N_SITE.base + "/read/" + match[1] + "/?" + match[2] : "";
 }
+function ebResponseText(value) {
+    // The public text files omit charset. Dart's HTTP fallback can expose
+    // UTF-8 bytes as latin1; already decoded Unicode must remain unchanged.
+    if (!/[\u0080-\u00ff]/.test(value) || /[^\u0000-\u00ff]/.test(value)) return value;
+    try { return decodeURIComponent(Array.from(value, character => "%" + character.charCodeAt(0).toString(16).padStart(2, "0")).join("")); }
+    catch (_) { return value; }
+}
+// Read only the literal data and URL expression used by the site's public
+// chapter loader. No page JavaScript, navigation, or arbitrary calls execute.
+function ebContentUrl(html, chapter) {
+    const ids = /\/read\/(\d+)\/\?(\d+)$/.exec(chapter), document = new Document(html);
+    if (!ids || nAttr(document, 'meta[name="itemid"]', "content") !== ids[1]) throw nError("CHAPTER", "網站未回傳指定作品的章節頁");
+    const script = document.select("script").map(node => node.text).find(text => /\$\.get\(unescape\(/.test(text));
+    const request = script && /\$\.get\(unescape\(([^]*?)\),\s*function\s*\(/.exec(script);
+    if (!request || request[1].length > 2048) throw nError("LOADER", "網站正文載入格式已變更，請更新來源");
+    const values = Object.create(null);
+    const declarations = /\bvar\s+([A-Za-z_$][\w$]*)\s*=\s*(\d+|"[\d,]+"|'[\d,]+')(\.split\(\s*['"],['"]\s*\))?\s*;/g;
+    let declared = false;
+    for (const match of script.matchAll(declarations)) {
+        const raw = match[2], value = /^\d+$/.test(raw) ? Number(raw) : raw.slice(1, -1);
+        values[match[1]] = match[3] ? String(value).split(",") : value;
+        if (Array.isArray(values[match[1]]) && values[match[1]].slice(0, -1).includes(ids[2])) declared = true;
+    }
+    if (!declared) throw nError("CHAPTER", "此作品章節索引中找不到指定章節");
+    let expression = request[1].replace(/^\(typeof\(td\)\s*!=\s*'undefined'\s*\?\s*td\s*:\s*''\)\s*\+/, "''+");
+    const tokens = [], token = /\s*(\d+|'[^'\\]*'|"[^"\\]*"|[A-Za-z_$][\w$]*|[+\-*%.\[\](),])/y;
+    let position = 0;
+    while (position < expression.length) {
+        token.lastIndex = position;
+        const match = token.exec(expression);
+        if (!match || tokens.length > 256) throw nError("LOADER", "不支援的正文網址格式");
+        tokens.push(match[1]); position = token.lastIndex;
+    }
+    const unknown = [...new Set(tokens.filter(value => /^[A-Za-z_$][\w$]*$/.test(value) && !Object.prototype.hasOwnProperty.call(values, value) && value !== "substr" && value !== "length"))];
+    if (unknown.length !== 1) throw nError("LOADER", "未辨識到正文網址的章節欄位");
+    values[unknown[0]] = ids[2];
+    let index = 0;
+    function expect(value) { if (tokens[index++] !== value) throw nError("LOADER", "正文網址語法不符"); }
+    function atom(depth) {
+        if (depth > 20) throw nError("LOADER", "正文網址過於複雜");
+        const next = tokens[index++]; let value;
+        if (next === "(") { value = sum(depth + 1); expect(")"); }
+        else if (/^\d+$/.test(next || "")) value = Number(next);
+        else if (/^['"]/.test(next || "")) value = next.slice(1, -1);
+        else if (Object.prototype.hasOwnProperty.call(values, next)) value = values[next];
+        else throw nError("LOADER", "正文網址包含未知欄位");
+        while (tokens[index] === "." || tokens[index] === "[") {
+            if (tokens[index++] === "[") {
+                const key = sum(depth + 1); expect("]");
+                if (!Array.isArray(value) || !Number.isInteger(key) || key < 0 || key >= value.length) throw nError("LOADER", "正文網址索引不符");
+                value = value[key];
+            } else {
+                const member = tokens[index++];
+                if (member === "length" && (typeof value === "string" || Array.isArray(value))) value = value.length;
+                else if (member === "substr" && typeof value === "string") {
+                    expect("("); const start = sum(depth + 1); expect(","); const length = sum(depth + 1); expect(")");
+                    if (!Number.isFinite(Number(start)) || !Number.isInteger(length) || length < 0 || length > 32) throw nError("LOADER", "正文網址字串範圍不符");
+                    value = value.substr(Number(start), length);
+                } else throw nError("LOADER", "正文網址包含不支援的操作");
+            }
+        }
+        return value;
+    }
+    function sum(depth) {
+        let value = product(depth);
+        while (tokens[index] === "+" || tokens[index] === "-") {
+            const op = tokens[index++], right = product(depth);
+            if (Array.isArray(value) || Array.isArray(right)) throw nError("LOADER", "正文網址資料類型不符");
+            value = op === "+" ? value + right : Number(value) - Number(right);
+        }
+        return value;
+    }
+    function product(depth) {
+        let value = atom(depth);
+        while (tokens[index] === "*" || tokens[index] === "%") {
+            const op = tokens[index++], right = atom(depth);
+            value = op === "*" ? Number(value) * Number(right) : Number(value) % Number(right);
+            if (!Number.isFinite(value)) throw nError("LOADER", "正文網址數值不符");
+        }
+        return value;
+    }
+    let path;
+    try { path = decodeURIComponent(String(sum(0))); } catch (_) { throw nError("LOADER", "未能解析站方公開正文網址"); }
+    if (index !== tokens.length || !(new RegExp("^/txt/\\d+/" + ids[1] + "/" + ids[2] + "\\d{1,8}\\.html$")).test(path)) throw nError("LOADER", "正文網址與指定章節不符");
+    return N_SITE.base + path;
+}
 class DefaultExtension extends NativeNovel {
-    constructor() { super(); this.readers = new Map(); }
+    constructor() { super(); this.readers = new Map(); this.client = new Client({timeout: 25, connectTimeout: 10}); }
+    async _http(url, referer) {
+        if (!nTrusted(url)) throw nError("URL", "正文請求離開無限小說網站");
+        let response;
+        try { response = await this.client.get(url, {Referer: referer || N_SITE.base + "/", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}); }
+        catch (_) { return null; }
+        if (!nTrusted(response.request && response.request.url || url)) throw nError("URL", "網站將正文請求轉到其他網站");
+        if (Number(response.statusCode) === 429) throw nError("RATE", "網站請求過於頻繁，請稍後重試");
+        return Number(response.statusCode) === 200 && typeof response.body === "string" && !nChallenge(response.body) ? ebResponseText(response.body) : null;
+    }
     get supportsLatest() { return true; }
     getSourcePreferences() { return [{key: "category", listPreference: {title: "首頁分類", summary: "可選日輕小說、排行或其他分類。", valueIndex: 0, entries: EIGHT_CATEGORIES.map(item => item[1]), entryValues: EIGHT_CATEGORIES.map(item => item[0])}}]; }
     _list(html, url, page, search) {
@@ -90,6 +185,12 @@ class DefaultExtension extends NativeNovel {
         if (!nTrusted(nAbsolute(N_SITE.base + "/", url))) throw nError("URL", "請使用套件目錄提供的章節網址");
         const chapter = ebChapter(N_SITE.base + "/", url);
         if (!chapter) throw nError("URL", "章節網址格式錯誤");
+        const reader = await this._http(chapter);
+        if (reader !== null) {
+            const contentUrl = ebContentUrl(reader, chapter), html = await this._http(contentUrl, chapter);
+            if (html === null || /<title[^>]*>\s*(?:404|403)|<(?:html|head)\b/i.test(html)) throw nError("CONTENT", "未取得站方公開正文，請稍後重試");
+            return nArticle(name, html, contentUrl);
+        }
         const host = await this._reader(chapter);
         // Start at 8book's canonical URL. Only the reader host explicitly
         // linked for this book AND chapter is accepted after its redirect.
