@@ -100,7 +100,7 @@
     "hasCloudflare": true,
     "sourceCodeUrl": "https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/javascript/novel/src/zh/twbook.js",
     "apiUrl": "",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "isManga": false,
     "itemType": 2,
     "isFullData": false,

@@ -2,7 +2,7 @@
 const mangayomiSources = [{
     name: "石頭小說（測試版）", id: 1827634455, lang: "zh", baseUrl: "https://www.twbook.cc", apiUrl: "",
     iconUrl: "https://www.twbook.cc/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.0", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/twbook.js",
+    sourceCodeLanguage: 1, version: "0.1.1", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/twbook.js",
     hasCloudflare: true, isNsfw: false, notes: "支援書庫、分類、搜尋、完整目錄、正文與網站特殊字型文字還原。網站驗證請在來源 WebView 手動完成。"
 }];
 const N_SITE = {name: "石頭小說", code: "TW", base: "https://www.twbook.cc", hosts: ["www.twbook.cc", "twbook.cc"], images: ["www.twbook.cc", "twbook.cc", "i1.twbook.cc"]};
@@ -187,6 +187,27 @@ function twPart(base, value, bookId) {
     return {book: match[1], chapter: match[2], part: Number(match[3] || 1), url: N_SITE.base + "/" + match[1] + "/" + match[2] + (match[3] ? "_" + match[3] : "") + ".html"};
 }
 class DefaultExtension extends NativeNovel {
+    constructor() { super(); this.client = new Client({timeout: 25, connectTimeout: 10}); }
+    _page(url, options) {
+        const task = this.pageQueue.then(async () => {
+            if (!nTrusted(url)) throw nError("URL", "網址不在石頭小說網站內");
+            if (!(options && options.fonts)) {
+                let response;
+                try { response = await this.client.get(url, this.getHeaders()); } catch (_) { /* Normal browser fallback. */ }
+                if (response) {
+                    const actual = response.request && response.request.url || url;
+                    if (!nTrusted(actual)) throw nError("URL", "網站將請求轉到其他網站");
+                    if (Number(response.statusCode) === 429) throw nError("RATE", "搜尋過於頻繁，請稍後重試");
+                    if (Number(response.statusCode) === 200 && typeof response.body === "string" && !nChallenge(response.body)) {
+                        const ready = !(options && options.waitFor) || nFirst(new Document(response.body), options.waitFor);
+                        if (ready) return {html: response.body, url: actual};
+                    }
+                }
+            }
+            return this._browser(url, options);
+        });
+        this.pageQueue = task.catch(() => {}); return task;
+    }
     getSourcePreferences() { return [{key: "category", listPreference: {title: "書庫分類", summary: "預設為你指定的全部書庫。", valueIndex: 0, entries: TW_GENRES.map(item => item[1]), entryValues: TW_GENRES.map(item => item[0])}}]; }
     _list(html, url, page) {
         const document = new Document(html), list = [], seen = new Set();
@@ -204,7 +225,7 @@ class DefaultExtension extends NativeNovel {
     async getPopular(page) {
         page = nPage(page);
         const category = await this._preference("category", TW_GENRES.map(item => item[0]), "");
-        const result = await this._page(N_SITE.base + "/bookstack/?page=" + page + (category ? "&cid=" + category : ""));
+        const result = await this._page(N_SITE.base + "/bookstack/?page=" + page + (category ? "&cid=" + category : ""), {waitFor: ".search-list"});
         return this._list(result.html, result.url, page);
     }
     async search(query, page) {
@@ -212,7 +233,7 @@ class DefaultExtension extends NativeNovel {
         if (!query) return {list: [], hasNextPage: false};
         const direct = twBook(N_SITE.base + "/", /^\d{6,12}$/.test(query) ? "/" + query + "/" : query);
         if (direct) { if (page > 1) return {list: [], hasNextPage: false}; const detail = await this.getDetail(direct); return {list: [{name: detail.name, link: direct, imageUrl: detail.imageUrl}], hasNextPage: false}; }
-        const result = await this._page(N_SITE.base + "/search/" + encodeURIComponent(query) + (page > 1 ? "?page=" + page : ""));
+        const result = await this._page(N_SITE.base + "/search/" + encodeURIComponent(query) + (page > 1 ? "?page=" + page : ""), {waitFor: ".search-list"});
         return this._list(result.html, result.url, page);
     }
     _chapters(html, url, bookId) {
@@ -229,11 +250,11 @@ class DefaultExtension extends NativeNovel {
     async getDetail(url) {
         const book = twBook(N_SITE.base + "/", url);
         if (!book) throw nError("URL", "請使用石頭小說的書籍網址");
-        const result = await this._page(book), document = new Document(result.html);
+        const result = await this._page(book, {waitFor: "#detail"}), document = new Document(result.html);
         if (twBook(N_SITE.base + "/", result.url) !== book) throw nError("BOOK", "網站未回到指定作品");
         const name = nText(document, "#detail h1.title");
         if (!name) throw nError("DETAIL", "未辨識到作品資料");
-        const toc = await this._page(book + "dir");
+        const toc = await this._page(book + "dir", {waitFor: ".chaplist .all"});
         if (toc.url.split(/[?#]/)[0] !== book + "dir") throw nError("TOC", "網站未回到指定目錄");
         return {name, link: book, imageUrl: nImage(result.url, nAttr(document, "#detail .cover img", "src")), author: nText(document, "#detail .author"),
             description: nPlain(nFirst(document, "#detail .intro") ? nFirst(document, "#detail .intro").innerHtml : ""),

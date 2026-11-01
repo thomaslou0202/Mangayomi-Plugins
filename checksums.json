@@ -39,7 +39,7 @@
     },
     {
       "path": "javascript/novel/src/zh/twbook.js",
-      "sha256": "07ee7523cc79668f7168c7de9df6e890feca445fa38bc9174f93dbcb8fa0cb19"
+      "sha256": "44845712b0f0b64e6adcb448b92cc5f066375e7bc106c14c2a42aed767387452"
     },
     {
       "path": "javascript/novel/src/zh/wenku8.js",
@@ -47,7 +47,7 @@
     },
     {
       "path": "novel_index.json",
-      "sha256": "ff0c709365353cb6233b806cc2100b78319a3cc763cacda38a9a458c5f9d7e32"
+      "sha256": "cdc44c09415ad181b4c8b2806777328d48848fb8c7c7a706bc9d2a0861774c66"
     },
     {
       "path": "repo.json",
