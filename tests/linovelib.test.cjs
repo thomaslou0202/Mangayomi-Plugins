@@ -60,3 +60,31 @@ test('Linovelib reports verification, offsite replies, unknown data and wrong se
  const unknown=load('linovelib',{http:async url=>response(url,'<div id="acontent">正文</div>')}).ext;await assert.rejects(unknown.getHtmlContent('章',chapter),/LN-PARAMS/);
  const wrong=load('linovelib',{browser:async url=>page(url,'<div class="gs-no-results-result">無結果</div><div class="gsc-cursor-current-page">1</div>')}).ext;await assert.rejects(wrong.search('作品',2),/LN-SEARCH-PAGE/);
 });
+
+test('Linovelib retries transport/server failures once without browser execution',async()=>{
+ for(const failure of [new Error('temporary socket failure'),502,503,504]) {
+  let calls=0,browsers=0;
+  const {ext,context}=load('linovelib',{http:async()=>{calls++;if(calls===1){if(failure instanceof Error)throw failure;return {statusCode:failure,body:'temporary'};}return {statusCode:200,body:reader()};},browser:async()=>{browsers++;throw Error('unexpected');}});
+  context.setTimeout=fn=>fn();
+  assert.match(await ext.getHtmlContent('作品',chapter),/正文甲/);assert.equal(calls,2);assert.equal(browsers,0);
+ }
+});
+test('Linovelib never retries rate limits or missing chapters',async()=>{
+ for(const statusCode of [429,404]) {
+  let calls=0;const {ext,context}=load('linovelib',{http:async()=>{calls++;return {statusCode,body:'error'};}});context.setTimeout=fn=>fn();
+  await assert.rejects(ext.getHtmlContent('作品',chapter),statusCode===429?/LN-RATE/:/LN-NOT-FOUND/);assert.equal(calls,1);
+ }
+});
+test('Linovelib retries only the failed subpage and retains earlier content once',async()=>{
+ const calls=[];let second=0;
+ const {ext,context}=load('linovelib',{http:async url=>{calls.push(url);return {statusCode:200,body:url===chapter?reader(1,'/novel/123/900_2.html','<p>第一頁</p>'):reader(2,'/novel/123/901.html',++second<3?'<p>內容加載失敗，請稍後重試。</p>':'<p>第二頁</p>')};}});context.setTimeout=fn=>fn();
+ const html=await ext.getHtmlContent('作品',chapter);assert.match(html,/第一頁/);assert.match(html,/第二頁/);assert.doesNotMatch(html,/加載失敗/);assert.equal((html.match(/第一頁/g)||[]).length,1);assert.equal(calls.filter(url=>url===chapter).length,1);assert.equal(second,3);
+});
+test('Linovelib persistent placeholder throws instead of returning partial content',async()=>{
+ let calls=0;const {ext,context}=load('linovelib',{http:async()=>{calls++;return {statusCode:200,body:reader(1,'/novel/123/901.html','<p>内容加载失败</p>')};}});context.setTimeout=fn=>fn();
+ await assert.rejects(ext.getHtmlContent('作品',chapter),/LN-CONTENT-TEMPORARY/);assert.equal(calls,3);
+});
+test('Linovelib does not retry ordinary prose that mentions a loading error',async()=>{
+ let calls=0;const {ext}=load('linovelib',{http:async()=>{calls++;return {statusCode:200,body:reader(1,'/novel/123/901.html','<p>畫面顯示內容加載失敗，他嘆了一口氣。</p>')};}});
+ assert.match(await ext.getHtmlContent('作品',chapter),/他嘆了一口氣/);assert.equal(calls,1);
+});

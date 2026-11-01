@@ -2,7 +2,7 @@
 const mangayomiSources = [{
     name: "嗶哩輕小說（繁體）", id: 1827634460, lang: "zh", baseUrl: "https://tw.linovelib.com", apiUrl: "",
     iconUrl: "https://tw.linovelib.com/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.0", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/linovelib.js",
+    sourceCodeLanguage: 1, version: "0.1.1", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/linovelib.js",
     hasCloudflare: true, isNsfw: false, notes: "繁體文庫、最新更新、站方 Google 搜尋、分卷目錄、章內分頁與插圖。僅提供網站正常開放的章節。"
 }];
 const N_SITE = {name: "嗶哩輕小說", code: "LN", base: "https://tw.linovelib.com", hosts: ["tw.linovelib.com"], images: ["tw.linovelib.com", "img3.readpai.com"]};
@@ -74,11 +74,22 @@ class DefaultExtension extends NativeNovel {
         if (result.kind !== "page" || typeof result.html !== "string") throw nError("EMPTY", search ? "站方搜尋尚未取得結果，請稍後重試，或直接搜尋作品網址／ID" : "未取得頁面內容，請在來源內建網頁確認");
         return result;
     }
+    async _get(url) {
+        // Retry only temporary transport/server failures. Authorization,
+        // missing pages and rate limits continue through the normal handling.
+        for (let attempt = 0; attempt < 2; attempt++) {
+            let response;
+            try { response = await this.client.get(url, this.getHeaders()); }
+            catch (_) { if (attempt) return null; }
+            if (response && ![502, 503, 504].includes(Number(response.statusCode))) return response;
+            if (attempt) return response;
+            await new Promise(resolve => setTimeout(resolve, 400));
+        }
+    }
     _page(url, options) {
         const task = this.pageQueue.then(async () => {
             if (!nTrusted(url)) throw nError("URL", "請使用嗶哩繁體站網址");
-            let response;
-            try { response = await this.client.get(url, this.getHeaders()); } catch (_) { /* Normal browser fallback. */ }
+            const response = await this._get(url);
             if (response) {
                 const actual = response.request && response.request.url || url;
                 if (!nTrusted(actual)) throw nError("URL", "網站轉到了其他網域");
@@ -156,6 +167,20 @@ class DefaultExtension extends NativeNovel {
         if (toc.url.split(/[?#]/)[0].replace(/\/$/, "") !== catalogue) throw nError("TOC", "網站未回到指定目錄");
         return {name, link: book, author: nClean(meta("og:novel:author")), imageUrl: nImage(result.url, meta("og:image")), description: nPlain(meta("og:description")), genre: [nClean(meta("og:novel:category"))].filter(Boolean), status: /完結|完结|完本/.test(meta("og:novel:status")) ? 1 : /連載|连载/.test(meta("og:novel:status")) ? 0 : 5, chapters: this._chapters(toc.html, id)};
     }
+    async _chapterPage(url) {
+        // Some reader pages return HTTP 200 with a temporary loading error.
+        // Retry that same subpage, never append a placeholder or skip ahead.
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const result = await this._page(url, {ready: "#acontent"});
+            const content = nFirst(new Document(result.html), "#acontent");
+            const text = nClean(content && content.text).replace(/[\s，。！!：:….,]/g, "");
+            const failed = content && !content.select("img").length &&
+                /^(?:本章)?(?:內容|内容|正文)(?:加載|加载|載入|读取|讀取)(?:失敗|失败)(?:請|请)?(?:稍後|稍后)?(?:重試|重试|刷新|重新整理)?$/.test(text);
+            if (!failed) return result;
+            if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+        }
+        throw nError("CONTENT-TEMPORARY", "網站暫時未載入本章內容，請稍後重試");
+    }
     async getHtmlContent(name, url) {
         const first = lvPart(N_SITE.base, url);
         if (!first) throw nError("URL", "章節網址格式錯誤");
@@ -163,7 +188,7 @@ class DefaultExtension extends NativeNovel {
         while (current && seen.size < 100) {
             if (seen.has(current.url)) throw nError("PAGES", "章內分頁重複，請回報作品網址");
             seen.add(current.url);
-            const result = await this._page(current.url, {ready: "#acontent"}), document = new Document(result.html), actual = lvPart(N_SITE.base, result.url), params = lvParams(document, result.params);
+            const result = await this._chapterPage(current.url), document = new Document(result.html), actual = lvPart(N_SITE.base, result.url), params = lvParams(document, result.params);
             if (!actual || actual.url !== current.url || String(params.articleid) !== first.book || String(params.chapterid) !== first.chapter || Number(params.page) !== current.part) throw nError("CHAPTER", "網站未回傳指定章節分頁");
             if (String(params.chapterisvip) !== "0") throw nError("VIP", "此章節未正常開放，請到網站使用官方閱讀權限");
             const content = nFirst(document, "#acontent");
