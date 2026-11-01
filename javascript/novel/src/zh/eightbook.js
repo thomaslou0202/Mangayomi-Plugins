@@ -2,7 +2,7 @@
 const mangayomiSources = [{
     name: "無限小說8book（測試版）", id: 1827634454, lang: "zh", baseUrl: "https://www.8book.com", apiUrl: "",
     iconUrl: "https://www.8book.com/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.1", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/eightbook.js",
+    sourceCodeLanguage: 1, version: "0.1.2", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/eightbook.js",
     hasCloudflare: true, isNsfw: false, notes: "支援排行、分類、更新、搜尋、分卷目錄與完整正文。優先取得站方公開章節內容，避免手機廣告轉址。"
 }];
 const N_SITE = {name: "無限小說", code: "8B", base: "https://www.8book.com", hosts: ["www.8book.com", "8book.com"], images: ["www.8book.com", "8book.com"]};
@@ -270,14 +270,24 @@ function ebContentUrl(html, chapter) {
 }
 class DefaultExtension extends NativeNovel {
     constructor() { super(); this.readers = new Map(); this.client = new Client({timeout: 25, connectTimeout: 10}); }
-    async _http(url, referer) {
+    _page(url, options) {
+        const task = this.pageQueue.then(async () => {
+            const result = await this._http(url, "", true);
+            return result !== null ? result : this._browser(url, options);
+        });
+        this.pageQueue = task.catch(() => {}); return task;
+    }
+    async _http(url, referer, withUrl) {
         if (!nTrusted(url)) throw nError("URL", "正文請求離開無限小說網站");
         let response;
         try { response = await this.client.get(url, {Referer: referer || N_SITE.base + "/", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}); }
         catch (_) { return null; }
-        if (!nTrusted(response.request && response.request.url || url)) throw nError("URL", "網站將正文請求轉到其他網站");
+        const actual = response.request && response.request.url || url;
+        if (!nTrusted(actual)) throw nError("URL", "網站將請求轉到其他網站");
         if (Number(response.statusCode) === 429) throw nError("RATE", "網站請求過於頻繁，請稍後重試");
-        return Number(response.statusCode) === 200 && typeof response.body === "string" && !nChallenge(response.body) ? ebResponseText(response.body) : null;
+        if (Number(response.statusCode) !== 200 || typeof response.body !== "string" || nChallenge(response.body)) return null;
+        const html = ebResponseText(response.body);
+        return withUrl ? {html, url: actual} : html;
     }
     get supportsLatest() { return true; }
     getSourcePreferences() { return [{key: "category", listPreference: {title: "首頁分類", summary: "可選日輕小說、排行或其他分類。", valueIndex: 0, entries: EIGHT_CATEGORIES.map(item => item[1]), entryValues: EIGHT_CATEGORIES.map(item => item[0])}}]; }

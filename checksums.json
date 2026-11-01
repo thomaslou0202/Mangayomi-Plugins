@@ -27,7 +27,7 @@
     },
     {
       "path": "javascript/novel/src/zh/eightbook.js",
-      "sha256": "6d426e800cfdb5103191827ce8fadc41576d614384f287c04b396bbe8d7717c0"
+      "sha256": "036ba661b172c1fd12dd07769a97c2b5fdc4a977ed73f0ec8450978baf4f417a"
     },
     {
       "path": "javascript/novel/src/zh/qidian.js",
@@ -47,7 +47,7 @@
     },
     {
       "path": "novel_index.json",
-      "sha256": "9c25d08f081b5fd04082d5110537a88ae79a7e12c0f53b58778d7a2ddf2bacce"
+      "sha256": "ff0c709365353cb6233b806cc2100b78319a3cc763cacda38a9a458c5f9d7e32"
     },
     {
       "path": "repo.json",

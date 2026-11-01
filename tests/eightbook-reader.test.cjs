@@ -17,6 +17,17 @@ test('8book direct HTTP reader avoids WebView and preserves a long complete chap
  const {ext}=load('eightbook',{http:async(url,headers)=>{calls.push({url,headers});return {statusCode:200,request:{url},body:url.includes('/txt/')?body:reader('mod')};}});
  const result=await ext.getHtmlContent('長章節',chapter);assert.equal(calls.length,2);assert.match(calls[1].url,/\/txt\/9\/12\/10145678\.html$/);assert.equal(calls[1].headers.Referer,chapter);assert.match(calls[0].headers['User-Agent'],/Windows/);assert.match(result,/第280段/);assert.equal((result.match(/<br>/g)||[]).length,281);
 });
+test('8book catalogue, search and detail also use HTTP without loading ad scripts',async()=>{
+ const urls=[];
+ const list='<div class="card"><div class="border_gray"><a class="nowraphide" href="/novelbooks/12/"><img src="/cover.jpg"><li class="nowraphide">測試作品</li></a></div></div>';
+ const detail='<meta property="og:title" content="測試作品"><div id="chapters"><div class="folder"><div class="vol-title"><h3>第一卷 / 1</h3></div><span class="fc">1</span><a class="episode_li" href="https://finance.binaccount.com/read/12/?101">第一章</a></div></div>';
+ const {ext}=load('eightbook',{http:async url=>{urls.push(url);return {statusCode:200,request:{url},body:url.includes('/novelbooks/')?detail:list};}});
+ assert.equal((await ext.getPopular(1)).list[0].name,'測試作品');
+ assert.equal((await ext.getLatestUpdates(1)).list.length,1);
+ assert.equal((await ext.search('測試',1)).list.length,1);
+ assert.equal((await ext.getDetail(base+'/novelbooks/12/')).chapters.length,1);
+ assert.equal(urls.length,4);
+});
 test('8book decodes charset-less UTF-8 from Dart latin1 fallback',async()=>{
  const {ext}=load('eightbook',{http:async url=>({statusCode:200,request:{url},body:Buffer.from(url.includes('/txt/')?'<p>中文正文與插圖</p>':reader('mod'),'utf8').toString('latin1')})});
  assert.match(await ext.getHtmlContent('測試',chapter),/中文正文與插圖/);
