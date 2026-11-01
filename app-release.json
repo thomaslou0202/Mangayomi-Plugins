@@ -2,7 +2,7 @@
   "version": "0.9.10",
   "build": 135,
   "tag": "v0.9.10+135",
-  "source": "f3504b848ce88ea194f9c418b9dd1e2fc0ffbb02",
+  "source": "67bc8cd086c95e3c526b4cb8defa7a6fa0140b5c",
   "sourceBranch": "app-source",
   "androidAsset": "Mangayomi-android.apk",
   "windowsAsset": "Mangayomi-windows.zip"
