@@ -2,7 +2,7 @@
 const mangayomiSources = [{
     name: "嗶哩輕小說（繁體）", id: 1827634460, lang: "zh", baseUrl: "https://tw.linovelib.com", apiUrl: "",
     iconUrl: "https://tw.linovelib.com/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.3", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/linovelib.js",
+    sourceCodeLanguage: 1, version: "0.1.4", appMinVerReq: "0.9.10", pkgPath: "novel/src/zh/linovelib.js",
     hasCloudflare: true, isNsfw: false, notes: "繁體文庫、最新更新、站方 Google 搜尋、分卷目錄、章內分頁與插圖。僅提供網站正常開放的章節。"
 }];
 const N_SITE = {name: "嗶哩輕小說", code: "LN", base: "https://tw.linovelib.com", hosts: ["tw.linovelib.com"], images: ["tw.linovelib.com", "img3.readpai.com"]};
@@ -234,6 +234,14 @@ function lvParams(document, captured) {
     for (const match of script.matchAll(pattern)) params[match[1]] = match[3];
     return params;
 }
+function lvEmbeddedReaderFailure(value) {
+    return /[內内]容加[載载](?:失敗|失败)[！!](?:請|请)|手機版頁面由於相容性問題/.test(String(value || "").replace(/\s/g, ""));
+}
+function lvIncompleteText(value) {
+    const text = nClean(value).replace(/\s/g, "");
+    return lvEmbeddedReaderFailure(text) ||
+        /^(?:本章)?(?:內容|内容|正文)(?:加載|加载|載入|读取|讀取)(?:失敗|失败)(?:[，。！!：:….,])*(?:請|请)?(?:稍後|稍后)?(?:重試|重试|刷新|重新整理)?[，。！!：:….,]*$/.test(text);
+}
 function lvCapture(options) {
     const bridge = window.flutter_inappwebview, once = "__linovel_" + options.nonce;
     if (!bridge || window[once]) return;
@@ -254,6 +262,27 @@ function lvCapture(options) {
             }
             const params = {};
             if (typeof window.ReadParams === "object" && window.ReadParams) for (const key of ["url_next", "url_index", "articleid", "chapterid", "page", "chapterisvip"]) if (window.ReadParams[key] !== undefined) params[key] = String(window.ReadParams[key]);
+            if (options.reading) {
+                if (window.innerWidth > 600) return reply("reader-viewport");
+                const paragraphs = [...ready.querySelectorAll("p")];
+                const dynamic = !!document.querySelector('script[src*="chapterlog"]');
+                const prepared = !dynamic || !paragraphs.length || paragraphs.some(p => [...p.attributes].some(a => a.name.indexOf("data-k") === 0));
+                const identified = ["articleid", "chapterid", "page", "chapterisvip"].every(key => params[key] !== undefined && params[key] !== "");
+                if ((document.readyState !== "complete" || !prepared || !identified) && Date.now() - started < 18000) return setTimeout(capture, 250);
+                if (!prepared || !identified) return reply("reader-incomplete");
+                const copy = ready.cloneNode(true), originals = [...ready.querySelectorAll("*")], copies = [...copy.querySelectorAll("*")];
+                for (let i = originals.length - 1; i >= 0; i--) {
+                    const node = originals[i], style = window.getComputedStyle(node), rect = node.getBoundingClientRect();
+                    const hidden = node.hidden || style.display === "none" || style.visibility === "hidden" || style.visibility === "collapse" ||
+                        (node.tagName !== "IMG" && (style.opacity === "0" || (style.transform && style.transform !== "none" && rect.width === 0 && rect.height === 0)));
+                    if (hidden || /^(?:SCRIPT|STYLE|IFRAME|OBJECT|EMBED|NOSCRIPT|FORM|INPUT|TEXTAREA|BUTTON|SELECT)$/.test(node.tagName) || node.classList.contains("adsbygoogle")) copies[i].remove();
+                }
+                const text = copy.textContent.replace(/\s/g, "");
+                const failed = lvEmbeddedReaderFailure(text);
+                if ((failed || (!text && !copy.querySelector("img"))) && Date.now() - started < 18000) return setTimeout(capture, 250);
+                if (failed || (!text && !copy.querySelector("img"))) return reply("reader-incomplete");
+                return reply("page", {html: '<html><body><div id="acontent">' + copy.innerHTML + '</div></body></html>', params, rendered: true});
+            }
             const copy = document.documentElement.cloneNode(true);
             for (const node of copy.querySelectorAll("script,style,iframe,object,embed,noscript,form,input,textarea,button,select,.adsbygoogle")) node.remove();
             return reply("page", {html: copy.outerHTML, params});
@@ -264,17 +293,19 @@ function lvCapture(options) {
 class DefaultExtension extends NativeNovel {
     constructor() { super(); this.client = new Client({timeout: 25, connectTimeout: 10}); }
     get supportsLatest() { return true; }
-    getHeaders() { return {Referer: N_SITE.base + "/", "Accept-Language": "zh-TW,zh;q=0.9", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}; }
-    async _capture(url, ready, search, searchPage) {
+    getHeaders() { return {Referer: N_SITE.base + "/", "Accept-Language": "zh-TW,zh;q=0.9", "User-Agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36"}; }
+    async _capture(url, ready, search, searchPage, reading) {
         const hosts = search ? ["cse.google.com"] : N_SITE.hosts;
         if (!nAllowed(url, hosts)) throw nError("URL", "網址不在支援的網站內");
-        const options = {hosts, ready, searchPage: searchPage || 0, nonce: Date.now().toString(36) + Math.random().toString(36).slice(2)};
-        const script = "(function(){const nChallenge=" + nChallenge.toString() + ";return (" + lvCapture.toString() + ")(" + JSON.stringify(options) + ");})()";
+        const options = {hosts, ready, searchPage: searchPage || 0, reading: !!reading, nonce: Date.now().toString(36) + Math.random().toString(36).slice(2)};
+        const script = "(function(){const nChallenge=" + nChallenge.toString() + ";const lvEmbeddedReaderFailure=" + lvEmbeddedReaderFailure.toString() + ";return (" + lvCapture.toString() + ")(" + JSON.stringify(options) + ");})()";
         let result;
         try { result = JSON.parse(await evaluateJavascriptViaWebview(url, search ? {} : this.getHeaders(), [script], 30)); }
         catch (_) { throw nError("BROWSER", "內建網頁讀取失敗，請在來源內建網頁確認後重試"); }
         if (!result || !nAllowed(result.url || "", hosts)) throw nError("URL", "網頁離開指定來源，請確認網站轉址");
         if (result.kind === "challenge") throw nError("VERIFY", "請在內建網頁手動完成網站驗證後重試");
+        if (result.kind === "reader-viewport") throw nError("READER-VIEWPORT", "請先更新 Mangayomi 至 0.9.10+136 或更新版本，才能正確讀取手機版正文");
+        if (result.kind === "reader-incomplete") throw nError("CONTENT-TEMPORARY", "網站正文尚未完整載入，請稍後重試");
         if (result.kind !== "page" || typeof result.html !== "string") throw nError("EMPTY", search ? "站方搜尋尚未取得結果，請稍後重試，或直接搜尋作品網址／ID" : "未取得頁面內容，請在來源內建網頁確認");
         return result;
     }
@@ -302,10 +333,14 @@ class DefaultExtension extends NativeNovel {
                 if (Number(response.statusCode) === 200 && typeof response.body === "string" && !nChallenge(response.body)) {
                     let html = response.body;
                     if (/[\u0080-\u00ff]/.test(html) && !/[^\u0000-\u00ff]/.test(html)) try { html = decodeURIComponent(Array.from(html, c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")).join("")); } catch (_) {}
-                    if (nFirst(new Document(html), options.ready)) return {html, url: actual};
+                    const document = new Document(html);
+                    if (nFirst(document, options.ready)) {
+                        if (options.reading && (document.select('script[src],style,link[rel="stylesheet"],#acontent [style],#acontent [hidden]').length || lvEmbeddedReaderFailure(nText(document, "#acontent")))) return this._capture(url, options.ready, false, 0, true);
+                        return {html, url: actual};
+                    }
                 }
             }
-            return this._capture(url, options.ready, false);
+            return this._capture(url, options.ready, false, 0, options.reading);
         });
         this.pageQueue = task.catch(() => {}); return task;
     }
@@ -379,11 +414,15 @@ class DefaultExtension extends NativeNovel {
         // Some reader pages return HTTP 200 with a temporary loading error.
         // Retry that same subpage, never append a placeholder or skip ahead.
         for (let attempt = 0; attempt < 3; attempt++) {
-            const result = await this._page(url, {ready: "#acontent"});
+            let result;
+            try { result = await this._page(url, {ready: "#acontent", reading: true}); }
+            catch (error) {
+                if (attempt === 2 || !/LN-(?:BROWSER|EMPTY|CONTENT-TEMPORARY)\b/.test(String(error))) throw error;
+                await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+                continue;
+            }
             const content = nFirst(new Document(result.html), "#acontent");
-            const text = nClean(content && content.text).replace(/[\s，。！!：:….,]/g, "");
-            const failed = content && !content.select("img").length &&
-                /^(?:本章)?(?:內容|内容|正文)(?:加載|加载|載入|读取|讀取)(?:失敗|失败)(?:請|请)?(?:稍後|稍后)?(?:重試|重试|刷新|重新整理)?$/.test(text);
+            const failed = !content || (!nClean(content.text) && !content.select("img").length) || lvIncompleteText(content.text);
             if (!failed) return result;
             if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
         }

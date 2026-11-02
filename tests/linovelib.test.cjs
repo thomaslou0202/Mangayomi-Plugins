@@ -6,6 +6,15 @@ const cards='<a class="book-layout" href="/novel/123.html"><img src="/loading.sv
 const detail='<h1>作品</h1><meta property="og:title" content="測試作品"><meta property="og:novel:author" content="作者"><meta property="og:description" content="簡介"><meta property="og:image" content="/cover.jpg"><meta property="og:novel:status" content="連載">';
 const toc='<div id="volumes"><div class="catalog-volume"><li class="chapter-bar"><h3>第一卷</h3></li><li class="jsChapter"><a href="/novel/123/900.html">第1章</a></li><li class="jsChapter"><a href="/novel/123/901.html">插圖</a></li></div><div class="catalog-volume"><li class="chapter-bar"><h3>第二卷</h3></li><li class="jsChapter"><a href="/novel/123/902.html">第1章</a></li></div></div>';
 const response=(url,body)=>({statusCode:200,request:{url},body});
+function renderCapture(script,html,params,{width=390,elapsed=false}={}) {
+ const {document}=parseHTML(html);Object.defineProperty(document,'readyState',{value:'complete'});
+ for(const e of document.querySelectorAll('*'))e.getBoundingClientRect=()=>({width:e.style.transform&&e.style.transform!=='none'?0:100,height:e.style.transform&&e.style.transform!=='none'?0:20});
+ let result='';
+ const clock=elapsed?{now:(()=>{let n=0;return()=>n++*20000;})()}:Date;
+ vm.runInNewContext(script,{document,location:{href:chapter},Date:clock,URL,setTimeout,window:{innerWidth:width,ReadParams:params,getComputedStyle:e=>({display:e.style.display||'block',visibility:e.style.visibility||'visible',opacity:e.style.opacity||'1',transform:e.style.transform||'none'}),flutter_inappwebview:{callHandler:(name,body)=>result=body}}});
+ return result;
+}
+
 function reader(part=1,next='/novel/123/901.html',body='<p>正文甲</p>',extra={}){
  const data={articleid:'123',chapterid:'900',page:String(part),chapterisvip:'0',url_next:next,...extra};
  return '<html><body><div id="acontent">'+body+'</div><script>var ReadParams={'+Object.entries(data).map(([k,v])=>k+':'+JSON.stringify(v)).join(',')+'};throw new Error("do not execute");</script></body></html>';
@@ -43,7 +52,7 @@ test('Linovelib direct ID search avoids Google and empty queries make no request
 });
 test('Linovelib normal browser fallback retains reading params without account fields',async()=>{
  const {document}=parseHTML(reader());let captured='';const params={articleid:'123',chapterid:'900',page:'1',chapterisvip:'0',url_next:'/novel/123/901.html',userid:'private',token:'secret'};
- const {ext}=load('linovelib',{http:async()=>({statusCode:403,body:'blocked'}),browser:async(url,headers,scripts)=>{vm.runInNewContext(scripts[0],{document,location:{href:url},Date,URL,setTimeout,window:{ReadParams:params,flutter_inappwebview:{callHandler:(name,body)=>captured=body}}});return captured;}});
+ const {ext}=load('linovelib',{http:async()=>({statusCode:403,body:'blocked'}),browser:async(url,headers,scripts)=>{captured=renderCapture(scripts[0],reader(),params);return captured;}});
  assert.match(await ext.getHtmlContent('章',chapter),/正文甲/);assert.doesNotMatch(captured,/private|secret|throw new Error/);
 });
 test('Linovelib search waits for the requested page rather than a temporarily visible previous page',async()=>{
@@ -123,4 +132,35 @@ test('Linovelib mixed Arabic and Chinese volumes keep sequential chapter identit
  const chapters=ext._chapters(catalogue,'123','測試作品'),ordered=readingOrder('測試作品',ingestFresh('測試作品',chapters));
  assert.deepEqual(ordered.map(c=>c.name),['0001 | 第十六卷 青年期 阿斯拉王國篇·前 第十話「第１７個計畫」','0002 | 第十七卷 青年期 阿斯拉王國篇（後） 第十話「第１７個計畫」']);
  assert.deepEqual(ordered.map(c=>c.url),[chapter,base+'/novel/123/901.html']);
+});
+
+test('Linovelib renders dynamic reader pages and removes hidden injected paragraphs',async()=>{
+ const params={articleid:'123',chapterid:'900',page:'1',chapterisvip:'0',url_next:'/novel/123/901.html'};
+ const raw=reader().replace('</body>','<script src="/chapterlog.js"></script></body>');
+ const html='<div id="acontent"><p data-k1>日記最後一頁</p><p data-k2 style="transform:matrix(0,0,0,0,0,0)">愛夏露出燦爛的笑容。</p><div style="display:none"><p>咦？怎麼突然這麼問？</p></div><p data-k3>正確接續的正文</p><img data-src="https://img3.readpai.com/a.jpg"><p data-k4>完整章末</p></div>';
+ let browsers=0;
+ const {ext}=load('linovelib',{http:async url=>response(url,raw),browser:async(url,headers,scripts)=>{browsers++;assert.match(headers['User-Agent'],/Android.*Mobile/);return renderCapture(scripts[0],html,params);}});
+ const result=await ext.getHtmlContent('章',chapter);assert.equal(browsers,1);assert.match(result,/日記最後一頁[\s\S]*正確接續的正文[\s\S]*完整章末/);assert.match(result,/img3.readpai.com/);assert.doesNotMatch(result,/燦爛|突然/);
+});
+test('Linovelib rejects wide desktop rendering rather than returning incomplete text',async()=>{
+ let calls=0;const params={articleid:'123',chapterid:'900',page:'1',chapterisvip:'0',url_next:'/novel/123/901.html'};
+ const {ext}=load('linovelib',{http:async url=>response(url,reader()+'<script src="/chapterlog.js"></script>'),browser:async(url,headers,scripts)=>{calls++;return renderCapture(scripts[0],reader(),params,{width:1280});}});
+ await assert.rejects(ext.getHtmlContent('章',chapter),/LN-READER-VIEWPORT/);assert.equal(calls,1);
+});
+test('Linovelib retries temporary rendered page failures without duplicating earlier subpages',async()=>{
+ let second=0;const calls=[];
+ const {ext,context}=load('linovelib',{http:async url=>response(url,reader()+'<script src="/chapterlog.js"></script>'),browser:async url=>{calls.push(url);if(url.includes('_2')){if(++second===1)throw Error('temporary WebView failure');return page(url,reader(2,'/novel/123/901.html','<p>第二頁完整章末</p>'));}return page(url,reader(1,'/novel/123/900_2.html','<p>第一頁正文</p>'));}});context.setTimeout=fn=>fn();
+ const result=await ext.getHtmlContent('章',chapter);assert.equal(calls.filter(url=>url===chapter).length,1);assert.equal(second,2);assert.equal((result.match(/第一頁正文/g)||[]).length,1);assert.match(result,/第二頁完整章末/);
+});
+test('Linovelib embedded loading failures never become successful partial chapter content',async()=>{
+ let calls=0;const params={articleid:'123',chapterid:'900',page:'1',chapterisvip:'0',url_next:'/novel/123/901.html'};
+ const html=reader(1,'/novel/123/901.html','<p>前段正文（內容加載失敗！請重載或更換瀏覽器）</p>');
+ const {ext,context}=load('linovelib',{http:async url=>response(url,html),browser:async(url,headers,scripts)=>{calls++;return renderCapture(scripts[0],html,params,{elapsed:true});}});context.setTimeout=fn=>fn();
+ await assert.rejects(ext.getHtmlContent('章',chapter),/LN-CONTENT-TEMPORARY/);assert.equal(calls,3);
+});
+test('Linovelib does not retry rendered verification pages or offsite navigation',async()=>{
+ for(const [result,code] of [[{kind:'challenge',url:chapter},'VERIFY'],[{kind:'page',url:'https://ad.invalid/',html:reader()},'URL']]){
+  let calls=0;const {ext}=load('linovelib',{http:async url=>response(url,reader()+'<script src="/chapterlog.js"></script>'),browser:async()=>{calls++;return JSON.stringify(result);}});
+  await assert.rejects(ext.getHtmlContent('章',chapter),new RegExp('LN-'+code));assert.equal(calls,1);
+ }
 });

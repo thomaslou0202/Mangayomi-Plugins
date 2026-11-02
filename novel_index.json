@@ -144,11 +144,11 @@
     "hasCloudflare": true,
     "sourceCodeUrl": "https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/javascript/novel/src/zh/linovelib.js",
     "apiUrl": "",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "isManga": false,
     "itemType": 2,
     "isFullData": false,
-    "appMinVerReq": "0.9.9",
+    "appMinVerReq": "0.9.10",
     "additionalParams": "",
     "sourceCodeLanguage": 1,
     "notes": "繁體文庫、最新更新、站方 Google 搜尋、分卷目錄、章內分頁與插圖。僅提供網站正常開放的章節。"
