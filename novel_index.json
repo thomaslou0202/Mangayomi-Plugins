@@ -144,7 +144,7 @@
     "hasCloudflare": true,
     "sourceCodeUrl": "https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/javascript/novel/src/zh/linovelib.js",
     "apiUrl": "",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "isManga": false,
     "itemType": 2,
     "isFullData": false,

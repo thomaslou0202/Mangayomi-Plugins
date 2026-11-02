@@ -18,7 +18,7 @@ test('Linovelib is a native novel source and public catalogue supports paginatio
 test('Linovelib full volume catalogue survives repeated chapter labels and app reader sorting',async()=>{
  const {ext}=load('linovelib',{http:async url=>response(url,url.endsWith('/catalog')?toc:detail)});const work=await ext.getDetail(book);assert.equal(work.name,'測試作品');assert.equal(work.author,'作者');assert.equal(work.chapters.length,3);
  const chapters=ingestFresh(work.name,work.chapters);assert.equal(chapters.length,3);assert.deepEqual(Array.from(readingOrder(work.name,chapters),c=>c.url),[900,901,902].map(id=>base+'/novel/123/'+id+'.html'));
- assert.match(work.chapters[0].name,/0003｜第二卷/);
+ assert.match(work.chapters[0].name,/0003 \| 第二卷/);
 });
 test('Linovelib reads every subpage and stops before the next chapter',async()=>{
  const urls=[];const {ext}=load('linovelib',{http:async url=>{urls.push(url);return response(url,url.includes('_2')?reader(2, '/novel/123/901.html','<p>正文乙</p>'):reader(1,'/novel/123/900_2.html'));}});
@@ -87,4 +87,27 @@ test('Linovelib persistent placeholder throws instead of returning partial conte
 test('Linovelib does not retry ordinary prose that mentions a loading error',async()=>{
  let calls=0;const {ext}=load('linovelib',{http:async()=>{calls++;return {statusCode:200,body:reader(1,'/novel/123/901.html','<p>畫面顯示內容加載失敗，他嘆了一口氣。</p>')};}});
  assert.match(await ext.getHtmlContent('作品',chapter),/他嘆了一口氣/);assert.equal(calls,1);
+});
+
+test('Linovelib removes the whole book name and formats the requested Mushoku chapter labels',async()=>{
+ const name='無職轉生 ～到了異世界就拿出真本事～';
+ const meta=detail.replace('測試作品',name);
+ const labels=['插圖','序章','第一話「難道是：異世界」'];
+ const catalogue='<div id="volumes"><div class="catalog-volume"><li class="chapter-bar"><h3>無職轉生 ~ 到了異世界就拿出真本事 ~ 1 幼年期</h3></li>'+labels.map((title,i)=>'<li class="jsChapter"><a href="/novel/123/'+(900+i)+'.html">'+title+'</a></li>').join('')+'</div></div>';
+ const {ext}=load('linovelib',{http:async url=>response(url,url.endsWith('/catalog')?catalogue:meta)});
+ const work=await ext.getDetail(book),ordered=readingOrder(name,ingestFresh(name,work.chapters));
+ assert.deepEqual(ordered.map(c=>c.name),['0001 | 1 幼年期 插圖','0002 | 1 幼年期 序章','0003 | 1 幼年期 第一話「難道是：異世界」']);
+ assert.deepEqual(ordered.map(c=>c.url),[900,901,902].map(id=>base+'/novel/123/'+id+'.html'));
+});
+test('Linovelib retains other titles, prose-like chapter names and repeated volume labels',()=>{
+ const {ext,context}=load('linovelib');
+ assert.equal(vm.runInContext('lvWithoutBookName("無職轉生外傳 第一話", "無職轉生")',context),'無職轉生外傳 第一話');
+ assert.equal(vm.runInContext('lvWithoutBookName("第一話「無職轉生」", "無職轉生")',context),'第一話「無職轉生」');
+ assert.equal(vm.runInContext('lvWithoutBookName("作品 ~ 副標 ~ １２ 幼年期", "作品～副標～")',context),'１２ 幼年期');
+ assert.equal(vm.runInContext('lvWithoutBookName("第一卷", "")',context),'第一卷');
+ const catalogue=toc.replaceAll('第一卷','測試作品 1 幼年期').replaceAll('第二卷','測試作品 2 少年期');
+ const chapters=ext._chapters(catalogue,'123','測試作品');
+ assert.equal(chapters.length,3);assert.equal(chapters[2].name,'0001 | 1 幼年期 第１章');assert.equal(chapters[0].name,'0003 | 2 少年期 第１章');
+ assert.equal(ingestFresh('測試作品',chapters).length,3);
+ const titled=ext._chapters(toc.replace('第1章','測試作品'),'123','測試作品');assert.equal(titled.length,3);assert.match(titled[2].name,/測試作品$/);
 });

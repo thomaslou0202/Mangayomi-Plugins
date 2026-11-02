@@ -2,7 +2,7 @@
 const mangayomiSources = [{
     name: "嗶哩輕小說（繁體）", id: 1827634460, lang: "zh", baseUrl: "https://tw.linovelib.com", apiUrl: "",
     iconUrl: "https://tw.linovelib.com/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.1", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/linovelib.js",
+    sourceCodeLanguage: 1, version: "0.1.2", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/linovelib.js",
     hasCloudflare: true, isNsfw: false, notes: "繁體文庫、最新更新、站方 Google 搜尋、分卷目錄、章內分頁與插圖。僅提供網站正常開放的章節。"
 }];
 const N_SITE = {name: "嗶哩輕小說", code: "LN", base: "https://tw.linovelib.com", hosts: ["tw.linovelib.com"], images: ["tw.linovelib.com", "img3.readpai.com"]};
@@ -180,6 +180,25 @@ function lvBook(base, value) {
     const match = /^https:\/\/tw\.linovelib\.com\/novel\/([1-9]\d*)\.html(?:[?#].*)?$/.exec(url);
     return match ? N_SITE.base + "/novel/" + match[1] + ".html" : "";
 }
+function lvWithoutBookName(value, bookName) {
+    const label = nClean(value);
+    const canonical = text => String(text || "").replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).replace(/〜/g, "~").replace(/\s/g, "");
+    const target = canonical(bookName);
+    if (!target) return label;
+    let prefix = "", length = 0;
+    for (const c of label) {
+        prefix += canonical(c); length += c.length;
+        if (prefix === target) {
+            const rest = label.slice(length);
+            // Match the whole book name at a label boundary, not a shared
+            // prefix of a different title. Preserve the actual chapter text.
+            if (!rest || /^[\s·:：—－-]|^(?:第|[0-9０-９])/.test(rest)) return nClean(rest.replace(/^[\s·:：—－-]+/, ""));
+            return label;
+        }
+        if (!target.startsWith(prefix)) return label;
+    }
+    return label;
+}
 function lvPart(base, value, bookId) {
     const url = nAbsolute(base, value);
     if (!nTrusted(url)) return null;
@@ -312,16 +331,20 @@ class DefaultExtension extends NativeNovel {
         if (!list.length && !nFirst(document, ".gs-no-results-result") && !nFirst(document, ".gsc-webResult")) throw nError("SEARCH", "未取得站方搜尋結果，請稍後重試");
         return {list, hasNextPage: document.select(".gsc-cursor-page").some(node => Number(nClean(node.text)) > page)};
     }
-    _chapters(html, bookId) {
+    _chapters(html, bookId, bookName) {
         const document = new Document(html), entries = [];
         for (const volume of document.select("#volumes .catalog-volume")) {
-            const label = nText(volume, ".chapter-bar h3");
+            const label = lvWithoutBookName(nText(volume, ".chapter-bar h3"), bookName);
             for (const anchor of volume.select("li.jsChapter a[href]")) {
-                const chapter = lvPart(N_SITE.base, anchor.attr("href"), bookId), title = nClean(anchor.text);
-                if (chapter && chapter.part === 1 && title) entries.push({name: (label ? label + " · " : "") + title, url: chapter.url});
+                const chapter = lvPart(N_SITE.base, anchor.attr("href"), bookId), originalTitle = nClean(anchor.text), title = lvWithoutBookName(originalTitle, bookName) || originalTitle;
+                if (chapter && chapter.part === 1 && title) entries.push({name: (label ? label + " " : "") + title, url: chapter.url});
             }
         }
-        return nNumberChapters(entries);
+        return nNumberChapters(entries).map(chapter => ({...chapter,
+            // Keep number-recognition protection on chapter text, while
+            // displaying a leading numeric volume as ordinary ASCII digits.
+            name: chapter.name.replace(/^([0-9]+)｜/, "$1 | ").replace(/^(\d+ \| )([０-９]+)(?=\s|$)/, (_, prefix, number) => prefix + number.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0)))
+        }));
     }
     async getDetail(url) {
         const book = lvBook(N_SITE.base + "/", url);
@@ -332,7 +355,7 @@ class DefaultExtension extends NativeNovel {
         if (!name) throw nError("DETAIL", "未辨識到作品資料");
         const catalogue = N_SITE.base + "/novel/" + id + "/catalog", toc = await this._page(catalogue, {ready: "#volumes .jsChapter"});
         if (toc.url.split(/[?#]/)[0].replace(/\/$/, "") !== catalogue) throw nError("TOC", "網站未回到指定目錄");
-        return {name, link: book, author: nClean(meta("og:novel:author")), imageUrl: nImage(result.url, meta("og:image")), description: nPlain(meta("og:description")), genre: [nClean(meta("og:novel:category"))].filter(Boolean), status: /完結|完结|完本/.test(meta("og:novel:status")) ? 1 : /連載|连载/.test(meta("og:novel:status")) ? 0 : 5, chapters: this._chapters(toc.html, id)};
+        return {name, link: book, author: nClean(meta("og:novel:author")), imageUrl: nImage(result.url, meta("og:image")), description: nPlain(meta("og:description")), genre: [nClean(meta("og:novel:category"))].filter(Boolean), status: /完結|完结|完本/.test(meta("og:novel:status")) ? 1 : /連載|连载/.test(meta("og:novel:status")) ? 0 : 5, chapters: this._chapters(toc.html, id, name)};
     }
     async _chapterPage(url) {
         // Some reader pages return HTTP 200 with a temporary loading error.
