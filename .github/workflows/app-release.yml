@@ -99,7 +99,7 @@ jobs:
         run: flutter test --no-pub test/services/database_worker_test.dart test/services/library_chapter_summary_test.dart test/services/sync_background_transport_test.dart test/services/sync_checkpoint_test.dart test/modules/library/library_unread_sort_test.dart test/repositories/manga_repository_test.dart test/modules/more/data_and_storage/restore_replace_test.dart test/settings/settings_clobber_test.dart
       - name: Test continuous novels and backward manga chapter entry
         working-directory: app
-        run: flutter test --no-pub test/modules/novel_continuous_reader_test.dart test/modules/novel_content_test.dart test/modules/manga/reader/reader_leading_boundary_test.dart test/modules/manga/reader/reader_pages_test.dart
+        run: flutter test --no-pub test/modules/novel_continuous_reader_test.dart test/modules/novel_content_test.dart test/modules/manga/reader/reader_leading_boundary_test.dart test/modules/manga/reader/reader_pages_test.dart test/services/webview_request_profile_test.dart
       - name: Test inline illustrations and existing pagination
         working-directory: app
         run: flutter test --no-pub test/modules/novel_illustration_test.dart test/modules/novel_inline_html_test.dart test/modules/novel_double_page_test.dart test/modules/novel_ref_after_dispose_test.dart test/l10n/traditional_chinese_test.dart test/l10n/episode_count_test.dart
@@ -215,7 +215,7 @@ jobs:
         run: flutter test --no-pub test/services/database_worker_test.dart test/services/library_chapter_summary_test.dart test/services/sync_background_transport_test.dart test/services/sync_checkpoint_test.dart test/modules/library/library_unread_sort_test.dart test/repositories/manga_repository_test.dart test/modules/more/data_and_storage/restore_replace_test.dart test/settings/settings_clobber_test.dart
       - name: Test continuous novels and backward manga chapter entry
         working-directory: app
-        run: flutter test --no-pub test/modules/novel_continuous_reader_test.dart test/modules/novel_content_test.dart test/modules/manga/reader/reader_leading_boundary_test.dart test/modules/manga/reader/reader_pages_test.dart
+        run: flutter test --no-pub test/modules/novel_continuous_reader_test.dart test/modules/novel_content_test.dart test/modules/manga/reader/reader_leading_boundary_test.dart test/modules/manga/reader/reader_pages_test.dart test/services/webview_request_profile_test.dart
       - name: Test inline illustrations and existing pagination
         working-directory: app
         run: flutter test --no-pub test/modules/novel_illustration_test.dart test/modules/novel_inline_html_test.dart test/modules/novel_double_page_test.dart test/modules/novel_ref_after_dispose_test.dart test/l10n/traditional_chinese_test.dart test/l10n/episode_count_test.dart

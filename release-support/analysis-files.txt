@@ -55,6 +55,8 @@ lib/repositories/track_repository.dart
 lib/repositories/update_repository.dart
 lib/router/router.dart
 lib/services/database_worker.dart
+lib/services/http/m_client.dart
+lib/services/http/webview_request_profile.dart
 lib/services/library_chapter_summary.dart
 lib/services/library_updater.dart
 lib/services/sync/sync_api_client.dart
@@ -81,4 +83,5 @@ test/services/database_worker_test.dart
 test/services/library_chapter_summary_test.dart
 test/services/sync_background_transport_test.dart
 test/services/sync_checkpoint_test.dart
+test/services/webview_request_profile_test.dart
 tool/export_comments_script.dart
