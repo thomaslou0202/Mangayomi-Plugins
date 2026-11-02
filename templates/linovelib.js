@@ -2,7 +2,7 @@
 const mangayomiSources = [{
     name: "嗶哩輕小說（繁體）", id: 1827634460, lang: "zh", baseUrl: "https://tw.linovelib.com", apiUrl: "",
     iconUrl: "https://tw.linovelib.com/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.2", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/linovelib.js",
+    sourceCodeLanguage: 1, version: "0.1.3", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/linovelib.js",
     hasCloudflare: true, isNsfw: false, notes: "繁體文庫、最新更新、站方 Google 搜尋、分卷目錄、章內分頁與插圖。僅提供網站正常開放的章節。"
 }];
 const N_SITE = {name: "嗶哩輕小說", code: "LN", base: "https://tw.linovelib.com", hosts: ["tw.linovelib.com"], images: ["tw.linovelib.com", "img3.readpai.com"]};
@@ -31,6 +31,24 @@ function lvWithoutBookName(value, bookName) {
         if (!target.startsWith(prefix)) return label;
     }
     return label;
+}
+function lvVolumeLabel(value) {
+    const label = nClean(value);
+    // Only a volume heading's leading integer is converted. Numbers in the
+    // chapter name, book name, dates or the global sorting prefix stay intact.
+    const match = /^(?:第\s*)?([0-9０-９]{1,4})(?:\s*(?:卷|巻|冊|册)|(?=\s|$))\s*(.*)$/.exec(label);
+    if (!match) return label;
+    const number = Number(match[1].replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0)));
+    const digits = String(number), names = "零一二三四五六七八九", units = ["", "十", "百", "千"];
+    let chinese = "", zero = false;
+    for (let i = 0; i < digits.length; i++) {
+        const digit = Number(digits[i]), place = digits.length - i - 1;
+        if (!digit) { if (chinese) zero = true; continue; }
+        if (zero) chinese += "零";
+        if (!(digit === 1 && place === 1 && !chinese)) chinese += names[digit];
+        chinese += units[place]; zero = false;
+    }
+    return "第" + (chinese || "零") + "卷" + (match[2] ? " " + match[2] : "");
 }
 function lvPart(base, value, bookId) {
     const url = nAbsolute(base, value);
@@ -167,16 +185,16 @@ class DefaultExtension extends NativeNovel {
     _chapters(html, bookId, bookName) {
         const document = new Document(html), entries = [];
         for (const volume of document.select("#volumes .catalog-volume")) {
-            const label = lvWithoutBookName(nText(volume, ".chapter-bar h3"), bookName);
+            const label = lvVolumeLabel(lvWithoutBookName(nText(volume, ".chapter-bar h3"), bookName));
             for (const anchor of volume.select("li.jsChapter a[href]")) {
                 const chapter = lvPart(N_SITE.base, anchor.attr("href"), bookId), originalTitle = nClean(anchor.text), title = lvWithoutBookName(originalTitle, bookName) || originalTitle;
                 if (chapter && chapter.part === 1 && title) entries.push({name: (label ? label + " " : "") + title, url: chapter.url});
             }
         }
         return nNumberChapters(entries).map(chapter => ({...chapter,
-            // Keep number-recognition protection on chapter text, while
-            // displaying a leading numeric volume as ordinary ASCII digits.
-            name: chapter.name.replace(/^([0-9]+)｜/, "$1 | ").replace(/^(\d+ \| )([０-９]+)(?=\s|$)/, (_, prefix, number) => prefix + number.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0)))
+            // Preserve the global sorting prefix and number-recognition
+            // protection on the chapter text.
+            name: chapter.name.replace(/^([0-9]+)｜/, "$1 | ")
         }));
     }
     async getDetail(url) {

@@ -96,7 +96,7 @@ test('Linovelib removes the whole book name and formats the requested Mushoku ch
  const catalogue='<div id="volumes"><div class="catalog-volume"><li class="chapter-bar"><h3>無職轉生 ~ 到了異世界就拿出真本事 ~ 1 幼年期</h3></li>'+labels.map((title,i)=>'<li class="jsChapter"><a href="/novel/123/'+(900+i)+'.html">'+title+'</a></li>').join('')+'</div></div>';
  const {ext}=load('linovelib',{http:async url=>response(url,url.endsWith('/catalog')?catalogue:meta)});
  const work=await ext.getDetail(book),ordered=readingOrder(name,ingestFresh(name,work.chapters));
- assert.deepEqual(ordered.map(c=>c.name),['0001 | 1 幼年期 插圖','0002 | 1 幼年期 序章','0003 | 1 幼年期 第一話「難道是：異世界」']);
+ assert.deepEqual(ordered.map(c=>c.name),['0001 | 第一卷 幼年期 插圖','0002 | 第一卷 幼年期 序章','0003 | 第一卷 幼年期 第一話「難道是：異世界」']);
  assert.deepEqual(ordered.map(c=>c.url),[900,901,902].map(id=>base+'/novel/123/'+id+'.html'));
 });
 test('Linovelib retains other titles, prose-like chapter names and repeated volume labels',()=>{
@@ -107,7 +107,20 @@ test('Linovelib retains other titles, prose-like chapter names and repeated volu
  assert.equal(vm.runInContext('lvWithoutBookName("第一卷", "")',context),'第一卷');
  const catalogue=toc.replaceAll('第一卷','測試作品 1 幼年期').replaceAll('第二卷','測試作品 2 少年期');
  const chapters=ext._chapters(catalogue,'123','測試作品');
- assert.equal(chapters.length,3);assert.equal(chapters[2].name,'0001 | 1 幼年期 第１章');assert.equal(chapters[0].name,'0003 | 2 少年期 第１章');
+ assert.equal(chapters.length,3);assert.equal(chapters[2].name,'0001 | 第一卷 幼年期 第１章');assert.equal(chapters[0].name,'0003 | 第二卷 少年期 第１章');
  assert.equal(ingestFresh('測試作品',chapters).length,3);
  const titled=ext._chapters(toc.replace('第1章','測試作品'),'123','測試作品');assert.equal(titled.length,3);assert.match(titled[2].name,/測試作品$/);
+});
+
+test('Linovelib unifies only Arabic volume numbers into Chinese volume labels',()=>{
+ const {context}=load('linovelib');
+ const cases=[['1 幼年期','第一卷 幼年期'],['17 青年期 阿斯拉王國篇（後）','第十七卷 青年期 阿斯拉王國篇（後）'],['第１７卷 青年期','第十七卷 青年期'],['17卷青年期','第十七卷 青年期'],['17冊 青年期','第十七卷 青年期'],['０ 序篇','第零卷 序篇'],['10','第十卷'],['11','第十一卷'],['20','第二十卷'],['101 番外','第一百零一卷 番外'],['110 番外','第一百一十卷 番外'],['1001 番外','第一千零一卷 番外'],['001 幼年期','第一卷 幼年期'],['第十六卷 青年期 阿斯拉王國篇·前','第十六卷 青年期 阿斯拉王國篇·前'],['短篇','短篇'],['BD特典 1','BD特典 1'],['2026年 特別篇','2026年 特別篇'],['17歲的少年','17歲的少年'],['1.5 番外','1.5 番外']];
+ for(const [input,expected]of cases)assert.equal(vm.runInContext('lvVolumeLabel('+JSON.stringify(input)+')',context),expected,input);
+});
+test('Linovelib mixed Arabic and Chinese volumes keep sequential chapter identity',()=>{
+ const {ext}=load('linovelib');
+ const catalogue='<div id="volumes">'+['第十六卷 青年期 阿斯拉王國篇·前','17 青年期 阿斯拉王國篇（後）'].map((v,i)=>'<div class="catalog-volume"><li class="chapter-bar"><h3>'+v+'</h3></li><li class="jsChapter"><a href="/novel/123/'+(900+i)+'.html">第十話「第17個計畫」</a></li></div>').join('')+'</div>';
+ const chapters=ext._chapters(catalogue,'123','測試作品'),ordered=readingOrder('測試作品',ingestFresh('測試作品',chapters));
+ assert.deepEqual(ordered.map(c=>c.name),['0001 | 第十六卷 青年期 阿斯拉王國篇·前 第十話「第１７個計畫」','0002 | 第十七卷 青年期 阿斯拉王國篇（後） 第十話「第１７個計畫」']);
+ assert.deepEqual(ordered.map(c=>c.url),[chapter,base+'/novel/123/901.html']);
 });
