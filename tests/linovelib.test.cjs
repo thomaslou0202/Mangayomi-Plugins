@@ -6,12 +6,13 @@ const cards='<a class="book-layout" href="/novel/123.html"><img src="/loading.sv
 const detail='<h1>作品</h1><meta property="og:title" content="測試作品"><meta property="og:novel:author" content="作者"><meta property="og:description" content="簡介"><meta property="og:image" content="/cover.jpg"><meta property="og:novel:status" content="連載">';
 const toc='<div id="volumes"><div class="catalog-volume"><li class="chapter-bar"><h3>第一卷</h3></li><li class="jsChapter"><a href="/novel/123/900.html">第1章</a></li><li class="jsChapter"><a href="/novel/123/901.html">插圖</a></li></div><div class="catalog-volume"><li class="chapter-bar"><h3>第二卷</h3></li><li class="jsChapter"><a href="/novel/123/902.html">第1章</a></li></div></div>';
 const response=(url,body)=>({statusCode:200,request:{url},body});
-function renderCapture(script,html,params,{width=390,elapsed=false}={}) {
+function renderCapture(script,html,params,{width=390,elapsed=false,beforeCapture,onResponse}={}) {
  const {document}=parseHTML(html);Object.defineProperty(document,'readyState',{value:'complete'});
  for(const e of document.querySelectorAll('*'))e.getBoundingClientRect=()=>({width:e.style.transform&&e.style.transform!=='none'?0:100,height:e.style.transform&&e.style.transform!=='none'?0:20});
+ if(beforeCapture)beforeCapture(document);
  let result='';
  const clock=elapsed?{now:(()=>{let n=0;return()=>n++*20000;})()}:Date;
- vm.runInNewContext(script,{document,location:{href:chapter},Date:clock,URL,setTimeout,window:{innerWidth:width,ReadParams:params,getComputedStyle:e=>({display:e.style.display||'block',visibility:e.style.visibility||'visible',opacity:e.style.opacity||'1',transform:e.style.transform||'none'}),flutter_inappwebview:{callHandler:(name,body)=>result=body}}});
+ vm.runInNewContext(script,{document,location:{href:chapter},Date:clock,URL,setTimeout,window:{innerWidth:width,ReadParams:params,getComputedStyle:e=>({display:e.style.display||'block',visibility:e.style.visibility||'visible',opacity:e.style.opacity||'1',transform:e.style.transform||'none'}),flutter_inappwebview:{callHandler:(name,body)=>{result=body;if(onResponse)onResponse(body);}}}});
  return result;
 }
 
@@ -163,4 +164,24 @@ test('Linovelib does not retry rendered verification pages or offsite navigation
   let calls=0;const {ext}=load('linovelib',{http:async url=>response(url,reader()+'<script src="/chapterlog.js"></script>'),browser:async()=>{calls++;return JSON.stringify(result);}});
   await assert.rejects(ext.getHtmlContent('章',chapter),new RegExp('LN-'+code));assert.equal(calls,1);
  }
+});
+
+test('Linovelib waits for paragraph layout markers before returning reader text',async()=>{
+ const params={articleid:'123',chapterid:'900',page:'1',chapterisvip:'0',url_next:'/novel/123/901.html'};
+ const html='<div id="acontent"><p>正常正文</p><p>尚未隱藏的干擾</p></div><script src="/chapterlog.js"></script>';
+ let prepared=false;
+ const {ext}=load('linovelib',{http:async url=>response(url,html),browser:async(url,headers,scripts)=>new Promise(resolve=>{
+  renderCapture(scripts[0],html,params,{beforeCapture:doc=>setTimeout(()=>{const p=doc.querySelectorAll('#acontent p');p[0].setAttribute('data-k1','');p[1].setAttribute('data-k2','');p[1].style.transform='matrix(0,0,0,0,0,0)';prepared=true;},20),onResponse:body=>{assert.equal(prepared,true);resolve(body);}});
+ })});
+ const result=await ext.getHtmlContent('章',chapter);assert.match(result,/正常正文/);assert.doesNotMatch(result,/尚未隱藏/);
+});
+test('Linovelib missing runtime chapter identity is an incomplete page',async()=>{
+ const {ext}=load('linovelib',{browser:async(url,headers,scripts)=>renderCapture(scripts[0],reader(),{},{elapsed:true})});
+ await assert.rejects(ext._capture(chapter,'#acontent',false,0,true),/LN-CONTENT-TEMPORARY/);
+});
+test('Linovelib rendered illustration-only chapters retain lazy offscreen images',async()=>{
+ const params={articleid:'123',chapterid:'900',page:'1',chapterisvip:'0',url_next:'/novel/123/901.html'};
+ const html='<div id="acontent"><img style="opacity:0" src="/loading.svg" data-src="https://img3.readpai.com/illustration.jpg"></div><script src="/chapterlog.js"></script>';
+ const {ext}=load('linovelib',{http:async url=>response(url,html),browser:async(url,headers,scripts)=>renderCapture(scripts[0],html,params)});
+ assert.match(await ext.getHtmlContent('插圖',chapter),/img3.readpai.com\/illustration.jpg/);
 });
