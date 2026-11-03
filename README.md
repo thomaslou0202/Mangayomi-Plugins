@@ -2,25 +2,7 @@
 
 提供 Mangayomi 原生 JavaScript 漫畫、小說及動畫來源，依照 [Mangayomi 套件庫](https://github.com/kodjodevf/mangayomi-extensions)的原生索引格式整理。三種類型各自使用獨立的清單網址。
 
-## 繁體中文正式版下載
-
-[Android 手機／平板 APK](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/latest/download/Mangayomi-android.apk) · [Windows ZIP](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/latest/download/Mangayomi-windows.zip) · [最新正式 Release](https://github.com/thomaslou0202/Mangayomi-Plugins/releases/latest) · [完整 App 原始碼](https://github.com/thomaslou0202/Mangayomi-Plugins/tree/app-source)
-
-目前正式版 **0.9.10+136**。保留小說正文插圖、完整繁體中文介面、漫畫來源舊資料相容、書庫效能與背景同步。手機與平板使用同一個 APK，最低 Android 7.0，沿用先前插圖／效能版的套件名稱與簽章，可直接覆蓋更新。
-
-136 版配合嗶哩來源 0.1.4，以手機尺寸完成背景網頁排版，再擷取實際顯示的正文，修正段落交錯與內容截斷；加入載入失敗與不完整正文重試。請先更新 App，再更新來源並重新開啟章節。
-
-135 版新增小說跨章連續捲動：章尾顯示一小塊分隔，再接續下一章；預載不會提前記為已讀，讀取失敗時可在章末重試。正文顯示時會清除重複書名，保留章節名稱與編號，已下載章節也適用。漫畫在章首繼續往前滑，可開啟上一章最後一頁，支援左右翻頁、雙頁及直向捲動。
-
-保留 134 版起點等作品的非同步載入修正。嗶哩輕小說來源另請更新到 0.1.4，並使用 App 0.9.10+136 或更新版本，以取得正確的手機版正文排版、載入失敗重試、精簡章節名稱與中文卷號。
-
-作品詳情頁在「相關作品」右側提供「評論」，用 App 內建網頁開啟來源網站的留言／評論區，並嘗試自動定位。支援稍後載入的留言元件；手動捲動後會停止延遲定位。若網站沒有可辨識區塊，仍可在完整網頁手動查看。
-
-**0.9.10+132 已安裝者可直接在程式內檢查更新**；更舊的測試版需先手動升級一次。「更多 → 關於 → 檢查更新」與啟動時的更新檢查，會讀取本倉庫的正式 GitHub Releases。Windows 更新按鈕會開啟本倉庫的下載頁，Android 可下載 APK 並由系統確認安裝。包含修訂號比較，可辨識 `0.9.10+135 → 0.9.10+136`。
-
-本機固定使用 `D:\Mangayomi\Windows\mangayomi.exe` 與 `D:\Mangayomi\Android\Mangayomi.apk`，不再建立各版安裝資料夾。歷史安裝檔保留在 [GitHub Releases](https://github.com/thomaslou0202/Mangayomi-Plugins/releases)，各正式版 tag 同時提供完整 App 原始碼與校驗碼。
-
-[安裝與後續發布方式](docs/app-releases.md) · [背景同步說明](docs/performance-app.md) · [繁體中文說明](docs/traditional-chinese-app.md) · [漫畫來源修正說明](docs/source-list-fix-app.md)。
+主程式原始碼與安裝檔已移至 [Mangayomi-modified](https://github.com/thomaslou0202/Mangayomi-modified)。
 
 ## 漫畫來源
 
