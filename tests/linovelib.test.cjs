@@ -1,5 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm');
-const {load,page,parseHTML}=require('./helpers/harness.cjs');
+const {load:loadBase,page,parseHTML}=require('./helpers/harness.cjs');
+const load=(name,options={})=>loadBase(name,{...options,preferences:{reader_mode:'mobile',...(options.preferences||{})}});
 const {ingestFresh,readingOrder}=require('./helpers/app-chapter-identity.cjs');
 const base='https://tw.linovelib.com',book=base+'/novel/123.html',chapter=base+'/novel/123/900.html';
 const cards='<a class="book-layout" href="/novel/123.html"><img src="/loading.svg" data-src="/files/123.jpg" alt="完整的作品書名"><h4 class="book-title">被截斷的...</h4></a><a class="book-layout" href="https://ad.invalid/novel/456.html"><h4>廣告</h4></a><a href="/wenku/allvisit_0_0_0_0_0_0_0_2_0.html">2</a>';

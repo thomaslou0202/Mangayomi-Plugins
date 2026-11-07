@@ -23,6 +23,11 @@ try {
     if (name === 'sfacg' || name === 'qidian') source = source.replace('/*__T2S_DICT__*/', () => quote(dictionary))
       .replace('/*__T2S_MAX__*/', String(maxLength)).replace('/*__OPENCC_NOTICE__*/', () => '/*\n' + read('OPENCC-LICENSE.txt').replace(/\*\//g, '* /') + '\n*/');
     if (name === 'twbook') source = source.replace('/*__FONT_MAP__*/', () => quote(JSON.parse(read('data/twbook-f24092-map.json'))));
+    if (name === 'linovelib') source = source
+      .replace('/*__LV_DESKTOP__*/', () => read('templates/linovelib-desktop.js'))
+      .replace('/*__LV_OPENCC__*/', () => read('node_modules/opencc-js/dist/umd/cn2t.js'))
+      .replace('/*__LV_OPENCC_NOTICE__*/', () => '/*\nopencc-js 1.4.2 (MIT); bundled opencc-data (Apache-2.0).\n' +
+        (read('node_modules/opencc-js/LICENSE') + '\n' + read('node_modules/opencc-js/THIRD_PARTY_LICENSES.md')).replace(/\*\//g, '* /') + '\n*/');
     if (/\/\*__[A-Z0-9_]+__\*\//.test(source)) throw new Error(`Unresolved template: ${name}`);
     const relative = `javascript/novel/src/zh/${name}.js`, file = path.join(root, relative);
     if (checking) {

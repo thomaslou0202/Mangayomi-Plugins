@@ -2,10 +2,19 @@
 const mangayomiSources = [{
     name: "嗶哩輕小說（繁體）", id: 1827634460, lang: "zh", baseUrl: "https://tw.linovelib.com", apiUrl: "",
     iconUrl: "https://tw.linovelib.com/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.4", appMinVerReq: "0.9.10", pkgPath: "novel/src/zh/linovelib.js",
-    hasCloudflare: true, isNsfw: false, notes: "繁體文庫、最新更新、站方 Google 搜尋、分卷目錄、章內分頁與插圖。僅提供網站正常開放的章節。"
+    sourceCodeLanguage: 1, version: "0.1.5", appMinVerReq: "0.9.10", pkgPath: "novel/src/zh/linovelib.js",
+    hasCloudflare: true, isNsfw: false, notes: "繁體文庫、最新更新、站方 Google 搜尋、分卷目錄、章內分頁與插圖。Windows 自動使用官方桌面入口並轉繁體。僅提供網站正常開放的章節。"
 }];
-const N_SITE = {name: "嗶哩輕小說", code: "LN", base: "https://tw.linovelib.com", hosts: ["tw.linovelib.com"], images: ["tw.linovelib.com", "img3.readpai.com"]};
+const N_SITE = {name: "嗶哩輕小說", code: "LN", base: "https://tw.linovelib.com", hosts: ["tw.linovelib.com"], images: ["tw.linovelib.com", "www.linovelib.com", "img3.readpai.com"]};
+/*__LV_OPENCC_NOTICE__*/
+const LV_OPENCC = (() => { const module = {exports: {}}; const exports = module.exports;
+/*__LV_OPENCC__*/
+return module.exports; })();
+let lvTraditionalConverter;
+function lvTraditionalHtml(html) {
+    lvTraditionalConverter ||= LV_OPENCC.Converter({from: "cn", to: "tw"});
+    return String(html).replace(/(^|>)([^<]*)(?=<|$)/g, (_, prefix, text) => prefix + lvTraditionalConverter(text));
+}
 /*__COMMON__*/
 function lvBook(base, value) {
     const url = nAbsolute(base, value);
@@ -123,9 +132,41 @@ function lvCapture(options) {
     }
     capture();
 }
+/*__LV_DESKTOP__*/
 class DefaultExtension extends NativeNovel {
     constructor() { super(); this.client = new Client({timeout: 25, connectTimeout: 10}); }
     get supportsLatest() { return true; }
+    getSourcePreferences() { return [{key: "reader_mode", listPreference: {title: "正文讀取方式", summary: "自動：Windows 使用官方桌面入口並轉為繁體；手機維持原繁體頁面。", valueIndex: 0, entries: ["自動（建議）", "原繁體手機頁", "官方桌面入口（轉繁體）"], entryValues: ["auto", "mobile", "desktop"]}}]; }
+    async _isWindows() {
+        return this.platformPromise ||= (async () => {
+            try {
+                const raw = await evaluateJavascriptViaWebview("https://www.linovelib.com/robots.txt", {}, [lvDesktopScript({platformOnly: true})], 10);
+                const data = JSON.parse(raw);
+                return data.kind === "platform" && data.url === "https://www.linovelib.com/robots.txt" && data.windows === true;
+            } catch (_) { return false; }
+        })();
+    }
+    _desktopPage(url) {
+        const part = lvPart(N_SITE.base, url);
+        if (!part) return Promise.reject(nError("URL", "章節網址格式錯誤"));
+        const target = part.url.replace("https://tw.linovelib.com", "https://www.linovelib.com");
+        const task = this.pageQueue.then(async () => {
+            let result;
+            try { result = JSON.parse(await evaluateJavascriptViaWebview("https://www.linovelib.com/robots.txt", {}, [lvDesktopScript({target, path: target.slice("https://www.linovelib.com".length), canonical: part.url, book: part.book, chapter: part.chapter, part: part.part})], 25)); }
+            catch (_) { throw nError("DESKTOP-BROWSER", "官方桌面頁讀取失敗，請稍後重試"); }
+            if (result.kind === "challenge") throw nError("DESKTOP-VERIFY", "官方桌面站需要驗證，請在內建網頁開啟 www.linovelib.com 確認");
+            if (result.kind === "rate") throw nError("RATE", "網站請求過於頻繁，請稍後重試");
+            if (result.kind === "vip") throw nError("VIP", "此章節未正常開放，請到網站使用官方閱讀權限");
+            if (result.kind !== "desktop-page" || result.url !== "https://www.linovelib.com/robots.txt" || result.desktopUrl !== target || result.canonicalUrl !== part.url) throw nError("DESKTOP-CONTENT", "官方桌面頁未回傳完整指定章節");
+            const p = result.params || {};
+            if (p.articleid !== part.book || p.chapterid !== part.chapter || Number(p.page) !== part.part || p.chapterisvip !== "0") throw nError("CHAPTER", "官方桌面頁未回傳指定章節分頁");
+            const content = nFirst(new Document(result.html), "#acontent");
+            if (!content || lvIncompleteText(content.text) || (!nClean(content.text) && !content.select("img").length)) throw nError("DESKTOP-CONTENT", "官方桌面頁正文不完整");
+            const safe = nSanitize(content.innerHtml, target);
+            return {url: part.url, html: '<div id="acontent">' + lvTraditionalHtml(safe) + '</div>', params: p, desktop: true};
+        });
+        this.pageQueue = task.catch(() => {}); return task;
+    }
     getHeaders() { return {Referer: N_SITE.base + "/", "Accept-Language": "zh-TW,zh;q=0.9", "User-Agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36"}; }
     async _capture(url, ready, search, searchPage, reading) {
         const hosts = search ? ["cse.google.com"] : N_SITE.hosts;
@@ -264,11 +305,19 @@ class DefaultExtension extends NativeNovel {
     async getHtmlContent(name, url) {
         const first = lvPart(N_SITE.base, url);
         if (!first) throw nError("URL", "章節網址格式錯誤");
+        const mode = await this._preference("reader_mode", ["auto", "mobile", "desktop"], "auto");
         const seen = new Set(), output = []; let current = first;
+        let desktop = mode === "desktop" || (mode === "auto" && await this._isWindows());
         while (current && seen.size < 100) {
             if (seen.has(current.url)) throw nError("PAGES", "章內分頁重複，請回報作品網址");
             seen.add(current.url);
-            const result = await this._chapterPage(current.url), document = new Document(result.html), actual = lvPart(N_SITE.base, result.url), params = lvParams(document, result.params);
+            let result;
+            try { result = desktop ? await this._desktopPage(current.url) : await this._chapterPage(current.url); }
+            catch (error) {
+                if (desktop || mode !== "auto" || !/LN-(?:BROWSER|EMPTY|CONTENT-TEMPORARY|READER-VIEWPORT|READER-INCOMPLETE)\b/.test(String(error))) throw error;
+                desktop = true; result = await this._desktopPage(current.url);
+            }
+            const document = new Document(result.html), actual = lvPart(N_SITE.base, result.url), params = lvParams(document, result.params);
             if (!actual || actual.url !== current.url || String(params.articleid) !== first.book || String(params.chapterid) !== first.chapter || Number(params.page) !== current.part) throw nError("CHAPTER", "網站未回傳指定章節分頁");
             if (String(params.chapterisvip) !== "0") throw nError("VIP", "此章節未正常開放，請到網站使用官方閱讀權限");
             const content = nFirst(document, "#acontent");

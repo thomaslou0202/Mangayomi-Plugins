@@ -31,7 +31,7 @@
     },
     {
       "path": "javascript/novel/src/zh/linovelib.js",
-      "sha256": "462873a6b6357ea76a76181c18cdeb509e4fb49946e392d81496900569ffae7b"
+      "sha256": "3cc6ae8ed88cf6465efc16da219bc3803b55c983f80571770d0e9d3861023162"
     },
     {
       "path": "javascript/novel/src/zh/qidian.js",
@@ -51,7 +51,7 @@
     },
     {
       "path": "novel_index.json",
-      "sha256": "92f9fc5c40d6bc78561441775918cb51ff894ea92725ff1bce60a2559566427e"
+      "sha256": "8f913214f9a8b4c915f72a716e1dd34f0137d1008fbbc9de6fb685b12ff60d2d"
     },
     {
       "path": "repo.json",
