@@ -152,5 +152,27 @@
     "additionalParams": "",
     "sourceCodeLanguage": 1,
     "notes": "繁體文庫、最新更新、站方 Google 搜尋、分卷目錄、章內分頁與插圖。Windows 自動使用官方桌面入口並轉繁體。僅提供網站正常開放的章節。"
+  },
+  {
+    "name": "輕之國度",
+    "id": 1827634461,
+    "baseUrl": "https://www.lightnovel.fun/tw",
+    "lang": "zh",
+    "typeSource": "single",
+    "iconUrl": "https://www.lightnovel.fun/favicon.ico",
+    "dateFormat": "",
+    "dateFormatLocale": "",
+    "isNsfw": false,
+    "hasCloudflare": true,
+    "sourceCodeUrl": "https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/javascript/novel/src/zh/lightnovel.js",
+    "apiUrl": "",
+    "version": "0.1.0",
+    "isManga": false,
+    "itemType": 2,
+    "isFullData": false,
+    "appMinVerReq": "0.9.10",
+    "additionalParams": "",
+    "sourceCodeLanguage": 1,
+    "notes": "熱門、最近更新、繁簡搜尋、完整分卷目錄、公開正文與插圖。預設繁體，可切換原文；可沿用內建網頁已登入帳號；限定章節依站方閱讀權限。"
   }
 ]

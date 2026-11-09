@@ -10,7 +10,7 @@ class Element {
 class Document extends Element {constructor(html){super(parseHTML(html).document);}}
 function load(name,{preferences={},browser=async()=>{throw new Error('Unexpected network request');},http=async()=>{throw new Error('Unexpected HTTP request');}}={}) {
     class SharedPreferences {get(key){return preferences[key];}}
-    const context=vm.createContext({Document,SharedPreferences,Client:class{get(url,headers){return http(url,headers);}},MProvider:class{},evaluateJavascriptViaWebview:browser});
+    const context=vm.createContext({Document,SharedPreferences,Client:class{get(url,headers){return http(url,headers);}post(url,headers,body){return http(url,headers,body);}},MProvider:class{},evaluateJavascriptViaWebview:browser});
     vm.runInContext(fs.readFileSync(path.join(__dirname,'../../javascript/novel/src/zh',name+'.js'),'utf8')+'\nglobalThis.ext=new DefaultExtension();',context);
     return {ext:context.ext,context};
 }
