@@ -2,7 +2,7 @@
 const mangayomiSources = [{
     name: "輕之國度", id: 1827634461, lang: "zh", baseUrl: "https://www.lightnovel.fun/tw", apiUrl: "",
     iconUrl: "https://www.lightnovel.fun/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.1", appMinVerReq: "0.9.10", pkgPath: "novel/src/zh/lightnovel.js",
+    sourceCodeLanguage: 1, version: "0.1.2", appMinVerReq: "0.9.10", pkgPath: "novel/src/zh/lightnovel.js",
     hasCloudflare: true, isNsfw: false, notes: "熱門、最近更新、繁簡搜尋、完整分卷目錄、公開正文與插圖。預設繁體，可切換原文；一般章節免登入；限定章節才使用內建網頁帳號並依站方閱讀權限。"
 }];
 const N_SITE = {name: "輕之國度", code: "LK", base: "https://www.lightnovel.fun/tw", hosts: ["www.lightnovel.fun"], images: ["www.lightnovel.fun", "api.lightnovel.fun"]};
@@ -423,7 +423,7 @@ function lkData(text) {
     let reply;
     try { reply = JSON.parse(text); } catch (_) { throw nError("RESPONSE", "網站未回傳有效資料，請稍後重試"); }
     if (!reply || typeof reply !== "object" || Array.isArray(reply)) throw nError("RESPONSE", "網站回傳格式已變更");
-    if (Number(reply.code) !== 0 || reply.code === undefined) throw nError("API", "網站拒絕此請求，請在內建網頁確認登入或閱讀權限");
+    if (Number(reply.code) !== 0 || reply.code === undefined) throw nError("API", "網站未接受此請求，請更新來源後重試；此錯誤不代表需要登入");
     if (!reply.data || typeof reply.data !== "object" || Array.isArray(reply.data)) throw nError("RESPONSE", "網站資料格式已變更");
     return reply.data;
 }
@@ -501,7 +501,7 @@ class DefaultExtension extends NativeNovel {
         let response;
         if (session) response = await this._browserApi(url, body, true);
         for (let attempt = 0; attempt < (session ? 0 : 2); attempt++) {
-            try { response = await this.client.post(url, {...this.getHeaders(), "Content-Type": "application/json"}, body); }
+            try { response = await this.client.post(url, {...this.getHeaders(), "Content-Type": "application/json"}, payload); }
             catch (_) { if (attempt) throw nError("NETWORK", "連線中斷，請稍後重試"); }
             if (response && ![502, 503, 504].includes(response.statusCode)) break;
             if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 500));

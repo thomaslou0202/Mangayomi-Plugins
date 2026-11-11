@@ -17,6 +17,18 @@ function catalogue(url, headers, body) {
   throw Error('Unexpected API '+url);
 }
 
+test('native Mangayomi JSON transport sends an object, not a JSON-encoded string',async()=>{
+  const {ext}=load('lightnovel',{http:async(url,headers,wireBody)=>{
+    // JsHttpClient._toHttpResponse JSON-encodes application/json bodies itself.
+    const received=JSON.parse(wireBody);
+    assert.equal(typeof received,'object');
+    assert.equal(received.pageSize,20);
+    assert.equal(received.page,1);
+    return reply(url,listing([book]));
+  }});
+  assert.equal((await ext.getPopular(1)).list[0].name,'測試作品');
+});
+
 test('LightNovel.fun lists popular/latest and zero-based search pages with Traditional Chinese', async()=>{
   const calls=[];
   const {ext}=load('lightnovel',{http:async(url,headers,body)=>{const p=JSON.parse(body);calls.push({url,p,headers});return reply(url,listing([book,book],/(?:apk-search-result|home-recent-updates-feed)-v1$/.test(url)?p.page+1:p.page,true));}});
