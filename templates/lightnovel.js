@@ -2,8 +2,8 @@
 const mangayomiSources = [{
     name: "輕之國度", id: 1827634461, lang: "zh", baseUrl: "https://www.lightnovel.fun/tw", apiUrl: "",
     iconUrl: "https://www.lightnovel.fun/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.0", appMinVerReq: "0.9.10", pkgPath: "novel/src/zh/lightnovel.js",
-    hasCloudflare: true, isNsfw: false, notes: "熱門、最近更新、繁簡搜尋、完整分卷目錄、公開正文與插圖。預設繁體，可切換原文；可沿用內建網頁已登入帳號；限定章節依站方閱讀權限。"
+    sourceCodeLanguage: 1, version: "0.1.1", appMinVerReq: "0.9.10", pkgPath: "novel/src/zh/lightnovel.js",
+    hasCloudflare: true, isNsfw: false, notes: "熱門、最近更新、繁簡搜尋、完整分卷目錄、公開正文與插圖。預設繁體，可切換原文；一般章節免登入；限定章節才使用內建網頁帳號並依站方閱讀權限。"
 }];
 const N_SITE = {name: "輕之國度", code: "LK", base: "https://www.lightnovel.fun/tw", hosts: ["www.lightnovel.fun"], images: ["www.lightnovel.fun", "api.lightnovel.fun"]};
 /*__COMMON__*/
@@ -88,7 +88,7 @@ class DefaultExtension extends NativeNovel {
     constructor() { super(); this.client = new Client({timeout: 25, connectTimeout: 10}); }
     get supportsLatest() { return true; }
     getHeaders() { return {Referer: N_SITE.base + "/", "Accept-Language": "zh-TW,zh;q=0.9", Accept: "application/json"}; }
-    getSourcePreferences() { return [{key: "display_language", listPreference: {title: "顯示文字", summary: "繁體會轉換書名、章名與正文，圖片與網址保持原樣。", valueIndex: 0, entries: ["繁體中文（建議）", "網站原文"], entryValues: ["tw", "original"]}}, {key: "account_mode", listPreference: {title: "閱讀帳號", summary: "先在來源內建網頁登入，再選擇沿用帳號。登入資訊保留在內建網頁，章節仍需符合站方權限。", valueIndex: 0, entries: ["訪客（公開章節）", "使用內建網頁已登入帳號"], entryValues: ["guest", "webview"]}}]; }
+    getSourcePreferences() { return [{key: "display_language", listPreference: {title: "顯示文字", summary: "繁體會轉換書名、章名與正文，圖片與網址保持原樣。", valueIndex: 0, entries: ["繁體中文（建議）", "網站原文"], entryValues: ["tw", "original"]}}]; }
     async _language() { return this._preference("display_language", ["tw", "original"], "tw"); }
     _text(value, language) {
         const text = String(value || "");
@@ -103,17 +103,16 @@ class DefaultExtension extends NativeNovel {
             let data;
             try { data = JSON.parse(await evaluateJavascriptViaWebview(LK_ORIGIN + "/robots.txt", {}, [script], 25)); }
             catch (_) { throw nError("BROWSER", "內建網頁未能完成讀取，請稍後重試"); }
-            if (data.kind === "login") throw nError("LOGIN", "請先在來源內建網頁登入輕之國度，再重新整理或重試章節");
+            if (data.kind === "login") throw nError("LOGIN", "此章節需要帳號，請在來源內建網頁登入輕之國度後重試");
             if (data.kind === "challenge") throw nError("VERIFY", "請在來源內建網頁手動完成驗證後重試");
             if (data.kind !== "api" || data.url !== LK_ORIGIN + "/robots.txt") throw nError("BROWSER", "內建網頁未回傳此來源資料");
             return {statusCode: data.status, body: data.text};
         });
         this.pageQueue = task.catch(() => {}); return task;
     }
-    async _api(endpoint, payload) {
+    async _api(endpoint, payload, session = false) {
         if (!LK_ENDPOINTS.includes(endpoint)) throw nError("URL", "不支援的網站介面");
         const url = LK_PROXY + endpoint, body = JSON.stringify(payload);
-        const session = await this._preference("account_mode", ["guest", "webview"], "guest") === "webview";
         let response;
         if (session) response = await this._browserApi(url, body, true);
         for (let attempt = 0; attempt < (session ? 0 : 2); attempt++) {
@@ -192,9 +191,16 @@ class DefaultExtension extends NativeNovel {
     async getHtmlContent(name, url) {
         const target = lkPath(url, true);
         if (!target) throw nError("URL", "章節網址不屬於此來源");
-        const chapter = await this._api("new-content-read/get-chapter-detail", {book_id: target.book, chapter_id: target.chapter});
+        const payload = {book_id: target.book, chapter_id: target.chapter};
+        let chapter = await this._api("new-content-read/get-chapter-detail", payload);
         if (String(chapter.book_id) !== target.book || String(chapter.chapter_id) !== target.chapter) throw nError("IDENTITY", "網站未回傳指定章節");
-        if (lkRestricted(chapter)) throw nError("ACCESS", "此章節需要登入、勇者資格或付費權限，請使用官方網站閱讀");
+        if (lkRestricted(chapter)) {
+            // Public browsing and chapters never depend on an existing login.
+            // Only this restricted chapter may use the normal WebView session.
+            chapter = await this._api("new-content-read/get-chapter-detail", payload, true);
+            if (String(chapter.book_id) !== target.book || String(chapter.chapter_id) !== target.chapter) throw nError("IDENTITY", "網站未回傳指定章節");
+            if (lkRestricted(chapter)) throw nError("ACCESS", "目前帳號尚未取得此章節的勇者資格或付費權限，請在官方網站確認");
+        }
         const snapshot = chapter.body_snapshot || {}, preview = chapter.render_preview || {};
         let html = snapshot.body_html || preview.body_html;
         if (!html && (snapshot.body_text || preview.body_text)) html = String(snapshot.body_text || preview.body_text).split(/\r?\n/).map(line => "<p>" + nEscape(line) + "</p>").join("");

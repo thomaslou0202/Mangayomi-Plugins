@@ -73,7 +73,7 @@ test('original language preference preserves original text and illustration-only
 
 test('locked, brave and paid chapters are never returned as readable preview text',async()=>{
   for(const flags of [{locked:1},{brave_required:1},{access_type:'paid',unlocked:0}]){
-    const {ext}=load('lightnovel',{http:async url=>reply(url,{book_id:1,chapter_id:100,body_snapshot:{body_html:'<p>Preview</p>'},...flags})});await assert.rejects(ext.getHtmlContent('作品',base+'/reader/1/100'),/LK-ACCESS/);
+    const {ext}=load('lightnovel',{http:async url=>reply(url,{book_id:1,chapter_id:100,body_snapshot:{body_html:'<p>Preview</p>'},...flags}),browser:async url=>JSON.stringify({kind:'api',url,status:200,text:JSON.stringify({code:0,data:{book_id:1,chapter_id:100,...flags}})})});await assert.rejects(ext.getHtmlContent('作品',base+'/reader/1/100'),/LK-ACCESS/);
   }
 });
 
@@ -105,9 +105,9 @@ test('browser fallback uses only ordinary same-origin API fetch and requests man
   const blocked=load('lightnovel',{http:async()=>({statusCode:403,body:''}),browser:async url=>JSON.stringify({kind:'challenge',url})}).ext;await assert.rejects(blocked.getPopular(1),/LK-VERIFY/);
 });
 
-test('opt-in account mode keeps the session inside WebView and respects granted chapter access',async()=>{
+test('restricted chapter alone uses the WebView session and respects granted access',async()=>{
   let rawReply='';
-  const {ext}=load('lightnovel',{preferences:{account_mode:'webview'},browser:async(url,h,scripts)=>new Promise(resolve=>{
+  const {ext}=load('lightnovel',{preferences:{account_mode:'webview'},http:async url=>reply(url,{book_id:1,chapter_id:100,locked:1}),browser:async(url,h,scripts)=>new Promise(resolve=>{
     const {document}=parseHTML('<html><body>robots</body></html>');document.cookie='';
     vm.runInNewContext(scripts[0],{document,location:{href:url},Date,URL,setTimeout,clearTimeout,AbortController,fetch:async(target,options)=>{
       assert.equal(JSON.parse(options.body).security_key,'fixture-session-only');
@@ -119,9 +119,30 @@ test('opt-in account mode keeps the session inside WebView and respects granted 
   assert.doesNotMatch(rawReply,/fixture-session-only/);
 });
 
-test('account mode asks for normal WebView login when no session exists',async()=>{
-  const {ext}=load('lightnovel',{preferences:{account_mode:'webview'},browser:async(url,h,scripts)=>new Promise(resolve=>{
+test('restricted chapters ask for normal WebView login when no session exists',async()=>{
+  const {ext}=load('lightnovel',{preferences:{account_mode:'webview'},http:async url=>reply(url,{book_id:1,chapter_id:100,locked:1}),browser:async(url,h,scripts)=>new Promise(resolve=>{
     const {document}=parseHTML('<html><body>robots</body></html>');document.cookie='';
     vm.runInNewContext(scripts[0],{document,location:{href:url},URL,window:{localStorage:{getItem:()=>null},flutter_inappwebview:{callHandler:(_,data)=>resolve(data)}}});
-  })});await assert.rejects(ext.getPopular(1),/LK-LOGIN/);
+  })});await assert.rejects(ext.getHtmlContent('作品',base+'/reader/1/100'),/LK-LOGIN/);
+});
+
+test('public browsing, catalogues and chapters never require login, including old account preferences',async()=>{
+  for(const mode of [undefined,'guest','webview']){
+    let browsers=0;
+    const {ext}=load('lightnovel',{preferences:{account_mode:mode},browser:async()=>{browsers++;throw Error('Public content must not request login');},http:async(url,h,b)=>{
+      if(url.endsWith('/get-chapter-detail'))return reply(url,{book_id:1,chapter_id:100,title:'序章',locked:0,access_type:'public',body_snapshot:{body_html:'<p>公開正文</p>'}});
+      if(url.endsWith('/home-feed-v1')||url.endsWith('/apk-search-result-v1'))return reply(url,listing([book]));
+      return catalogue(url,h,b);
+    }});
+    assert.equal((await ext.getPopular(1)).list.length,1);
+    assert.equal((await ext.search('作品',1)).list.length,1);
+    assert.equal((await ext.getDetail(base+'/book/1')).chapters.length,3);
+    assert.match(await ext.getHtmlContent('作品',base+'/reader/1/100'),/公開正文/);
+    assert.equal(browsers,0);
+  }
+});
+
+test('authenticated retry must still return the requested book and chapter',async()=>{
+  const {ext}=load('lightnovel',{http:async url=>reply(url,{book_id:1,chapter_id:100,locked:1}),browser:async url=>JSON.stringify({kind:'api',url,status:200,text:JSON.stringify({code:0,data:{book_id:2,chapter_id:100,unlocked:1,body_snapshot:{body_html:'<p>另一部作品</p>'}}})})});
+  await assert.rejects(ext.getHtmlContent('作品',base+'/reader/1/100'),/LK-IDENTITY/);
 });

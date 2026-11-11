@@ -31,7 +31,7 @@
     },
     {
       "path": "javascript/novel/src/zh/lightnovel.js",
-      "sha256": "f800e0465f0f870f09fc338f49de507003b7dd9dd97ed4b3b2140be74bcc5f73"
+      "sha256": "83bdebc31ecf74ff179ec4ad870ebb4ab025899b8921e2ef772bb4dc65d503f9"
     },
     {
       "path": "javascript/novel/src/zh/linovelib.js",
@@ -55,7 +55,7 @@
     },
     {
       "path": "novel_index.json",
-      "sha256": "aaaec322e800674a32080fb342fb0b20d80b13bcf5a0b6b45ee804257facdea3"
+      "sha256": "dffe811382fda4f326522cb4317c3fe0a23ac9c4ee8f299142e5497b44dfad17"
     },
     {
       "path": "repo.json",
