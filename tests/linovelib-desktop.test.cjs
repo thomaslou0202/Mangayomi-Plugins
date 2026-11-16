@@ -69,3 +69,20 @@ test('an explicit final-chapter navigation ends without inventing another page',
  const {ext,requests}=setup({preferences:{reader_mode:'desktop'},fetchPage:async()=>fixture(1,'javascript:alert("沒有下一章")')});
  assert.match(await ext.getHtmlContent('終章',first),/頭髮/);assert.equal(requests.length,1);
 });
+test('the platform probe runs once and later chapters reuse the saved answer',async()=>{
+ const preferences={};
+ const one=setup({preferences});
+ await one.ext.getHtmlContent('測試章',first);
+ const probes=one.browserCalls.length;
+ assert.equal(preferences.lv_platform,'windows');
+ // A new extension instance, as the app builds for every request.
+ const two=setup({preferences});
+ await two.ext.getHtmlContent('測試章',first);
+ assert.equal(two.browserCalls.length,probes-1,'no second platform probe');
+});
+test('a failed platform probe is not saved',async()=>{
+ const preferences={};
+ const {ext}=load('linovelib',{preferences,browser:async()=>{throw new Error('webview unavailable');}});
+ assert.equal(await ext._isWindows(),false);
+ assert.equal(preferences.lv_platform,undefined,'the next request probes again');
+});

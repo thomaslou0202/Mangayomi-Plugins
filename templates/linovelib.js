@@ -2,7 +2,7 @@
 const mangayomiSources = [{
     name: "嗶哩輕小說（繁體）", id: 1827634460, lang: "zh", baseUrl: "https://tw.linovelib.com", apiUrl: "",
     iconUrl: "https://tw.linovelib.com/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.5", appMinVerReq: "0.9.10", pkgPath: "novel/src/zh/linovelib.js",
+    sourceCodeLanguage: 1, version: "0.1.6", appMinVerReq: "0.9.10", pkgPath: "novel/src/zh/linovelib.js",
     hasCloudflare: true, isNsfw: false, notes: "繁體文庫、最新更新、站方 Google 搜尋、分卷目錄、章內分頁與插圖。Windows 自動使用官方桌面入口並轉繁體。僅提供網站正常開放的章節。"
 }];
 const N_SITE = {name: "嗶哩輕小說", code: "LN", base: "https://tw.linovelib.com", hosts: ["tw.linovelib.com"], images: ["tw.linovelib.com", "www.linovelib.com", "img3.readpai.com"]};
@@ -11,6 +11,8 @@ const LV_OPENCC = (() => { const module = {exports: {}}; const exports = module.
 /*__LV_OPENCC__*/
 return module.exports; })();
 let lvTraditionalConverter;
+// Where the platform probe's answer is kept between requests.
+const LV_PLATFORM_KEY = "lv_platform";
 function lvTraditionalHtml(html) {
     lvTraditionalConverter ||= LV_OPENCC.Converter({from: "cn", to: "tw"});
     return String(html).replace(/(^|>)([^<]*)(?=<|$)/g, (_, prefix, text) => prefix + lvTraditionalConverter(text));
@@ -134,15 +136,28 @@ function lvCapture(options) {
 }
 /*__LV_DESKTOP__*/
 class DefaultExtension extends NativeNovel {
-    constructor() { super(); this.client = new Client({timeout: 25, connectTimeout: 10}); }
+    // The site answers in about a second. A stalled request waited 25 s, was
+    // retried for another 25 s, and only then fell back to the in-app page.
+    constructor() { super(); this.client = new Client({timeout: 15, connectTimeout: 8}); }
     get supportsLatest() { return true; }
     getSourcePreferences() { return [{key: "reader_mode", listPreference: {title: "正文讀取方式", summary: "自動：Windows 使用官方桌面入口並轉為繁體；手機維持原繁體頁面。", valueIndex: 0, entries: ["自動（建議）", "原繁體手機頁", "官方桌面入口（轉繁體）"], entryValues: ["auto", "mobile", "desktop"]}}]; }
     async _isWindows() {
+        // The app builds a fresh extension for every request, so a probe kept
+        // only in memory opened an extra hidden WebView for every chapter read
+        // in automatic mode. A definite answer is saved with the source's
+        // settings; a failed probe is not, so the next chapter asks again.
         return this.platformPromise ||= (async () => {
+            let saved = "";
+            try { saved = String(this.prefs.getString(LV_PLATFORM_KEY, "") || ""); } catch (_) {}
+            if (saved === "windows") return true;
+            if (saved === "other") return false;
             try {
                 const raw = await evaluateJavascriptViaWebview("https://www.linovelib.com/robots.txt", {}, [lvDesktopScript({platformOnly: true})], 10);
                 const data = JSON.parse(raw);
-                return data.kind === "platform" && data.url === "https://www.linovelib.com/robots.txt" && data.windows === true;
+                if (data.kind !== "platform" || data.url !== "https://www.linovelib.com/robots.txt") return false;
+                const windows = data.windows === true;
+                try { this.prefs.setString(LV_PLATFORM_KEY, windows ? "windows" : "other"); } catch (_) {}
+                return windows;
             } catch (_) { return false; }
         })();
     }
