@@ -74,12 +74,14 @@ const mangayomiSources = [{
     lang: "zh",
     baseUrl: "https://www.wenku8.net",
     apiUrl: "",
-    iconUrl: "https://www.wenku8.net/favicon.ico",
+    // The site answers its own favicon with a Cloudflare 403, so the browse
+    // list failed to draw it every time. Served from this repository instead.
+    iconUrl: "https://raw.githubusercontent.com/thomaslou0202/Mangayomi-Plugins/main/icons/wenku8.png",
     typeSource: "single",
     itemType: 2,
     isManga: false,
     sourceCodeLanguage: 1,
-    version: "0.3.6",
+    version: "0.3.7",
     appMinVerReq: "0.9.9",
     pkgPath: "novel/src/zh/wenku8.js",
     hasCloudflare: true,

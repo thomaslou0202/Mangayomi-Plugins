@@ -152,3 +152,9 @@ chapters and images inside stripped external anchors. The seven Wenku8
 regressions now assert this behavior in both source language settings.
 Existing downloaded HTML must be downloaded again to remove its old banner.
 The upstream unmodified 0.9.9 reader still hides online images.
+
+Version 0.3.7: Serve the source icon from this repository
+The site answers /favicon.ico with a Cloudflare 403, so the Browse list could
+never draw the icon and recorded a failed image load each time it tried. The
+icon is now served from icons/wenku8.png in this repository. Reading,
+searching and downloading are unchanged.
