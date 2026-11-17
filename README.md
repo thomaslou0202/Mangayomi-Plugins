@@ -18,20 +18,22 @@ Mangabz 的使用方式、備份相容格式與驗證範圍見 [Mangabz 說明](
 
 | 來源 | 版本 | 功能 |
 | --- | --- | --- |
-| 輕小說文庫8（測試版） | 0.3.6 | 熱門、最近更新、繁簡中文搜尋、分卷目錄、正文與插圖、繁體顯示切換、需要時自動登入 |
+| 輕小說文庫8（測試版） | 0.3.7 | 熱門、最近更新、繁簡中文搜尋、分卷目錄、正文與插圖、繁體顯示切換、需要時自動登入 |
 | 小說狂人（測試版） | 0.1.0 | 精選排行、分類與日／週／總排行、中文搜尋、目錄、正文 |
 | SF輕小說（測試版） | 0.1.0 | 書庫分類、繁簡中文搜尋、分卷目錄、免費章節正文；VIP 保留標示 |
 | 無限小說8book（測試版） | 0.1.2 | 熱門排行、日輕等分類、最新更新、搜尋、分卷目錄、完整正文與插圖、首頁至閱讀皆優先使用 HTTP 避免廣告轉址 |
 | 石頭小說（測試版） | 0.1.1 | 書庫分類、搜尋與目錄優先使用 HTTP、搜尋載入完成後辨識結果、正文、章內分頁、特殊字型文字還原 |
 | 起點中文網（測試版） | 0.1.0 | 官方手機站熱門榜、繁簡搜尋與分頁、完整分卷目錄、免費正文；付費章節標示 VIP |
-| 嗶哩輕小說（繁體） | 0.1.5 | 熱門文庫、最新更新、站方 Google 搜尋、分卷目錄、完整章內分頁與正文插圖 |
+| 嗶哩輕小說（繁體） | 0.1.6 | 熱門文庫、最新更新、站方 Google 搜尋、分卷目錄、完整章內分頁與正文插圖 |
 | 輕之國度 | 0.1.2 | 熱門、最近更新、繁簡搜尋、完整分卷目錄、正文與插圖、繁體／原文切換、一般章節免登入，受限章節才使用內建網頁帳號 |
+| KadoKado 角角者 | 0.1.0 | 台灣角川小說平台：人氣／收藏排行、最新更新、相關度搜尋、分卷目錄（只列免費章節）、繁體原文正文與插圖；正文需在內建網頁登入會員 |
 
 最低版本設為 Mangayomi 0.9.9。新增來源使用固定 ID，來源清單及更新網址由本儲存庫產生。
 
 起點的安裝、免費章節範圍與驗證說明見 [起點中文網說明](docs/qidian.md)。
 嗶哩繁體站的安裝、站方搜尋與閱讀說明見 [嗶哩輕小說說明](docs/linovelib.md)。
 輕之國度的安裝、帳號登入與閱讀權限說明見 [輕之國度說明](docs/lightnovel.md)。
+KadoKado 的登入與章節範圍說明見 [KadoKado 說明](docs/kadokado.md)。
 
 ## 動畫來源
 
@@ -135,12 +137,13 @@ javascript/novel/src/zh/eightbook.js
 javascript/novel/src/zh/twbook.js
 javascript/novel/src/zh/qidian.js
 javascript/novel/src/zh/linovelib.js
+javascript/novel/src/zh/kadokado.js
 javascript/anime/src/zh/anime1.js
 ```
 
 需要 Node.js 22 或更新版本。產生與檢查索引無額外套件；執行解析器測試時，先用 `npm ci --ignore-scripts` 安裝開發依賴。安裝到 Mangayomi 的來源仍是單一 JavaScript 檔，不需要 npm。
 
-SF、8book、石頭小說、起點、嗶哩的程式碼維護在 `templates/`，共用程式放在 `templates/native-novel-common.js`；發佈時產生五個可獨立執行的來源。請修改模板，避免直接修改隨後會被覆蓋的產出檔案。文庫8、小說狂人、漫畫人及 Anime1 直接維護來源檔。
+SF、8book、石頭小說、起點、嗶哩的程式碼維護在 `templates/`，共用程式放在 `templates/native-novel-common.js`；發佈時產生五個可獨立執行的來源。請修改模板，避免直接修改隨後會被覆蓋的產出檔案。文庫8、小說狂人、KadoKado、漫畫人及 Anime1 直接維護來源檔。
 
 1. 修改來源，並增加該檔案 `mangayomiSources` 中的 `version`；保留原本的 `id`。
 2. 在儲存庫資料夾執行 `npm run build`，重新產生 `index.json`、`novel_index.json`、`anime_index.json`、`repo.json` 與 `checksums.json`。

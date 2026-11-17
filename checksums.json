@@ -30,6 +30,10 @@
       "sha256": "036ba661b172c1fd12dd07769a97c2b5fdc4a977ed73f0ec8450978baf4f417a"
     },
     {
+      "path": "javascript/novel/src/zh/kadokado.js",
+      "sha256": "0a2031e0eeb40926d62119fb5f30cad35fb4ad20a90889ff485ed9f813c7b752"
+    },
+    {
       "path": "javascript/novel/src/zh/lightnovel.js",
       "sha256": "4ecee2878067fdb99d282de742759abde8c9ac297cf3a42c25e25f3a5deed7c6"
     },
@@ -55,7 +59,7 @@
     },
     {
       "path": "novel_index.json",
-      "sha256": "57a2a4c6cd3295cd95ece47bc3d6498a32f4ef8425eb7e5a0fafe446dc31e56c"
+      "sha256": "8f86eb57a0d42f6b9d7347b53f6be60f6b6992d86acd33ef75633168a693d227"
     },
     {
       "path": "repo.json",
