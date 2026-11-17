@@ -52,3 +52,12 @@ test('KadoKado asks the reader to sign in when the site hides the text',async()=
   await assert.rejects(ext.getHtmlContent('第一節',site+'/chapter/11'),/KK-LOGIN/);
  }
 });
+test('KadoKado draws stored image paths through the site image proxy',async()=>{
+ const {ext}=load('kadokado',{browser:browserFor(json(200,{type:'NOVEL',content:'<p>正文</p><img src="memberId/1/chapter/a.jpg"><img data-src="https://storage.googleapis.com/kadokado-storage/b.png" src="/loading.svg">',imageUrls:['memberId/1/chapter/c.jpg']}))});
+ const html=await ext.getHtmlContent('第一節',site+'/chapter/11');
+ const proxy='https://img.kadokado.com.tw/insecure/s:0/plain/';
+ assert.ok(html.includes(proxy+'memberId/1/chapter/a.jpg'));
+ assert.ok(html.includes(proxy+'b.png'),'Cloud Storage bucket dropped as the site does');
+ assert.ok(html.includes(proxy+'memberId/1/chapter/c.jpg'));
+ assert.doesNotMatch(html,/loading\.svg/);
+});

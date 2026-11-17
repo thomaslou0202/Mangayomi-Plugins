@@ -1,6 +1,6 @@
 /*
  * KadoKado 角角者 native JavaScript novel source for Mangayomi.
- * Version 0.1.0. UTF-8, no dependencies or embedded credentials.
+ * Version 0.1.1. UTF-8, no dependencies or embedded credentials.
  * MIT license; see LICENSE.txt.
  *
  * Catalogue, search, title details and chapter lists come from the site's
@@ -13,7 +13,7 @@ const mangayomiSources = [{
     baseUrl: "https://www.kadokado.cn", apiUrl: "https://api.kadokado.cn",
     iconUrl: "https://www.kadokado.cn/static/favicon.ico",
     typeSource: "single", itemType: 2, isManga: false, sourceCodeLanguage: 1,
-    version: "0.1.0", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/kadokado.js",
+    version: "0.1.1", appMinVerReq: "0.9.9", pkgPath: "novel/src/zh/kadokado.js",
     hasCloudflare: false, isNsfw: false,
     notes: "台灣角川小說平台。排行、最新更新、搜尋與目錄免登入；網站只對會員顯示正文，請先在來源內建網頁登入 www.kadokado.cn。只列出免費章節。"
 }];
@@ -24,7 +24,6 @@ const KK_RANKINGS = [
     ["MostViewed|Week", "本週人氣"], ["MostViewed|Month", "本月人氣"], ["MostViewed|Day", "今日人氣"],
     ["MostFavorite|Week", "本週收藏"], ["MostFavorite|Month", "本月收藏"]
 ];
-const KK_IMAGE_HOSTS = ["img.kadokado.com.tw", "storage.googleapis.com"];
 
 function kkError(code, message) { return new Error("KadoKado：" + message + "（KK-" + code + "）"); }
 function kkClean(text) { return String(text || "").replace(/\s+/g, " ").trim(); }
@@ -42,10 +41,24 @@ function kkChapterId(url) {
     const match = /^(?:https:\/\/www\.kadokado\.(?:cn|com\.tw))?\/chapter\/([1-9]\d*)(?:[/?#]|$)/.exec(String(url || "").trim());
     return match ? kkId(match[1]) : 0;
 }
+// Mirrors the site's own image helper: covers and chapter pictures are
+// stored as a path (or a Cloud Storage URL) and drawn through the image proxy
+// at img.kadokado.com.tw. A path left as it was could not load in the app.
+const KK_IMAGE_PROXY = "https://img.kadokado.com.tw/insecure/s:0/plain/";
 function kkImage(value) {
-    const url = String(value || "").trim();
-    const match = /^https:\/\/([^/?#]+)\//.exec(url);
-    return match && KK_IMAGE_HOSTS.includes(match[1].toLowerCase()) ? url : "";
+    const raw = String(value || "").trim();
+    if (!raw || /[\s"'<>\\]/.test(raw) || raw.startsWith("//")) return "";
+    const match = /^https:\/\/([^/?#]+)(\/[^?#]*)?/i.exec(raw);
+    if (!match) {
+        if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) return "";
+        const path = raw.replace(/^\/+/, "");
+        return /^[\w.~%-]+(?:\/[\w.~%:-]+)+$/.test(path) ? KK_IMAGE_PROXY + path : "";
+    }
+    const host = match[1].toLowerCase(), path = (match[2] || "").replace(/^\/+/, "");
+    if (host === "img.kadokado.com.tw" || host === "img.kadokado.cn") return raw;
+    // Cloud Storage: drop the bucket name, as the site does.
+    if (host === "storage.googleapis.com") return path.includes("/") ? KK_IMAGE_PROXY + path.replace(/^[^/]*\//, "") : "";
+    return "";
 }
 function kkCover(item) { return kkImage(Array.isArray(item.coverUrls) ? item.coverUrls[0] : ""); }
 // Full-width digits in the global serial keep the app from folding chapters

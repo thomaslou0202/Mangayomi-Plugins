@@ -29,6 +29,7 @@ async function lvDesktopFetch(options) {
         if (params.articleid !== options.book || params.chapterid !== options.chapter || Number(params.page) !== options.part) return reply("wrong-chapter");
         if (params.chapterisvip !== "0") return reply("vip");
         if (!content || (!content.textContent.trim() && !content.querySelector("img")) || lvEmbeddedReaderFailure(content.textContent)) return reply("incomplete");
+        lvRevealHiddenImages(content);
         // The desktop response is complete before the chapterlog script adds decoys.
         // Reject a changed response format rather than returning obfuscated text.
         const unusualLayout = [...content.querySelectorAll('style,[hidden],[style*="transform"],[style*="visibility"],[style*="display"],[style*="opacity"]')]
@@ -57,5 +58,5 @@ async function lvDesktopFetch(options) {
 }
 
 function lvDesktopScript(options) {
-    return "(function(){const nChallenge=" + nChallenge.toString() + ";const lvEmbeddedReaderFailure=" + lvEmbeddedReaderFailure.toString() + ";return (" + lvDesktopFetch.toString() + ")(" + JSON.stringify({...options, nonce: "__lv_desktop_" + Date.now().toString(36) + Math.random().toString(36).slice(2)}) + ");})()";
+    return "(function(){const nChallenge=" + nChallenge.toString() + ";const lvEmbeddedReaderFailure=" + lvEmbeddedReaderFailure.toString() + ";const lvRevealHiddenImages=" + lvRevealHiddenImages.toString() + ";return (" + lvDesktopFetch.toString() + ")(" + JSON.stringify({...options, nonce: "__lv_desktop_" + Date.now().toString(36) + Math.random().toString(36).slice(2)}) + ");})()";
 }

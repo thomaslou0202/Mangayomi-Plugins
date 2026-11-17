@@ -186,3 +186,11 @@ test('Linovelib rendered illustration-only chapters retain lazy offscreen images
  const {ext}=load('linovelib',{http:async url=>response(url,html),browser:async(url,headers,scripts)=>renderCapture(scripts[0],html,params)});
  assert.match(await ext.getHtmlContent('插圖',chapter),/img3.readpai.com\/illustration.jpg/);
 });
+test('Linovelib reads an illustration chapter over HTTP, hidden image box included, without the in-app page',async()=>{
+ const body='<p>插圖</p><img data-src="https://img3.readpai.com/9/1.jpg"><div id="hidden-images" style="display:none;"><img src="/images/sloading.svg" data-src="https://img3.readpai.com/9/2.jpg"></div>';
+ let browserCalls=0;
+ const {ext}=load('linovelib',{http:async url=>response(url,reader(1,'/novel/123/901.html',body)),browser:async()=>{browserCalls++;throw new Error('unexpected');}});
+ const html=await ext.getHtmlContent('插圖',chapter);
+ assert.match(html,/img3.readpai.com\/9\/1.jpg/);assert.match(html,/img3.readpai.com\/9\/2.jpg/);
+ assert.equal(browserCalls,0);
+});

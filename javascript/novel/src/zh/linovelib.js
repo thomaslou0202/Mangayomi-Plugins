@@ -2,7 +2,7 @@
 const mangayomiSources = [{
     name: "嗶哩輕小說（繁體）", id: 1827634460, lang: "zh", baseUrl: "https://tw.linovelib.com", apiUrl: "",
     iconUrl: "https://tw.linovelib.com/favicon.ico", typeSource: "single", itemType: 2, isManga: false,
-    sourceCodeLanguage: 1, version: "0.1.6", appMinVerReq: "0.9.10", pkgPath: "novel/src/zh/linovelib.js",
+    sourceCodeLanguage: 1, version: "0.1.7", appMinVerReq: "0.9.10", pkgPath: "novel/src/zh/linovelib.js",
     hasCloudflare: true, isNsfw: false, notes: "繁體文庫、最新更新、站方 Google 搜尋、分卷目錄、章內分頁與插圖。Windows 自動使用官方桌面入口並轉繁體。僅提供網站正常開放的章節。"
 }];
 const N_SITE = {name: "嗶哩輕小說", code: "LN", base: "https://tw.linovelib.com", hosts: ["tw.linovelib.com"], images: ["tw.linovelib.com", "www.linovelib.com", "img3.readpai.com"]};
@@ -471,6 +471,22 @@ function lvIncompleteText(value) {
     return lvEmbeddedReaderFailure(text) ||
         /^(?:本章)?(?:內容|内容|正文)(?:加載|加载|載入|读取|讀取)(?:失敗|失败)(?:[，。！!：:….,])*(?:請|请)?(?:稍後|稍后)?(?:重試|重试|刷新|重新整理)?[，。！!：:….,]*$/.test(text);
 }
+// Illustration chapters keep part of their pictures in a hidden box that the
+// site's script reveals: <div id="hidden-images" style="display:none"> holding
+// nothing but images. It is not a decoy, so it is shown instead of being
+// dropped (which lost pictures) or rejected (which failed the whole chapter on
+// the Windows desktop path). Any other hidden content is still refused.
+function lvRevealHiddenImages(root) {
+    for (const box of root.querySelectorAll("#hidden-images")) {
+        const children = [...box.children];
+        if (box.textContent.trim() || !children.length || children.some(child => child.tagName !== "IMG")) continue;
+        box.removeAttribute("style"); box.removeAttribute("hidden");
+    }
+}
+// The same for HTML read over plain HTTP, before it is parsed.
+function lvUnwrapHiddenImages(html) {
+    return String(html).replace(/<div\s+id=["']hidden-images["'][^>]*>((?:\s*<img\b[^>]*>)*\s*)<\/div>/gi, "$1");
+}
 function lvCapture(options) {
     const bridge = window.flutter_inappwebview, once = "__linovel_" + options.nonce;
     if (!bridge || window[once]) return;
@@ -499,6 +515,7 @@ function lvCapture(options) {
                 const identified = ["articleid", "chapterid", "page", "chapterisvip"].every(key => params[key] !== undefined && params[key] !== "");
                 if ((document.readyState !== "complete" || !prepared || !identified) && Date.now() - started < 18000) return setTimeout(capture, 250);
                 if (!prepared || !identified) return reply("reader-incomplete");
+                lvRevealHiddenImages(ready);
                 const copy = ready.cloneNode(true), originals = [...ready.querySelectorAll("*")], copies = [...copy.querySelectorAll("*")];
                 for (let i = originals.length - 1; i >= 0; i--) {
                     const node = originals[i], style = window.getComputedStyle(node), rect = node.getBoundingClientRect();
@@ -550,6 +567,7 @@ async function lvDesktopFetch(options) {
         if (params.articleid !== options.book || params.chapterid !== options.chapter || Number(params.page) !== options.part) return reply("wrong-chapter");
         if (params.chapterisvip !== "0") return reply("vip");
         if (!content || (!content.textContent.trim() && !content.querySelector("img")) || lvEmbeddedReaderFailure(content.textContent)) return reply("incomplete");
+        lvRevealHiddenImages(content);
         // The desktop response is complete before the chapterlog script adds decoys.
         // Reject a changed response format rather than returning obfuscated text.
         const unusualLayout = [...content.querySelectorAll('style,[hidden],[style*="transform"],[style*="visibility"],[style*="display"],[style*="opacity"]')]
@@ -578,7 +596,7 @@ async function lvDesktopFetch(options) {
 }
 
 function lvDesktopScript(options) {
-    return "(function(){const nChallenge=" + nChallenge.toString() + ";const lvEmbeddedReaderFailure=" + lvEmbeddedReaderFailure.toString() + ";return (" + lvDesktopFetch.toString() + ")(" + JSON.stringify({...options, nonce: "__lv_desktop_" + Date.now().toString(36) + Math.random().toString(36).slice(2)}) + ");})()";
+    return "(function(){const nChallenge=" + nChallenge.toString() + ";const lvEmbeddedReaderFailure=" + lvEmbeddedReaderFailure.toString() + ";const lvRevealHiddenImages=" + lvRevealHiddenImages.toString() + ";return (" + lvDesktopFetch.toString() + ")(" + JSON.stringify({...options, nonce: "__lv_desktop_" + Date.now().toString(36) + Math.random().toString(36).slice(2)}) + ");})()";
 }
 
 class DefaultExtension extends NativeNovel {
@@ -633,7 +651,7 @@ class DefaultExtension extends NativeNovel {
         const hosts = search ? ["cse.google.com"] : N_SITE.hosts;
         if (!nAllowed(url, hosts)) throw nError("URL", "網址不在支援的網站內");
         const options = {hosts, ready, searchPage: searchPage || 0, reading: !!reading, nonce: Date.now().toString(36) + Math.random().toString(36).slice(2)};
-        const script = "(function(){const nChallenge=" + nChallenge.toString() + ";const lvEmbeddedReaderFailure=" + lvEmbeddedReaderFailure.toString() + ";return (" + lvCapture.toString() + ")(" + JSON.stringify(options) + ");})()";
+        const script = "(function(){const nChallenge=" + nChallenge.toString() + ";const lvEmbeddedReaderFailure=" + lvEmbeddedReaderFailure.toString() + ";const lvRevealHiddenImages=" + lvRevealHiddenImages.toString() + ";return (" + lvCapture.toString() + ")(" + JSON.stringify(options) + ");})()";
         let result;
         try { result = JSON.parse(await evaluateJavascriptViaWebview(url, search ? {} : this.getHeaders(), [script], 30)); }
         catch (_) { throw nError("BROWSER", "內建網頁讀取失敗，請在來源內建網頁確認後重試"); }
@@ -668,6 +686,7 @@ class DefaultExtension extends NativeNovel {
                 if (Number(response.statusCode) === 200 && typeof response.body === "string" && !nChallenge(response.body)) {
                     let html = response.body;
                     if (/[\u0080-\u00ff]/.test(html) && !/[^\u0000-\u00ff]/.test(html)) try { html = decodeURIComponent(Array.from(html, c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")).join("")); } catch (_) {}
+                    if (options.reading) html = lvUnwrapHiddenImages(html);
                     const document = new Document(html);
                     if (nFirst(document, options.ready)) {
                         if (options.reading && (document.select('script[src],style,link[rel="stylesheet"],#acontent [style],#acontent [hidden]').length || lvEmbeddedReaderFailure(nText(document, "#acontent")))) return this._capture(url, options.ready, false, 0, true);

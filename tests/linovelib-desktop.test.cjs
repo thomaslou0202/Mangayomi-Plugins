@@ -86,3 +86,11 @@ test('a failed platform probe is not saved',async()=>{
  assert.equal(await ext._isWindows(),false);
  assert.equal(preferences.lv_platform,undefined,'the next request probes again');
 });
+test('desktop illustration chapters keep their hidden image box and still refuse hidden text',async()=>{
+ const gallery='<p>插圖說明</p><img data-src="https://img3.readpai.com/5/5567/1/1.jpg"><div id="hidden-images" style="display:none;"><img src="/images/sloading.svg" data-src="https://img3.readpai.com/5/5567/1/2.jpg"><img data-src="https://img3.readpai.com/5/5567/1/3.jpg"></div>';
+ const ok=setup({preferences:{reader_mode:'desktop'},fetchPage:async()=>fixture(1,'/novel/123/901.html',gallery)});
+ const html=await ok.ext.getHtmlContent('插圖',first);
+ for(const n of [1,2,3])assert.match(html,new RegExp('img3.readpai.com/5/5567/1/'+n+'.jpg'));
+ const decoy=setup({preferences:{reader_mode:'desktop'},fetchPage:async()=>fixture(1,'/novel/123/901.html','<p>正文</p><div id="hidden-images" style="display:none;"><p>干擾文字</p></div>')});
+ await assert.rejects(decoy.ext.getHtmlContent('章',first),/LN-DESKTOP-CONTENT/);
+});
